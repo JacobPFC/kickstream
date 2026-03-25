@@ -104,6 +104,12 @@
   .player-footer { padding: 10px 12px; border-top: 1px solid var(--border); margin-top: auto; }
   .close-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; width: 100%; }
   .close-btn:hover { color: var(--text); border-color: var(--muted); }
+  /* SCORES */
+  .score-badge { position: absolute; top: 6px; right: 6px; z-index: 2; background: rgba(8,12,16,0.85); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 3px 8px; display: flex; align-items: center; gap: 5px; font-family: 'Bebas Neue', sans-serif; }
+  .score-num { font-size: 1rem; color: var(--text); line-height: 1; }
+  .score-sep { font-size: 0.7rem; color: var(--muted); }
+  .score-min { font-size: 0.6rem; font-weight: 700; color: var(--live); letter-spacing: 0.5px; }
+
   /* EMBEDDED PLAYER */
   .player-iframe-wrap { position: relative; width: 100%; height: 100%; background: #000; }
   .player-iframe-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
@@ -248,6 +254,52 @@
 </div>
 
 <script>
+  // WatchFooty scores cache: key = normalized title -> match data
+  let wfCache = {};
+
+  async function loadWatchFootyScores() {
+    try {
+      const res = await fetch('https://lively-frost-f83a.jacobpompeymansfield.workers.dev/wf/api/v1/matches/live');
+      if (!res.ok) return;
+      const matches = await res.json();
+      wfCache = {};
+      matches.forEach(m => {
+        const key = normTitle(m.title);
+        wfCache[key] = m;
+        // also index by home+away
+        if (m.teams?.home?.name && m.teams?.away?.name) {
+          const k2 = normTitle(m.teams.home.name + ' ' + m.teams.away.name);
+          wfCache[k2] = m;
+        }
+      });
+    } catch(e) {}
+  }
+
+  function normTitle(s) {
+    return (s||'').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
+  }
+
+  function findWFMatch(match) {
+    const k1 = normTitle(match.title);
+    if (wfCache[k1]) return wfCache[k1];
+    // Try home+away
+    if (match.teams?.home?.name && match.teams?.away?.name) {
+      const k2 = normTitle(match.teams.home.name + ' ' + match.teams.away.name);
+      if (wfCache[k2]) return wfCache[k2];
+      // Fuzzy: first 6 chars of each team
+      const h = normTitle(match.teams.home.name).substring(0,6);
+      const a = normTitle(match.teams.away.name).substring(0,6);
+      for (const [k,v] of Object.entries(wfCache)) {
+        if (v.teams?.home?.name && v.teams?.away?.name) {
+          const vh = normTitle(v.teams.home.name).substring(0,6);
+          const va = normTitle(v.teams.away.name).substring(0,6);
+          if (h === vh && a === va) return v;
+        }
+      }
+    }
+    return null;
+  }
+
   const SPORT_ICONS = {
     football:'⚽', basketball:'🏀', tennis:'🎾', hockey:'🏒', baseball:'⚾',
     mma:'🥊', boxing:'🥊', rugby:'🏉', volleyball:'🏐', cricket:'🏏',
@@ -390,6 +442,12 @@
     const homeBadge = `<div class="poster-badge ph" title="${homeName}">${homeInitial}</div>`;
     const awayBadge = `<div class="poster-badge ph" title="${awayName}">${awayInitial}</div>`;
 
+    const wf = isLive ? findWFMatch(match) : null;
+    const hasScore = wf && wf.scores && (wf.scores.home !== null && wf.scores.away !== null);
+    const scoreTag = hasScore
+      ? `<div class="score-badge"><span class="score-num">${wf.scores.home}</span><span class="score-sep">-</span><span class="score-num">${wf.scores.away}</span>${wf.currentMinute ? `<span class="score-min">${wf.currentMinute}</span>` : ''}</div>`
+      : '';
+
     const tag = isLive
       ? `<div class="card-live-tag"><div class="card-live-dot"></div>LIVE</div>`
       : `<div class="card-time-tag">${timeStr}</div>`;
@@ -398,6 +456,7 @@
       <div class="card-poster">
         <div class="card-poster-teams">${homeBadge}<div class="poster-vs">VS</div>${awayBadge}</div>
         ${tag}
+        ${scoreTag}
       </div>
       <div class="card-body">
         <div class="card-title">${match.title}</div>
@@ -642,7 +701,9 @@
   }
 
   loadSports();
+  loadWatchFootyScores();
   loadMatches();
+  setInterval(() => { loadWatchFootyScores().then(() => renderMatches(allMatches)); }, 60000);
   checkUrlMatch();
   setInterval(async () => {
     try { document.getElementById('live-count').textContent = (await fetch('https://lively-frost-f83a.jacobpompeymansfield.workers.dev/api/matches/live').then(r=>r.json())).length; } catch(e) {}
