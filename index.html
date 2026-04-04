@@ -131,13 +131,101 @@
   @keyframes shimmer { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
   .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.85rem; }
 
+  /* ── Mobile / iPhone ── */
   @media (max-width: 768px) {
+    /* Hide desktop elements */
     .sidebar { display: none; }
-    .main { margin-left: 0; padding: 1rem; }
+    .filter-tabs { display: none; }
+    .header-search { display: none; }
+
+    /* Header: just logo + live pill */
+    header { padding: 0 1rem; gap: 1rem; height: 52px; }
+    .logo { font-size: 1.4rem; }
+
+    /* Body padding for bottom nav */
+    body { padding-bottom: 62px; }
+
+    /* Main content */
+    .main { margin-left: 0; padding: 0.75rem; }
+    .layout { padding-top: 52px; }
+
+    /* Sport filter — horizontal scroll strip */
+    .mobile-sport-strip {
+      display: flex; gap: 6px; overflow-x: auto; padding: 0.6rem 0.75rem;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid var(--border); background: var(--surface);
+      margin: 0 -0.75rem 0.75rem; position: sticky; top: 52px; z-index: 100;
+    }
+    .mobile-sport-strip::-webkit-scrollbar { display: none; }
+    .mobile-sport-chip {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;
+      font-weight: 600; border: 1px solid var(--border); background: var(--surface2);
+      color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .mobile-sport-chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    /* Match cards: 2 columns */
+    .matches-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+    /* Bigger tap targets */
+    .card-watch { padding: 8px 5px; font-size: 0.78rem; min-height: 36px; }
+    .card-share { padding: 8px; min-height: 36px; }
+
+    /* Player: full width, stream list below */
     .player-inner { grid-template-columns: 1fr; }
     .player-panel { border-left: none; border-top: 1px solid var(--border); }
-    .filter-tabs { display: none; }
+    .stream-list { max-height: 180px; }
+    .stream-item { padding: 10px 12px; min-height: 44px; }
+    .stream-newtab-btn { min-width: 44px; justify-content: center; }
+
+    /* Bottom nav */
+    .bottom-nav {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      background: rgba(10,14,19,0.98); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border); height: 62px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 3px; background: transparent; border: none;
+      color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.62rem;
+      font-weight: 600; cursor: pointer; transition: color 0.15s; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bottom-nav-btn.active { color: var(--accent); }
+    .bottom-nav-btn svg { width: 20px; height: 20px; }
+    .bottom-nav-btn .nav-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: var(--live);
+      animation: pulse 1.4s infinite; display: none;
+    }
+    .bottom-nav-btn.nav-live .nav-dot { display: block; }
+
+    /* Search bar below header on mobile */
+    .mobile-search {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0.5rem 0.75rem; background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      margin: 0 -0.75rem 0.75rem;
+    }
+    .mobile-search input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; font-size: 1rem; /* 1rem prevents iOS zoom */
+      color: var(--text); font-family: 'DM Sans', sans-serif; outline: none;
+    }
+    .mobile-search input::placeholder { color: var(--muted); }
+
+    /* Section titles smaller */
+    .sport-section-title { font-size: 1rem; }
+
+    /* Channels grid 2 col */
+    .channels-grid { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* Hide bottom nav and mobile elements on desktop */
+  .bottom-nav { display: none; }
+  .mobile-sport-strip { display: none; }
+  .mobile-search { display: none; }
 </style>
 </head>
 <body>
@@ -158,6 +246,16 @@
     <div class="live-pill"><div class="live-dot"></div><span id="live-count">—</span> LIVE</div>
   </div>
 </header>
+
+<!-- Mobile search (shown below header on phones) -->
+<div class="mobile-search">
+  <input type="text" placeholder="Search matches..." id="mobile-search-input" oninput="filterSearch(this.value)">
+</div>
+
+<!-- Mobile sport filter strip -->
+<div class="mobile-sport-strip" id="mobile-sport-strip">
+  <button class="mobile-sport-chip active" data-sport="all" onclick="selectSport('all',this,true)">🌐 All</button>
+</div>
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
@@ -235,6 +333,9 @@
 
   function filterSearch(q) {
     q = q.toLowerCase().trim();
+    // Keep mobile search input in sync
+    const mob = document.getElementById('mobile-search-input');
+    if (mob && mob.value.toLowerCase().trim() !== q) mob.value = q;
     document.querySelectorAll('.match-card').forEach(c => {
       const t = c.querySelector('.card-title')?.textContent.toLowerCase() || '';
       c.style.display = (!q || t.includes(q)) ? '' : 'none';
@@ -251,11 +352,18 @@
     loadMatches();
   }
 
-  function selectSport(sport, btn) {
+  function selectSport(sport, btn, isMobile) {
     currentSport = sport;
+    // Update desktop sidebar
     document.querySelectorAll('.sport-link').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    const desktopBtn = document.querySelector(`.sport-link[data-sport="${sport}"]`);
+    if (desktopBtn) desktopBtn.classList.add('active');
+    // Update mobile chips
+    document.querySelectorAll('.mobile-sport-chip').forEach(b => b.classList.remove('active'));
+    const mobileBtn = document.querySelector(`.mobile-sport-chip[data-sport="${sport}"]`);
+    if (mobileBtn) mobileBtn.classList.add('active');
     document.getElementById('search-input').value = '';
+    document.getElementById('mobile-search-input').value = '';
     closePlayer();
     renderMatches(allMatches);
   }
@@ -271,14 +379,23 @@
       const res = await fetch(W + '/api/sports');
       const sports = await res.json();
       const sidebar = document.getElementById('sidebar');
+      const mobileStrip = document.getElementById('mobile-sport-strip');
       sports.forEach(sport => {
         const icon = SPORT_ICONS[sport.id] || '🎯';
+        // Desktop sidebar button
         const btn = document.createElement('button');
         btn.className = 'sport-link';
         btn.dataset.sport = sport.id;
         btn.innerHTML = `<span class="sport-icon">${icon}</span> ${sport.name} <span class="sport-count" id="count-${sport.id}">—</span>`;
         btn.onclick = () => selectSport(sport.id, btn);
         sidebar.appendChild(btn);
+        // Mobile chip
+        const chip = document.createElement('button');
+        chip.className = 'mobile-sport-chip';
+        chip.dataset.sport = sport.id;
+        chip.textContent = `${icon} ${sport.name}`;
+        chip.onclick = () => selectSport(sport.id, chip, true);
+        mobileStrip.appendChild(chip);
       });
     } catch(e) {}
   }
@@ -584,6 +701,30 @@
     } catch(e) {}
   }
 
+  function mobileNav(filter, btn) {
+    channelsView = false;
+    currentFilter = filter;
+    // Update bottom nav active state
+    document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Also sync header tabs
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    const headerTab = document.querySelector(`.filter-tab[onclick*="'${filter}'"]`);
+    if (headerTab) headerTab.classList.add('active');
+    document.getElementById('search-input').value = '';
+    document.getElementById('mobile-search-input').value = '';
+    closePlayer();
+    loadMatches();
+  }
+
+  function mobileNavChannels(btn) {
+    document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Find and trigger the channels tab
+    const channelsTab = document.querySelector('.filter-tab[onclick*="showChannels"]');
+    if (channelsTab) showChannels(channelsTab);
+  }
+
   loadSports();
   loadMatches();
   checkUrlMatch();
@@ -592,5 +733,26 @@
     try { document.getElementById('live-count').textContent = (await fetch(W+'/api/matches/live').then(r=>r.json())).length; } catch(e) {}
   }, 60000);
 </script>
+<!-- Mobile bottom nav -->
+<nav class="bottom-nav">
+  <button class="bottom-nav-btn nav-live active" id="nav-live" onclick="mobileNav('live',this)">
+    <div class="nav-dot"></div>
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+    Live
+  </button>
+  <button class="bottom-nav-btn" id="nav-today" onclick="mobileNav('today',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 18H5V8h14v13z"/></svg>
+    Today
+  </button>
+  <button class="bottom-nav-btn" id="nav-all" onclick="mobileNav('all',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+    All
+  </button>
+  <button class="bottom-nav-btn" id="nav-channels" onclick="mobileNavChannels(this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5v2h8v-2h5a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 14H3V5h18v12z"/></svg>
+    Channels
+  </button>
+</nav>
+
 </body>
 </html>
