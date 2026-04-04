@@ -420,14 +420,31 @@
     document.getElementById('player-wrap').innerHTML = `<div class="player-placeholder"><div class="spinner"></div>Loading...</div>`;
     document.getElementById('stream-list').innerHTML = `<div class="no-streams"><span class="spinner"></span>Fetching streams...</div>`;
 
-    const sources = match.sources||[];
+    const sources = match.sources || [];
     if (!sources.length) {
       document.getElementById('stream-list').innerHTML = '<div class="no-streams">No streams available</div>';
       document.getElementById('player-wrap').innerHTML = `<div class="player-placeholder"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0010 10A10 10 0 0022 12 10 10 0 0012 2z"/></svg><span>No streams available</span></div>`;
       return;
     }
 
-    const results = await Promise.all(sources.map(s => fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r=>r.json()).catch(()=>[])));
+    // Fetch all stream sources in parallel and build embed URLs from streamed API data
+    const results = await Promise.all(
+      sources.map(s =>
+        fetch(`${W}/api/stream/${s.source}/${s.id}`)
+          .then(r => r.json())
+          .then(data => {
+            const arr = Array.isArray(data) ? data : [];
+            return arr.map(stream => ({
+              ...stream,
+              _source: s.source,
+              _id: s.id,
+              // Always build embed URL from streamed API fields — don't trust s.embedUrl
+              embedUrl: `https://embedsports.top/embed/${s.source}/${s.id}/${stream.streamNo || 1}`
+            }));
+          })
+          .catch(() => [])
+      )
+    );
     const streams = results.flat();
 
     if (!streams.length) {
@@ -439,15 +456,21 @@
     const list = document.getElementById('stream-list');
     list.innerHTML = '';
     streams.forEach((s, i) => {
+      const embedUrl = s.embedUrl;
+
       const item = document.createElement('div');
       item.className = 'stream-item';
       item.style.cursor = 'pointer';
-      item.innerHTML = `<div class="stream-lang">${s.language||'Stream'} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src">${s.source||''}</div>`;
-      item.addEventListener('click', () => embedStream(s.embedUrl, item));
+      item.innerHTML = `
+        <div class="stream-lang">${s.language || 'Stream'} #${s.streamNo || i + 1}</div>
+        ${s.hd ? '<div class="stream-hd">HD</div>' : ''}
+        <div class="stream-src">${s._source || s.source || ''}</div>
+      `;
+      item.addEventListener('click', () => embedStream(embedUrl, item));
 
       const newTab = document.createElement('a');
       newTab.className = 'stream-newtab-btn';
-      newTab.href = s.embedUrl;
+      newTab.href = embedUrl;
       newTab.target = '_blank';
       newTab.rel = 'noopener noreferrer';
       newTab.title = 'Open in new tab';
@@ -460,6 +483,7 @@
       list.appendChild(wrap);
     });
 
+    // Auto-load first stream
     if (streams[0]?.embedUrl) {
       const first = list.querySelector('.stream-item');
       if (first) embedStream(streams[0].embedUrl, first);
