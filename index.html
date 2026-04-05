@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KickStream — Live Sports</title>
-<link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -45,7 +44,7 @@
   .sport-link .sport-count { margin-left: auto; font-size: 0.68rem; background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 10px; color: var(--muted); }
   .sport-link.active .sport-count { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.2); color: var(--accent); }
 
-  .main { margin-left: var(--sidebar-w); flex: 1; padding: 1.5rem; min-width: 0; }
+  .main { margin-left: var(--sidebar-w); flex: 1; padding: 1.5rem; padding-bottom: 5rem; min-width: 0; }
 
   #player-section { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden; animation: fadeIn 0.3s ease; }
   #player-section.visible { display: block; }
@@ -140,7 +139,6 @@
     .filter-tabs { display: none; }
   }
 </style>
-<script src="https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js"></script>
 </head>
 <body>
 
@@ -198,6 +196,12 @@
         <div class="skel"></div><div class="skel"></div><div class="skel"></div>
         <div class="skel"></div><div class="skel"></div><div class="skel"></div>
       </div>
+    </div>
+
+    <!-- Native Ad -->
+    <div style="margin: 1rem 0;">
+      <script async="async" data-cfasync="false" src="https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js"></script>
+      <div id="container-3571a161b12859500250b6695f54b5c2"></div>
     </div>
   </main>
 </div>
@@ -594,18 +598,5 @@
     try { document.getElementById('live-count').textContent = (await fetch(W+'/api/matches/live').then(r=>r.json())).length; } catch(e) {}
   }, 60000);
 </script>
-<!-- Banner Ad -->
-<div style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
-  <script>
-    atOptions = {
-      'key' : '227d90309c60d025e7698e00ceca60ed',
-      'format' : 'iframe',
-      'height' : 60,
-      'width' : 468,
-      'params' : {}
-    };
-  </script>
-  <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
-</div>
 </body>
 </html>
