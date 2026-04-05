@@ -16,8 +16,8 @@
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
 
   header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1.5rem; }
-  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent); text-decoration: none; flex-shrink: 0; }
-  .logo span { color: var(--text); }
+  .logo { text-decoration: none; flex-shrink: 0; display: flex; align-items: center; }
+  .logo img { height: 32px; width: auto; }
   .header-search { flex: 1; max-width: 340px; position: relative; }
   .header-search input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px 7px 36px; font-size: 0.82rem; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
   .header-search input:focus { border-color: var(--accent); }
@@ -98,7 +98,7 @@
   .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; }
   .match-card:hover { border-color: #2a3d52; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
   .match-card.live-card { border-color: rgba(255,23,68,0.25); }
-  .card-poster { aspect-ratio: 16/9; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d1f35 0%, #0a1628 50%, #061020 100%); }
+  .card-poster { aspect-ratio: 16/9; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: url('https://cdn.discordapp.com/attachments/1403059641646190642/1484304147682689175/KickStream.png?ex=69bdbd75&is=69bc6bf5&hm=0322c9da1160baa41142251f91675bfdd32a150eabff600947898b30a698c62f&') center/cover; }
   .card-poster::before { content: ''; position: absolute; inset: 0; background: rgba(5,10,18,0.55); z-index: 0; }
   .card-poster-teams { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; width: 100%; }
   .poster-badge { width: 44px; height: 44px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: #fff; flex-shrink: 0; font-family: 'Bebas Neue', sans-serif; backdrop-filter: blur(4px); }
@@ -143,7 +143,7 @@
 <body>
 
 <header>
-  <a class="logo" href="#">Kick<span>Stream</span></a>
+  <a class="logo" href="#"><img src="kickstream_logo.png" alt="KickStream"></a>
   <div class="filter-tabs">
     <button class="filter-tab active" onclick="setFilter('live',this)">🔴 Live</button>
     <button class="filter-tab" onclick="setFilter('today',this)">Today</button>
@@ -496,7 +496,7 @@
     const playerWrap = document.getElementById('player-wrap');
     playerWrap.innerHTML = `
       <div class="player-iframe-wrap">
-        <iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
+        <iframe id="stream-iframe" src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
         <div id="player-blocked" style="display:none" class="player-blocked">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0010 10A10 10 0 0022 12 10 10 0 0012 2z"/></svg>
           <p>This stream can't be embedded.</p>
