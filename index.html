@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KickStream — Live Sports</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -16,8 +17,8 @@
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
 
   header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1.5rem; }
-  .logo { text-decoration: none; flex-shrink: 0; display: flex; align-items: center; }
-  .logo img { height: 32px; width: auto; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent); text-decoration: none; flex-shrink: 0; }
+  .logo span { color: var(--text); }
   .header-search { flex: 1; max-width: 340px; position: relative; }
   .header-search input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px 7px 36px; font-size: 0.82rem; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
   .header-search input:focus { border-color: var(--accent); }
@@ -143,7 +144,7 @@
 <body>
 
 <header>
-  <a class="logo" href="#"><img src="kickstream_logo.png" alt="KickStream"></a>
+  <a class="logo" href="#">Kick<span>Stream</span></a>
   <div class="filter-tabs">
     <button class="filter-tab active" onclick="setFilter('live',this)">🔴 Live</button>
     <button class="filter-tab" onclick="setFilter('today',this)">Today</button>
