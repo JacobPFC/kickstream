@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KickStream — Movies</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js"></script>
+<script src="https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js"></script>
+<style>
+  :root {
+    --bg: #0a0e13; --surface: #111720; --surface2: #181f2a; --border: #1e2d3d;
+    --accent: #00e676; --accent2: #00b0ff; --live: #ff1744; --text: #e2e8f0;
+    --muted: #4a6280; --card-hover: #141e2b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1.5rem; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent); text-decoration: none; flex-shrink: 0; }
+  .logo span { color: var(--text); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+  .nav-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-decoration: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .nav-btn:hover { color: var(--text); border-color: var(--muted); }
+  .nav-btn.active { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.3); color: var(--accent); }
+  .discord-btn { display: flex; align-items: center; gap: 6px; background: rgba(88,101,242,0.1); border: 1px solid rgba(88,101,242,0.3); color: #5865f2; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-decoration: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .discord-btn:hover { background: rgba(88,101,242,0.2); border-color: #5865f2; }
+
+  .main { padding-top: 56px; padding: 76px 1.5rem 5rem; max-width: 1400px; margin: 0 auto; }
+  .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 2px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+  .page-title span { color: var(--muted); font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 400; letter-spacing: 0; }
+
+  .search-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+  .search-bar input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.85rem; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--muted); }
+  .search-btn { background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s; }
+  .search-btn:hover { opacity: 0.85; }
+
+  .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .movie-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+  .movie-card:hover { border-color: #2a3d52; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .movie-card.active { border-color: var(--accent); }
+  .movie-poster { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--surface2); }
+  .movie-poster-ph { width: 100%; aspect-ratio: 2/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+  .movie-info { padding: 8px 10px; }
+  .movie-title { font-size: 0.78rem; font-weight: 600; line-height: 1.3; margin-bottom: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .movie-year { font-size: 0.68rem; color: var(--muted); }
+
+  .player-section { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden; }
+  .player-section.visible { display: block; }
+  .player-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .player-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px; }
+  .close-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .close-btn:hover { color: var(--text); border-color: var(--muted); }
+  .player-wrap { position: relative; aspect-ratio: 16/9; background: #000; }
+  .player-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  .empty { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.85rem; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 3rem; color: var(--muted); font-size: 0.85rem; }
+
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--accent); color: var(--text); padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; z-index: 9999; animation: toastIn 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+  @keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  @media (max-width: 768px) {
+    header { padding: 0 0.75rem; gap: 0.6rem; }
+    .discord-btn { display: none; }
+    .main { padding: 70px 0.75rem 5rem; }
+    .movies-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .movie-title { font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">Kick<span>Stream</span></a>
+  <div class="header-right">
+    <a class="nav-btn" href="/">⚽ Sports</a>
+    <a class="nav-btn active" href="/movies.html">🎬 Movies</a>
+    <a class="discord-btn" href="https://discord.gg/ZnpTZE4jMu" target="_blank" rel="noopener noreferrer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      Discord
+    </a>
+  </div>
+</header>
+
+<div class="main">
+  <div class="page-title">🎬 Movies <span>Search and watch free movies</span></div>
+
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search for a movie..." onkeydown="if(event.key==='Enter')searchMovies()">
+    <button class="search-btn" onclick="searchMovies()">Search</button>
+  </div>
+
+  <div id="player-section" class="player-section">
+    <div class="player-header">
+      <div class="player-title" id="player-title">—</div>
+      <button class="close-btn" onclick="closePlayer()">✕ Close</button>
+    </div>
+    <div class="player-wrap">
+      <iframe id="player-iframe" src="" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
+    </div>
+  </div>
+
+  <div id="movies-container">
+    <div class="loading"><div class="spinner"></div> Loading popular movies...</div>
+  </div>
+</div>
+
+<!-- Native Ad -->
+<div style="margin: 1rem 1.5rem;">
+  <script async="async" data-cfasync="false" src="https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js"></script>
+  <div id="container-3571a161b12859500250b6695f54b5c2"></div>
+</div>
+
+<!-- Banner Ad -->
+<div style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
+  <script>
+    atOptions = {
+      'key' : '227d90309c60d025e7698e00ceca60ed',
+      'format' : 'iframe',
+      'height' : 60,
+      'width' : 468,
+      'params' : {}
+    };
+  </script>
+  <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
+</div>
+
+<script>
+  const TMDB_KEY = '4ef0d7355d9ffb5151e987764708ce96'; // public TMDB API key
+  const TMDB_IMG = 'https://image.tmdb.org/t/p/w300';
+  let currentMovieId = null;
+
+  function showToast(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  function closePlayer() {
+    document.getElementById('player-section').classList.remove('visible');
+    document.getElementById('player-iframe').src = '';
+    document.querySelectorAll('.movie-card').forEach(c => c.classList.remove('active'));
+    currentMovieId = null;
+  }
+
+  function playMovie(id, title) {
+    currentMovieId = id;
+    document.getElementById('player-title').textContent = title;
+    document.getElementById('player-iframe').src = `https://rivestream.org/embed?type=movie&id=${id}`;
+    document.getElementById('player-section').classList.add('visible');
+    document.getElementById('player-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.movie-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll(`.movie-card[data-id="${id}"]`).forEach(c => c.classList.add('active'));
+  }
+
+  function buildCard(movie) {
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+    card.dataset.id = movie.id;
+    const poster = movie.poster_path
+      ? `<img class="movie-poster" src="${TMDB_IMG}${movie.poster_path}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'movie-poster-ph\\'>🎬</div>'">`
+      : `<div class="movie-poster-ph">🎬</div>`;
+    const year = movie.release_date ? movie.release_date.slice(0,4) : '';
+    card.innerHTML = `${poster}<div class="movie-info"><div class="movie-title">${movie.title}</div><div class="movie-year">${year}</div></div>`;
+    card.addEventListener('click', () => playMovie(movie.id, movie.title));
+    return card;
+  }
+
+  function renderMovies(movies) {
+    const container = document.getElementById('movies-container');
+    if (!movies.length) { container.innerHTML = '<div class="empty">No movies found.</div>'; return; }
+    const grid = document.createElement('div');
+    grid.className = 'movies-grid';
+    movies.forEach(m => grid.appendChild(buildCard(m)));
+    container.innerHTML = '';
+    container.appendChild(grid);
+  }
+
+  async function searchMovies() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q) return loadPopular();
+    document.getElementById('movies-container').innerHTML = '<div class="loading"><div class="spinner"></div> Searching...</div>';
+    closePlayer();
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}&language=en-US&page=1`);
+      const data = await res.json();
+      renderMovies(data.results || []);
+    } catch(e) {
+      document.getElementById('movies-container').innerHTML = '<div class="empty">Search failed. Try again.</div>';
+    }
+  }
+
+  async function loadPopular() {
+    document.getElementById('movies-container').innerHTML = '<div class="loading"><div class="spinner"></div> Loading popular movies...</div>';
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_KEY}&language=en-US&page=1`);
+      const data = await res.json();
+      renderMovies(data.results || []);
+    } catch(e) {
+      document.getElementById('movies-container').innerHTML = '<div class="empty">Could not load movies.</div>';
+    }
+  }
+
+  loadPopular();
+</script>
+</body>
+</html>
