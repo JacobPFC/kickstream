@@ -157,7 +157,7 @@
   function playMovie(id, title) {
     currentMovieId = id;
     document.getElementById('player-title').textContent = title;
-    document.getElementById('player-iframe').src = `https://rivestream.org/embed?type=movie&id=${id}`;
+    document.getElementById('player-iframe').src = `https://vidsrc.cc/v3/embed/movie/${id}`;
     document.getElementById('player-section').classList.add('visible');
     document.getElementById('player-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.querySelectorAll('.movie-card').forEach(c => c.classList.remove('active'));
