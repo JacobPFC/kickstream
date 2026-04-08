@@ -186,6 +186,7 @@
     .channels-section-title { font-size: 1rem; margin: 1rem 0 0.5rem; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 <script src="https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js"></script>
 <script src="https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js"></script>
 </head>
@@ -625,6 +626,59 @@
     document.getElementById('teams-row').style.display = 'none';
   }
 
+  let hlsInstance = null;
+
+  function playChannel(streamUrl, channelName, cardEl) {
+    // Close sports player if open
+    closePlayer();
+    document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
+    if (cardEl) cardEl.classList.add('active');
+
+    // Remove existing channel player if present
+    const existing = document.getElementById('channel-player-section');
+    if (existing) existing.remove();
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+    const section = document.createElement('div');
+    section.id = 'channel-player-section';
+    section.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';
+    section.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div>
+        <button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button>
+      </div>
+      <div style="position:relative;aspect-ratio:16/9;background:#000;">
+        <video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay></video>
+      </div>`;
+
+    const container = document.getElementById('matches-container');
+    container.insertBefore(section, container.firstChild);
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const video = document.getElementById('channel-video');
+    if (Hls.isSupported()) {
+      hlsInstance = new Hls();
+      hlsInstance.loadSource(streamUrl);
+      hlsInstance.attachMedia(video);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
+      hlsInstance.on(Hls.Events.ERROR, (e, data) => {
+        if (data.fatal) showToast('Stream unavailable or geo-blocked');
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+      video.play().catch(()=>{});
+    } else {
+      section.querySelector('div:last-child').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">HLS not supported in this browser</div>';
+    }
+  }
+
+  function closeChannelPlayer() {
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    const el = document.getElementById('channel-player-section');
+    if (el) el.remove();
+    document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
+  }
+
   async function showChannels(btn) {
     channelsView = true;
     document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
@@ -634,17 +688,35 @@
     if (channelsLoaded) return;
     document.getElementById('matches-container').innerHTML = `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try {
-      const res = await fetch(W + '/cdn/api/v1/channels/?user=cdnlivetv&plan=free');
-      const data = await res.json();
-      const channels = (data.channels||[]).filter(ch => ch.status === 'online');
+      const [chRes, stRes] = await Promise.all([
+        fetch('https://iptv-org.github.io/api/channels.json'),
+        fetch('https://iptv-org.github.io/api/streams.json')
+      ]);
+      const allChannels = await chRes.json();
+      const allStreams = await stRes.json();
+
+      // Build stream lookup by channel id
+      const streamMap = {};
+      allStreams.forEach(s => {
+        if (s.channel && s.url && !streamMap[s.channel]) {
+          streamMap[s.channel] = s.url;
+        }
+      });
+
+      // Only show channels that have a stream and are not NSFW
+      const channels = allChannels.filter(ch => streamMap[ch.id] && !ch.is_nsfw && !ch.closed);
+
+      // Group by country
       const groups = {};
       channels.forEach(ch => {
-        const code = ch.code || 'other';
+        const code = (ch.country || 'other').toLowerCase();
         if (!groups[code]) groups[code] = [];
         groups[code].push(ch);
       });
+
       const priority = ['gb','us'];
       const sorted = [...priority.filter(c=>groups[c]), ...Object.keys(groups).filter(c=>!priority.includes(c)).sort()];
+
       const container = document.createElement('div');
       sorted.forEach(code => {
         const chs = groups[code];
@@ -656,17 +728,16 @@
         const grid = document.createElement('div');
         grid.className = 'channels-grid';
         chs.forEach(ch => {
-          const card = document.createElement('a');
+          const card = document.createElement('div');
           card.className = 'channel-card';
-          card.href = ch.url||'#';
-          card.target = '_blank';
-          card.rel = 'noopener noreferrer';
-          const logo = ch.image ? `<img class="channel-logo" src="${ch.image}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
+          const logo = ch.logo ? `<img class="channel-logo" src="${ch.logo}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
           card.innerHTML = `${logo}<div class="channel-name">${ch.name||'Channel'}</div>`;
+          card.addEventListener('click', () => playChannel(streamMap[ch.id], ch.name, card));
           grid.appendChild(card);
         });
         container.appendChild(grid);
       });
+
       document.getElementById('matches-container').innerHTML = '';
       document.getElementById('matches-container').appendChild(container);
       channelsLoaded = true;
