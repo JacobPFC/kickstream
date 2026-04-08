@@ -107,6 +107,11 @@ header { position: fixed; top: 0; left: 0; right: 0; z-index: 300; background: r
 .load-more { display: block; width: 100%; margin-top: 1rem; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
 .load-more:hover { color: var(--text); border-color: var(--muted); }
 
+.source-bar { padding: 8px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--surface2); }
+.source-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-right: 4px; flex-shrink: 0; }
+.source-btn { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.source-btn:hover { color: var(--text); border-color: var(--muted); }
+.source-btn.active { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.3); color: var(--accent); }
 .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--accent); color: var(--text); padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 500; z-index: 9999; animation: toastIn 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
 @keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
@@ -218,6 +223,10 @@ header { position: fixed; top: 0; left: 0; right: 0; z-index: 300; background: r
             <div class="autonext-progress"><div class="autonext-fill" id="autonext-fill" style="width:100%"></div></div>
             <button class="ctrl-btn" onclick="cancelAutoNext()" style="padding:3px 8px;font-size:0.68rem;">Cancel</button>
           </div>
+          <div class="source-bar">
+            <span class="source-label">Source</span>
+            <div id="source-btns"></div>
+          </div>
         </div>
         <div class="ep-sidebar" id="ep-sidebar" style="display:none">
           <div class="ep-sidebar-header">
@@ -246,6 +255,47 @@ header { position: fixed; top: 0; left: 0; right: 0; z-index: 300; background: r
 </div>
 
 <script>
+const SOURCES = [
+  { name: 'Aiden',     movie: id => `https://vidsrc.cc/v3/embed/movie/${id}`,          tv: (id,s,e) => `https://vidsrc.cc/v3/embed/tv/${id}/${s}/${e}` },
+  { name: 'Maya',      movie: id => `https://vidsrc.me/embed/movie/${id}`,              tv: (id,s,e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { name: 'Liam',      movie: id => `https://autoembed.cc/movie/tmdb/${id}`,            tv: (id,s,e) => `https://autoembed.cc/tv/tmdb/${id}-${s}-${e}` },
+  { name: 'Sofia',     movie: id => `https://multiembed.mov/?video_id=${id}&tmdb=1`,    tv: (id,s,e) => `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { name: 'Noah',      movie: id => `https://embed.su/embed/movie/${id}`,               tv: (id,s,e) => `https://embed.su/embed/tv/${id}/${s}/${e}` },
+  { name: 'Elena',     movie: id => `https://player.embed-api.stream/?id=${id}`,        tv: (id,s,e) => `https://player.embed-api.stream/?id=${id}&s=${s}&e=${e}` },
+  { name: 'Lucas',     movie: id => `https://vidsrc.icu/embed/movie/${id}`,             tv: (id,s,e) => `https://vidsrc.icu/embed/tv/${id}/${s}/${e}` },
+  { name: 'Chloe',     movie: id => `https://www.2embed.cc/embed/${id}`,                tv: (id,s,e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+];
+
+let currentSourceIndex = 0;
+
+function renderSources(type) {
+  const wrap = document.getElementById('source-btns');
+  wrap.innerHTML = '';
+  wrap.style.display = 'flex';
+  wrap.style.gap = '5px';
+  wrap.style.flexWrap = 'wrap';
+  SOURCES.forEach((src, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'source-btn' + (i === currentSourceIndex ? ' active' : '');
+    btn.textContent = src.name;
+    btn.onclick = () => switchSource(i);
+    wrap.appendChild(btn);
+  });
+}
+
+function switchSource(index) {
+  currentSourceIndex = index;
+  document.querySelectorAll('.source-btn').forEach((b,i) => b.classList.toggle('active', i === index));
+  const src = SOURCES[index];
+  if (!currentItem) return;
+  if (currentItem._type === 'tv') {
+    document.getElementById('player-iframe').src = src.tv(currentItem.id, currentSeason, currentEpisode);
+  } else {
+    document.getElementById('player-iframe').src = src.movie(currentItem.id);
+  }
+  showToast('Switched to ' + src.name);
+}
+
 const TMDB_KEY = '4ef0d7355d9ffb5151e987764708ce96';
 const IMG = 'https://image.tmdb.org/t/p/w300';
 const API = 'https://api.themoviedb.org/3';
@@ -386,6 +436,8 @@ async function openItem(item) {
     document.getElementById('ep-sidebar').style.display = 'flex';
     document.getElementById('ep-sidebar').style.flexDirection = 'column';
     document.getElementById('next-ep-btn').style.display = '';
+    currentSourceIndex = 0;
+    renderSources('tv');
     currentSeason = 1; currentEpisode = 1;
     await loadSeasons(item.id);
     await loadEpisodes(1);
@@ -393,7 +445,9 @@ async function openItem(item) {
   } else {
     document.getElementById('ep-sidebar').style.display = 'none';
     document.getElementById('next-ep-btn').style.display = 'none';
-    document.getElementById('player-iframe').src = `https://vidsrc.cc/v3/embed/movie/${item.id}`;
+    currentSourceIndex = 0;
+    renderSources('movie');
+    document.getElementById('player-iframe').src = SOURCES[0].movie(item.id);
   }
 }
 
@@ -437,7 +491,7 @@ async function loadEpisodes(seasonNum) {
 
 function playEpisode(showId, season, episode) {
   currentSeason = season; currentEpisode = episode;
-  document.getElementById('player-iframe').src = `https://vidsrc.cc/v3/embed/tv/${showId}/${season}/${episode}`;
+  document.getElementById('player-iframe').src = SOURCES[currentSourceIndex].tv(showId, season, episode);
   document.getElementById('player-ep-label').textContent = `Season ${season} · Episode ${episode}`;
   document.getElementById('autonext-bar').classList.remove('visible');
   document.querySelectorAll('.ep-item').forEach(i => i.classList.toggle('active', parseInt(i.dataset.ep) === episode));
