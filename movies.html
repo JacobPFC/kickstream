@@ -329,6 +329,17 @@ function setType(type, btn) {
   document.querySelectorAll('[data-genre=""]').forEach(b => b.classList.add('active'));
   closePlayer();
   loadContent();
+
+// Auto-open from home page hero Watch Now
+const _auto = sessionStorage.getItem('autoOpen');
+if (_auto) {
+  sessionStorage.removeItem('autoOpen');
+  try {
+    const a = JSON.parse(_auto);
+    const fakeItem = { id: a.id, _type: a.type, title: a.title, name: a.title };
+    setTimeout(() => openItem(fakeItem), 800);
+  } catch(e) {}
+}
 }
 
 function setCat(genreId, btn) {
