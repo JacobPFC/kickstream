@@ -256,6 +256,12 @@
         </div>
       </div>
     </div>
+    <div id="channel-search-bar" style="display:none;margin-bottom:1rem;">
+      <div class="header-search" style="max-width:100%;position:relative;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+        <input type="text" placeholder="Search channels..." id="channel-search-input" oninput="filterChannels(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px 8px 36px;font-size:0.82rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;">
+      </div>
+    </div>
     <div id="matches-container">
       <div class="skel-grid">
         <div class="skel"></div><div class="skel"></div><div class="skel"></div>
@@ -320,6 +326,8 @@
     document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('search-input').value = '';
+    document.getElementById('channel-search-bar').style.display = 'none';
+    closeChannelPlayer();
     closePlayer();
     loadMatches();
   }
@@ -679,12 +687,29 @@
     document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
   }
 
+  function filterChannels(q) {
+    q = q.toLowerCase().trim();
+    document.querySelectorAll('.channel-card').forEach(c => {
+      const name = c.querySelector('.channel-name')?.textContent.toLowerCase() || '';
+      c.style.display = (!q || name.includes(q)) ? '' : 'none';
+    });
+    // Hide section titles if all cards in that section are hidden
+    document.querySelectorAll('.channels-section-title').forEach(title => {
+      const grid = title.nextElementSibling;
+      if (!grid) return;
+      const visible = [...grid.querySelectorAll('.channel-card')].some(c => c.style.display !== 'none');
+      title.style.display = visible ? '' : 'none';
+    });
+  }
+
   async function showChannels(btn) {
     channelsView = true;
     document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     closePlayer();
     document.getElementById('search-input').value = '';
+    document.getElementById('channel-search-bar').style.display = 'block';
+    document.getElementById('channel-search-input').value = '';
     if (channelsLoaded) return;
     document.getElementById('matches-container').innerHTML = `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try {
