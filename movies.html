@@ -23,7 +23,7 @@ header.solid { background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); -we
 .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent); text-decoration: none; flex-shrink: 0; }
 .logo span { color: var(--text); }
 .header-search { flex: 1; max-width: 340px; position: relative; }
-.header-search input { width: 100%; background: rgba(24,31,42,0.9); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px 8px 36px; font-size: 16px; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+.header-search input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px 8px 36px; font-size: 16px; color: #e2e8f0; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
 .header-search input:focus { border-color: var(--accent); }
 .header-search input::placeholder { color: var(--muted); font-size: 0.82rem; }
 .header-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
@@ -492,7 +492,7 @@ function renderHero() {
 
 function heroWatch(id, type, title) {
   showBrowse(type);
-  setTimeout(() => openItem({id, _type:type, title, name:title}), 400);
+  setTimeout(() => openItem({id, _type:type, title, name:title}), 800);
 }
 
 function goSlide(n) {
@@ -617,7 +617,10 @@ function buildCard(item, type, mixed=false) {
         ${rating?`<span class="movie-rating">★ ${rating}</span>`:''}
       </div>
     </div>`;
-  card.addEventListener('click', () => openItem({...item, _type:t}));
+  card.addEventListener('click', () => {
+    if (!inBrowse) showBrowse(t);
+    setTimeout(() => openItem({...item, _type:t}), inBrowse ? 0 : 400);
+  });
   return card;
 }
 
