@@ -169,8 +169,10 @@
 
     /* Header adjustments */
     header { padding: 0 0.75rem; gap: 0.6rem; }
-    .header-search { max-width: 160px; }
+    .header-search { display: none; }
     .discord-btn { display: none; }
+    .mobile-search-btn { display: flex !important; }
+    .settings-gear-btn { font-size: 0.72rem; padding: 5px 8px; }
 
     /* Match cards - 2 per row on mobile */
     .matches-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -185,6 +187,64 @@
     .channel-name { font-size: 0.7rem; }
     .channels-section-title { font-size: 1rem; margin: 1rem 0 0.5rem; }
   }
+
+  /* ── SETTINGS PANEL ── */
+  #settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:498; }
+  #settings-overlay.open { display:block; }
+  #settings-panel { position:fixed; top:0; right:-340px; width:320px; height:100vh; background:var(--surface); border-left:1px solid var(--border); z-index:499; padding:1.5rem 1.25rem; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); overflow-y:auto; box-shadow:-8px 0 32px rgba(0,0,0,0.5); }
+  #settings-panel.open { right:0; }
+  .sp-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; }
+  .sp-close { background:transparent; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; padding:4px; }
+  .sp-section { margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+  .sp-section:last-child { border-bottom:none; }
+  .sp-label { font-size:0.6rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:0.75rem; display:block; }
+  .sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; font-size:0.82rem; }
+  .sp-row span { color:var(--text); }
+  .sp-toggle { position:relative; width:38px; height:22px; flex-shrink:0; }
+  .sp-toggle input { opacity:0; width:0; height:0; }
+  .sp-toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:22px; cursor:pointer; transition:background 0.2s; }
+  .sp-toggle-slider::before { content:''; position:absolute; width:16px; height:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+  .sp-toggle input:checked + .sp-toggle-slider { background:var(--accent); }
+  .sp-toggle input:checked + .sp-toggle-slider::before { transform:translateX(16px); }
+  .sp-select { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.8rem; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; }
+  .sp-btn { width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--muted); font-size:0.8rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; margin-top:4px; }
+  .sp-btn:hover { color:var(--live); border-color:var(--live); }
+  .sp-btn.sp-btn-green:hover { color:var(--accent); border-color:var(--accent); }
+  .settings-gear-btn { display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--muted); padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+  .settings-gear-btn:hover { color:var(--text); border-color:var(--muted); }
+
+  /* ── SEARCH OVERLAY (mobile) ── */
+  #search-overlay { display:none; position:fixed; inset:0; z-index:900; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:flex-start; justify-content:center; padding-top:70px; }
+  #search-overlay.open { display:flex; }
+  .search-overlay-box { width:min(92vw,480px); background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1rem; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .search-ov-wrap { position:relative; margin-bottom:0.75rem; }
+  .search-ov-wrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+  .search-ov-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:11px 14px 11px 40px; font-size:16px; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; -webkit-appearance:none; }
+  .search-ov-input:focus { border-color:var(--accent); }
+  .search-ov-results { max-height:50vh; overflow-y:auto; }
+  .search-ov-item { display:flex; align-items:center; gap:10px; padding:8px 4px; cursor:pointer; border-bottom:1px solid rgba(30,45,61,0.5); transition:background 0.15s; border-radius:6px; }
+  .search-ov-item:hover { background:var(--surface2); }
+  .search-ov-title { font-size:0.85rem; font-weight:600; }
+  .search-ov-meta { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+  .search-ov-cancel { width:100%; margin-top:0.75rem; padding:9px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--muted); font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .mobile-search-btn { display:none; align-items:center; gap:5px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--muted); padding:5px 10px; border-radius:8px; font-size:0.75rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+  /* ── LEGAL NOTICE ── */
+  .legal-notice { text-align:center; padding:0.75rem 1.5rem 5rem; font-size:0.68rem; color:var(--muted); line-height:1.5; }
+
+  /* ── COMPACT VIEW ── */
+  body.compact-view .matches-grid { grid-template-columns:1fr; gap:4px; }
+  body.compact-view .match-card { display:flex; align-items:center; border-radius:8px; }
+  body.compact-view .card-poster { aspect-ratio:unset; width:48px; height:48px; flex-shrink:0; border-radius:6px 0 0 6px; }
+  body.compact-view .card-poster-teams { padding:4px; gap:4px; }
+  body.compact-view .poster-badge { width:28px; height:28px; font-size:0.7rem; }
+  body.compact-view .poster-vs { font-size:0.6rem; }
+  body.compact-view .card-body { flex:1; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  body.compact-view .card-title { margin-bottom:0; -webkit-line-clamp:1; }
+  body.compact-view .card-meta { display:none; }
+
+  /* ── REDUCE MOTION ── */
+  body.reduce-motion * { animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 <script src="https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js"></script>
@@ -274,6 +334,7 @@
       <script async="async" data-cfasync="false" src="https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js"></script>
       <div id="container-3571a161b12859500250b6695f54b5c2"></div>
     </div>
+    <div class="legal-notice">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
   </main>
 </div>
 
@@ -396,7 +457,11 @@
 
   function renderMatches(matches) {
     if (channelsView) return;
-    const filtered = currentSport === 'all' ? matches : matches.filter(m => m.category === currentSport);
+    let filtered = currentSport === 'all' ? matches : matches.filter(m => m.category === currentSport);
+    if (getSetting('hideFinished', false)) {
+      const now = Date.now();
+      filtered = filtered.filter(m => !m.date || new Date(m.date).getTime() + 3*60*60*1000 > now);
+    }
     if (!filtered.length) {
       document.getElementById('matches-container').innerHTML = `<div class="empty">No matches available right now.</div>`;
       return;
@@ -427,7 +492,8 @@
   function buildCard(match, isLive) {
     const card = document.createElement('div');
     card.className = 'match-card' + (isLive ? ' live-card' : '');
-    const timeStr = new Date(match.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const use24 = getSetting('clock','12') === '24';
+    const timeStr = new Date(match.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: !use24});
     const icon = SPORT_ICONS[match.category] || '🎯';
     const homeName = match.teams?.home?.name || '';
     const awayName = match.teams?.away?.name || '';
@@ -533,7 +599,8 @@
           .catch(() => [])
       )
     );
-    const streams = results.flat();
+    let streams = results.flat();
+    if (getSetting('preferHD', true)) streams.sort((a,b) => (b.hd?1:0) - (a.hd?1:0));
 
     if (!streams.length) {
       document.getElementById('stream-list').innerHTML = '<div class="no-streams">No streams found</div>';
@@ -587,9 +654,11 @@
     document.querySelectorAll('.stream-item').forEach(el => el.style.background = '');
     if (itemEl) itemEl.style.background = 'rgba(0,230,118,0.08)';
     const playerWrap = document.getElementById('player-wrap');
+    const autoplay = getSetting('autoplay', true);
+    const iframeSrc = autoplay ? embedUrl : embedUrl;
     playerWrap.innerHTML = `
       <div class="player-iframe-wrap">
-        <iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
+        <iframe id="stream-iframe" src="${iframeSrc}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
         <div id="player-blocked" style="display:none" class="player-blocked">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0010 10A10 10 0 0022 12 10 10 0 0012 2z"/></svg>
           <p>This stream can't be embedded.</p>
@@ -864,7 +933,104 @@
     }
   }
 
-  loadSports();
+
+  // ── SETTINGS ──
+  function getSetting(key, def) {
+    try { const v = localStorage.getItem('ks_s_'+key); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
+  }
+  function saveSetting(key, val) {
+    localStorage.setItem('ks_s_'+key, JSON.stringify(val));
+  }
+  function openSettings() {
+    document.getElementById('settings-panel').classList.add('open');
+    document.getElementById('settings-overlay').classList.add('open');
+  }
+  function closeSettings() {
+    document.getElementById('settings-panel').classList.remove('open');
+    document.getElementById('settings-overlay').classList.remove('open');
+  }
+  function toggleCompact(on) {
+    saveSetting('compact', on);
+    document.body.classList.toggle('compact-view', on);
+  }
+  function toggleReduceMotion(on) {
+    saveSetting('reduceMotion', on);
+    document.body.classList.toggle('reduce-motion', on);
+  }
+  async function toggleNotifications(on) {
+    if (on) {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        showToast('Notifications blocked by browser');
+        document.getElementById('sp-notifs').checked = false;
+        return;
+      }
+      showToast('Notifications enabled');
+    }
+    saveSetting('notifs', on);
+  }
+  function clearMoviesRW() {
+    localStorage.removeItem('ks_rw');
+    showToast('Movies recently watched cleared');
+  }
+  function resetSettings() {
+    ['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs'].forEach(k => localStorage.removeItem('ks_s_'+k));
+    location.reload();
+  }
+  function applySettings() {
+    // Default filter
+    const df = getSetting('defaultFilter', 'live');
+    document.getElementById('sp-default-filter').value = df;
+    // Default sport
+    const ds = getSetting('defaultSport', 'all');
+    document.getElementById('sp-default-sport').value = ds;
+    // Toggles
+    document.getElementById('sp-autoplay').checked = getSetting('autoplay', true);
+    document.getElementById('sp-prefer-hd').checked = getSetting('preferHD', true);
+    document.getElementById('sp-hide-finished').checked = getSetting('hideFinished', false);
+    document.getElementById('sp-compact').checked = getSetting('compact', false);
+    document.getElementById('sp-reduce-motion').checked = getSetting('reduceMotion', false);
+    document.getElementById('sp-notifs').checked = getSetting('notifs', false);
+    document.getElementById('sp-clock').value = getSetting('clock', '12');
+    // Apply
+    if (getSetting('compact', false)) document.body.classList.add('compact-view');
+    if (getSetting('reduceMotion', false)) document.body.classList.add('reduce-motion');
+  }
+
+  // ── SEARCH OVERLAY (mobile) ──
+  function openSearchOverlay() {
+    document.getElementById('search-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('search-ov-input').focus(), 100);
+  }
+  function closeSearchOverlay(e) {
+    if (e && e.target !== document.getElementById('search-overlay')) return;
+    document.getElementById('search-overlay').classList.remove('open');
+    document.getElementById('search-ov-results').innerHTML = '';
+    document.getElementById('search-ov-input').value = '';
+  }
+  function overlayFilterSearch(q) {
+    q = q.toLowerCase().trim();
+    const res = document.getElementById('search-ov-results');
+    if (!q) { res.innerHTML = ''; return; }
+    const matches = allMatches.filter(m => m.title.toLowerCase().includes(q)).slice(0, 10);
+    if (!matches.length) { res.innerHTML = '<div style="padding:0.75rem;color:var(--muted);font-size:0.82rem;">No matches found</div>'; return; }
+    res.innerHTML = '';
+    matches.forEach(match => {
+      const el = document.createElement('div');
+      el.className = 'search-ov-item';
+      const timeStr = new Date(match.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      el.innerHTML = `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${timeStr} · ${match.sources?.length||0} streams</div></div>`;
+      el.addEventListener('click', () => {
+        document.getElementById('search-overlay').classList.remove('open');
+        openMatch(match);
+      });
+      res.appendChild(el);
+    });
+  }
+
+  applySettings();
+
+  loadSports()
   loadMatches();
   checkUrlMatch();
 
@@ -872,6 +1038,95 @@
     try { document.getElementById('live-count').textContent = (await fetch(W+'/api/matches/live').then(r=>r.json())).length; } catch(e) {}
   }, 60000);
 </script>
+<!-- Search Overlay (mobile) -->
+<div id="search-overlay" onclick="closeSearchOverlay(event)">
+  <div class="search-overlay-box">
+    <div class="search-ov-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      <input class="search-ov-input" id="search-ov-input" type="text" placeholder="Search matches..." oninput="overlayFilterSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="search-ov-results" id="search-ov-results"></div>
+    <button class="search-ov-cancel" onclick="closeSearchOverlay()">Cancel</button>
+  </div>
+</div>
+
+<!-- Settings Overlay -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <div class="sp-title">Settings <button class="sp-close" onclick="closeSettings()">✕</button></div>
+
+  <div class="sp-section">
+    <span class="sp-label">Default View</span>
+    <div class="sp-row"><span>Open on</span>
+      <select class="sp-select" id="sp-default-filter" onchange="saveSetting('defaultFilter',this.value)">
+        <option value="live">🔴 Live</option>
+        <option value="today">Today</option>
+        <option value="all">All Matches</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>Default Sport</span>
+      <select class="sp-select" id="sp-default-sport" onchange="saveSetting('defaultSport',this.value)">
+        <option value="all">All Sports</option>
+        <option value="football">⚽ Football</option>
+        <option value="basketball">🏀 Basketball</option>
+        <option value="tennis">🎾 Tennis</option>
+        <option value="hockey">🏒 Hockey</option>
+        <option value="baseball">⚾ Baseball</option>
+        <option value="mma">🥊 MMA</option>
+        <option value="boxing">🥊 Boxing</option>
+        <option value="rugby">🏉 Rugby</option>
+        <option value="cricket">🏏 Cricket</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Streams</span>
+    <div class="sp-row"><span>Auto-play streams</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-autoplay" onchange="saveSetting('autoplay',this.checked)" checked><span class="sp-toggle-slider"></span></label>
+    </div>
+    <div class="sp-row"><span>Prefer HD streams</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-prefer-hd" onchange="saveSetting('preferHD',this.checked)" checked><span class="sp-toggle-slider"></span></label>
+    </div>
+    <div class="sp-row"><span>Hide finished matches</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-hide-finished" onchange="saveSetting('hideFinished',this.checked)"><span class="sp-toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Display</span>
+    <div class="sp-row"><span>Compact card view</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-compact" onchange="toggleCompact(this.checked)"><span class="sp-toggle-slider"></span></label>
+    </div>
+    <div class="sp-row"><span>Clock format</span>
+      <select class="sp-select" id="sp-clock" onchange="saveSetting('clock',this.value)">
+        <option value="12">12-hour (3:30 PM)</option>
+        <option value="24">24-hour (15:30)</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>Reduce motion</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-reduce-motion" onchange="toggleReduceMotion(this.checked)"><span class="sp-toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Notifications</span>
+    <div class="sp-row"><span>Match go-live alerts</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-notifs" onchange="toggleNotifications(this.checked)"><span class="sp-toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Data</span>
+    <button class="sp-btn" onclick="clearMoviesRW()">🗑 Clear Movies Recently Watched</button>
+    <button class="sp-btn sp-btn-green" onclick="resetSettings()">↺ Reset All Settings</button>
+  </div>
+
+  <div style="font-size:0.65rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.5;">
+    This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.
+  </div>
+</div>
+
 <!-- Banner Ad -->
 <div style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
   <script>
