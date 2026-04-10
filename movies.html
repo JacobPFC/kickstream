@@ -227,6 +227,31 @@ header.solid { background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); -we
 @keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
 /* ── LEGAL NOTICE ── */
+
+/* ── SETTINGS EXTRAS ── */
+.sp-section { margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:1.25rem; }
+.sp-section:last-child { border-bottom:none; }
+.sp-label { font-size:0.6rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:0.75rem; display:block; }
+.sp-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; font-size:0.82rem; gap:8px; }
+.sp-row span { color:var(--text); flex:1; }
+.sp-toggle { position:relative; width:38px; height:22px; flex-shrink:0; }
+.sp-toggle input { opacity:0; width:0; height:0; }
+.sp-slider { position:absolute; inset:0; background:var(--border); border-radius:22px; cursor:pointer; transition:background 0.2s; }
+.sp-slider::before { content:''; position:absolute; width:16px; height:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:transform 0.2s; }
+.sp-toggle input:checked + .sp-slider { background:var(--accent); }
+.sp-toggle input:checked + .sp-slider::before { transform:translateX(16px); }
+.sp-select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:0.78rem; color:var(--text); font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; -webkit-appearance:none; }
+.sp-btn { width:100%; padding:8px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--muted); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; margin-top:4px; }
+.sp-btn:hover { color:var(--live); border-color:var(--live); }
+.sp-btn.green:hover { color:var(--accent); border-color:var(--accent); }
+.sp-rating-row { display:flex; align-items:center; gap:8px; }
+.sp-rating-val { font-size:0.78rem; color:var(--accent); font-weight:700; min-width:20px; }
+.sp-range { flex:1; accent-color:var(--accent); }
+/* Poster size variants */
+body[data-card-size="small"] .movies-grid { grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); gap:7px; }
+body[data-card-size="small"] .cards-scroll { grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); }
+body[data-card-size="large"] .movies-grid { grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap:12px; }
+body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); }
 .legal-notice { text-align: center; padding: 0.75rem 1.5rem 5rem; font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
 
 /* ── MOBILE ── */
@@ -287,34 +312,91 @@ header.solid { background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); -we
     Settings
     <button class="settings-close" onclick="closeSettings()">✕</button>
   </div>
-  <div class="settings-section">
-    <div class="settings-label">Theme</div>
+
+  <div class="sp-section">
+    <span class="sp-label">Theme</span>
     <div class="theme-grid">
       <button class="theme-btn active" data-theme-id="default" onclick="setTheme('default',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#0a0e13,#00e676)"></div>
-        Default
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#0a0e13,#00e676)"></div>Default
       </button>
       <button class="theme-btn" data-theme-id="coastal" onclick="setTheme('coastal',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#0d1b2a,#3dd6c5)"></div>
-        Coastal Serenity
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#0d1b2a,#3dd6c5)"></div>Coastal
       </button>
       <button class="theme-btn" data-theme-id="forest" onclick="setTheme('forest',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#0e1a0e,#5db85d)"></div>
-        Enchanted Forest
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#0e1a0e,#5db85d)"></div>Forest
       </button>
       <button class="theme-btn" data-theme-id="minimalist" onclick="setTheme('minimalist',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a1a,#7aa4c8)"></div>
-        Modern Minimalist
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a1a,#7aa4c8)"></div>Minimalist
       </button>
       <button class="theme-btn" data-theme-id="sunset" onclick="setTheme('sunset',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#14080e,#e87040)"></div>
-        Sunset Glow
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#14080e,#e87040)"></div>Sunset
       </button>
       <button class="theme-btn" data-theme-id="winter" onclick="setTheme('winter',this)">
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#08101a,#90c8e8)"></div>
-        Winter Wonderland
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#08101a,#90c8e8)"></div>Winter
       </button>
     </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Content</span>
+    <div class="sp-row"><span>Open on</span>
+      <select class="sp-select" id="sp-default-type" onchange="mvSave('defaultType',this.value)">
+        <option value="home">🏠 Home</option>
+        <option value="movie">🎬 Movies</option>
+        <option value="tv">📺 TV Shows</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>English only</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-english" onchange="mvSave('englishOnly',this.checked);englishOnly=this.checked;currentPage=1;if(inBrowse)loadContent()"><span class="sp-slider"></span></label>
+    </div>
+    <div class="sp-row"><span>Hide adult content</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-adult" onchange="mvSave('hideAdult',this.checked);currentPage=1;if(inBrowse)loadContent()"><span class="sp-slider"></span></label>
+    </div>
+    <div class="sp-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <span>Min. rating: <span class="sp-rating-val" id="sp-rating-val">0</span>★</span>
+      <input type="range" class="sp-range" id="sp-min-rating" min="0" max="9" step="0.5" value="0"
+        oninput="document.getElementById('sp-rating-val').textContent=this.value;mvSave('minRating',parseFloat(this.value));currentPage=1;if(inBrowse)loadContent()">
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Playback</span>
+    <div class="sp-row"><span>Default source</span>
+      <select class="sp-select" id="sp-default-src" onchange="mvSave('defaultSrc',parseInt(this.value))">
+        <option value="0">Aiden</option>
+        <option value="1">Maya</option>
+        <option value="2">Liam</option>
+        <option value="3">Sofia</option>
+        <option value="4">Noah</option>
+        <option value="5">Elena</option>
+        <option value="6">Lucas</option>
+        <option value="7">Chloe</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>Auto-play next episode</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-autonext" onchange="mvSave('autonext',this.checked);document.getElementById('autonext-cb').checked=this.checked"><span class="sp-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Display</span>
+    <div class="sp-row"><span>Card size</span>
+      <select class="sp-select" id="sp-card-size" onchange="setCardSize(this.value)">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sp-section">
+    <span class="sp-label">Data</span>
+    <button class="sp-btn" onclick="clearRecentlyWatched()">🗑 Clear Recently Watched</button>
+    <button class="sp-btn green" onclick="mvResetSettings()">↺ Reset All Settings</button>
+  </div>
+
+  <div style="font-size:0.65rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.5;">
+    This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.
   </div>
 </div>
 
@@ -326,7 +408,7 @@ header.solid { background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); -we
   </div>
   <div class="header-right">
     <button class="hdr-btn search-open-btn" onclick="openSearchOverlay()">🔍</button>
-    <button class="hdr-btn settings-btn" onclick="openSettings()" style="display:none">⚙️ Settings</button>
+    <button class="hdr-btn settings-btn" onclick="openSettings()">⚙️ Settings</button>
     <a class="hdr-btn" href="/">⚽ Sports</a>
     <button class="hdr-btn active" id="home-btn" onclick="showHome()">🏠 Home</button>
     <button class="hdr-btn" id="browse-btn" onclick="showBrowse()">🎬 Browse</button>
@@ -525,6 +607,43 @@ function setTheme(id, btn) {
 }
 function openSettings() { document.getElementById('settings-panel').classList.add('open'); document.getElementById('settings-overlay').classList.add('open'); }
 function closeSettings() { document.getElementById('settings-panel').classList.remove('open'); document.getElementById('settings-overlay').classList.remove('open'); }
+
+// ── MOVIE SETTINGS ──
+function mvGet(key, def) { try { const v = localStorage.getItem('ksmv_'+key); return v===null?def:JSON.parse(v); } catch(e){return def;} }
+function mvSave(key, val) { localStorage.setItem('ksmv_'+key, JSON.stringify(val)); }
+function setCardSize(size) { mvSave('cardSize', size); document.body.removeAttribute('data-card-size'); if(size!=='medium') document.body.setAttribute('data-card-size', size); }
+function mvResetSettings() { ['defaultType','englishOnly','hideAdult','minRating','defaultSrc','autonext','cardSize'].forEach(k=>localStorage.removeItem('ksmv_'+k)); location.reload(); }
+function applyMvSettings() {
+  // default type
+  const dt = mvGet('defaultType','home');
+  document.getElementById('sp-default-type').value = dt;
+  // english
+  const eng = mvGet('englishOnly', true);
+  englishOnly = eng;
+  document.getElementById('sp-english').checked = eng;
+  document.getElementById('english-filter')?.classList.toggle('active', eng);
+  // adult
+  document.getElementById('sp-adult').checked = mvGet('hideAdult', false);
+  // min rating
+  const mr = mvGet('minRating', 0);
+  document.getElementById('sp-min-rating').value = mr;
+  document.getElementById('sp-rating-val').textContent = mr;
+  // default src
+  document.getElementById('sp-default-src').value = mvGet('defaultSrc', 0);
+  // autonext
+  const an = mvGet('autonext', true);
+  document.getElementById('sp-autonext').checked = an;
+  document.getElementById('autonext-cb').checked = an;
+  // card size
+  const cs = mvGet('cardSize','medium');
+  document.getElementById('sp-card-size').value = cs;
+  if(cs!=='medium') document.body.setAttribute('data-card-size', cs);
+  // Apply default src
+  currentSourceIndex = mvGet('defaultSrc', 0);
+  // Apply default view on first load
+  if (dt === 'movie') { setTimeout(()=>showBrowse('movie'), 10); }
+  else if (dt === 'tv') { setTimeout(()=>showBrowse('tv'), 10); }
+}
 
 // Apply saved theme
 (function() {
@@ -812,7 +931,11 @@ async function loadContent(append=false){
   Object.entries(params).forEach(([k,v])=>{
     if(!['sort','vote_count','with_genres'].includes(k)) extra+=`&${k}=${v}`;
   });
-  const url=base+lang+genreParam+extra;
+  const hideAdult = mvGet('hideAdult', false);
+  const minRating = mvGet('minRating', 0);
+  const adultParam = hideAdult ? '&include_adult=false' : '';
+  const ratingParam = minRating > 0 ? `&vote_average.gte=${minRating}` : '';
+  const url=base+lang+genreParam+extra+adultParam+ratingParam;
   try {
     const data=await fetch(url).then(r=>r.json());
     renderGrid(data.results||[],append);
@@ -1024,6 +1147,7 @@ loadRow('row-drama',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=18&so
 loadRow('row-crime',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=80&sort_by=popularity.desc&with_original_language=en`,'movie');
 loadRow('row-anim',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc&with_original_language=en`,'movie');
 
+applyMvSettings();
 const _auto=sessionStorage.getItem('autoOpen');
 if(_auto){sessionStorage.removeItem('autoOpen');try{const a=JSON.parse(_auto);showBrowse(a.type);setTimeout(()=>openItem({id:a.id,_type:a.type,title:a.title,name:a.title}),600);}catch(e){}}
 </script>

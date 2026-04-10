@@ -971,10 +971,6 @@
     }
     saveSetting('notifs', on);
   }
-  function clearMoviesRW() {
-    localStorage.removeItem('ks_rw');
-    showToast('Movies recently watched cleared');
-  }
   function resetSettings() {
     ['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs'].forEach(k => localStorage.removeItem('ks_s_'+k));
     location.reload();
@@ -1118,7 +1114,6 @@
 
   <div class="sp-section">
     <span class="sp-label">Data</span>
-    <button class="sp-btn" onclick="clearMoviesRW()">🗑 Clear Movies Recently Watched</button>
     <button class="sp-btn sp-btn-green" onclick="resetSettings()">↺ Reset All Settings</button>
   </div>
 
