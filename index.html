@@ -783,34 +783,20 @@
     if (channelsLoaded) return;
     document.getElementById('matches-container').innerHTML = `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try {
-      const [chRes, stRes] = await Promise.all([
-        fetch('https://iptv-org.github.io/api/channels.json'),
-        fetch('https://iptv-org.github.io/api/streams.json')
-      ]);
-      const allChannels = await chRes.json();
-      const allStreams = await stRes.json();
+      const res = await fetch('https://api.cdnlivetv.tv/api/v1/channels/?user=cdnlivetv&plan=free');
+      const data = await res.json();
+      const channels = (data.channels || []).filter(ch => ch.status === 'online' && ch.url);
 
-      // Build stream lookup by channel id
-      const streamMap = {};
-      allStreams.forEach(s => {
-        if (s.channel && s.url && !streamMap[s.channel]) {
-          streamMap[s.channel] = s.url;
-        }
-      });
-
-      // Only show channels that have a stream and are not NSFW
-      const channels = allChannels.filter(ch => streamMap[ch.id] && !ch.is_nsfw && !ch.closed);
-
-      // Group by country
+      // Group by country code
       const groups = {};
       channels.forEach(ch => {
-        const code = (ch.country || 'other').toLowerCase();
+        const code = (ch.code || 'other').toLowerCase();
         if (!groups[code]) groups[code] = [];
         groups[code].push(ch);
       });
 
-      const priority = ['gb','us'];
-      const sorted = [...priority.filter(c=>groups[c]), ...Object.keys(groups).filter(c=>!priority.includes(c)).sort()];
+      const priority = ['gb', 'us'];
+      const sorted = [...priority.filter(c => groups[c]), ...Object.keys(groups).filter(c => !priority.includes(c)).sort()];
 
       const container = document.createElement('div');
       sorted.forEach(code => {
@@ -825,9 +811,10 @@
         chs.forEach(ch => {
           const card = document.createElement('div');
           card.className = 'channel-card';
-          const logo = ch.logo ? `<img class="channel-logo" src="${ch.logo}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
-          card.innerHTML = `${logo}<div class="channel-name">${ch.name||'Channel'}</div>`;
-          card.addEventListener('click', () => playChannel(streamMap[ch.id], ch.name, card));
+          const logo = ch.image ? `<img class="channel-logo" src="${ch.image}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
+          const viewers = ch.viewers > 0 ? `<div style="font-size:0.6rem;color:var(--muted);margin-top:2px">👁 ${ch.viewers}</div>` : '';
+          card.innerHTML = `${logo}<div class="channel-name">${ch.name || 'Channel'}</div>${viewers}`;
+          card.addEventListener('click', () => playChannel(ch.url, ch.name, card));
           grid.appendChild(card);
         });
         container.appendChild(grid);
