@@ -247,8 +247,7 @@
   body.reduce-motion * { animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
-<script src="https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js"></script>
-<script src="https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js"></script>
+<!-- popunder loaded deferred below -->
 </head>
 <body>
 
@@ -1136,5 +1135,37 @@
   <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
 </div>
 <script>applySettings();</script>
+<script>
+// Load popunder/social bar after page is fully loaded and idle
+// This prevents it firing as a pop-over on the current tab
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var s1 = document.createElement('script');
+    s1.src = 'https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';
+    document.body.appendChild(s1);
+    var s2 = document.createElement('script');
+    s2.src = 'https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';
+    document.body.appendChild(s2);
+  }, 2000); // 2 second delay after load
+});
+
+// If the page loses focus (ad opened new tab/window), re-focus this tab
+document.addEventListener('click', function() {
+  setTimeout(function() {
+    if (document.hidden) {
+      window.focus();
+    }
+  }, 100);
+});
+
+// Prevent any script from navigating the current tab away
+window.addEventListener('beforeunload', function(e) {
+  if (!window._allowUnload) {
+    e.preventDefault();
+    window.focus();
+    return false;
+  }
+});
+</script>
 </body>
 </html>
