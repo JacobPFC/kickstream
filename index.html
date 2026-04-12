@@ -814,7 +814,7 @@
           const logo = ch.image ? `<img class="channel-logo" src="${ch.image}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
           const viewers = ch.viewers > 0 ? `<div style="font-size:0.6rem;color:var(--muted);margin-top:2px">👁 ${ch.viewers}</div>` : '';
           card.innerHTML = `${logo}<div class="channel-name">${ch.name || 'Channel'}</div>${viewers}`;
-          card.addEventListener('click', () => playChannel(ch.url, ch.name, card));
+          card.addEventListener('click', () => window.open(ch.url, '_blank', 'noopener,noreferrer'));
           grid.appendChild(card);
         });
         container.appendChild(grid);
