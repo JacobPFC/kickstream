@@ -125,6 +125,8 @@
   .channel-card:hover { border-color: #2a3d52; transform: translateY(-2px); background: var(--card-hover); }
   .channel-logo { width: 60px; height: 36px; object-fit: contain; }
   .channel-name { font-size: 0.75rem; font-weight: 600; text-align: center; color: var(--text); line-height: 1.2; }
+  .channel-live { border-color: rgba(255,23,68,0.35) !important; background: rgba(255,23,68,0.04); }
+  .channel-live:hover { border-color: rgba(255,23,68,0.6) !important; }
   .channels-section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; margin: 1.2rem 0 0.6rem; color: var(--muted); }
 
   .skel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
@@ -783,40 +785,98 @@
     if (channelsLoaded) return;
     document.getElementById('matches-container').innerHTML = `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try {
-      const res = await fetch('https://api.cdnlivetv.tv/api/v1/channels/?user=cdnlivetv&plan=free');
-      const data = await res.json();
-      const channels = (data.channels || []).filter(ch => ch.status === 'online' && ch.url);
+      // Fetch channels and all sports events in parallel
+      const [chRes, evRes] = await Promise.all([
+        fetch('https://api.cdnlivetv.tv/api/v1/channels/?user=cdnlivetv&plan=free'),
+        fetch('https://api.cdnlivetv.tv/api/v1/events/sports/?user=cdnlivetv&plan=free')
+      ]);
+      const chData = await chRes.json();
+      const evData = await evRes.json();
 
-      // Group by country code
+      // Build a map of channel_code -> what's currently live on it
+      const nowShowing = {};
+      const events = Array.isArray(evData) ? evData : (evData.events || []);
+      events.forEach(ev => {
+        if (ev.status === 'live' && ev.channels) {
+          ev.channels.forEach(ch => {
+            if (!nowShowing[ch.channel_code]) {
+              const title = ev.homeTeam && ev.awayTeam
+                ? `${ev.homeTeam} vs ${ev.awayTeam}`
+                : (ev.event || ev.tournament || '');
+              nowShowing[ch.channel_code] = {
+                title,
+                tournament: ev.tournament || '',
+                viewers: parseInt(ch.viewers) || 0,
+                homeImg: ev.homeTeamIMG || null,
+                awayImg: ev.awayTeamIMG || null,
+              };
+            }
+          });
+        }
+      });
+
+      // Filter to online channels only, attach live info, sort by viewers desc
+      const channels = (chData.channels || [])
+        .filter(ch => ch.status === 'online' && ch.url)
+        .map(ch => ({ ...ch, live: nowShowing[ch.code] || null, totalViewers: nowShowing[ch.code]?.viewers || parseInt(ch.viewers) || 0 }))
+        .sort((a, b) => b.totalViewers - a.totalViewers);
+
+      // Split into two sections: live now, and all channels
+      const liveChannels = channels.filter(ch => ch.live);
+      const allChannels = channels;
+
+      const container = document.createElement('div');
+
+      function buildChannelCard(ch) {
+        const card = document.createElement('div');
+        card.className = 'channel-card' + (ch.live ? ' channel-live' : '');
+        const logo = ch.image ? `<img class="channel-logo" src="${ch.image}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
+        const liveTag = ch.live ? `<div style="font-size:0.58rem;font-weight:700;background:var(--live);color:#fff;padding:1px 5px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>` : '';
+        const showingNow = ch.live ? `<div style="font-size:0.62rem;color:var(--accent);line-height:1.2;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>` : '';
+        const viewers = ch.totalViewers > 0 ? `<div style="font-size:0.6rem;color:var(--muted);margin-top:2px">👁 ${ch.totalViewers}</div>` : '';
+        card.innerHTML = `${logo}${liveTag}<div class="channel-name">${ch.name || 'Channel'}</div>${showingNow}${viewers}`;
+        card.addEventListener('click', () => window.open(ch.url, '_blank', 'noopener,noreferrer'));
+        return card;
+      }
+
+      // Live Now section
+      if (liveChannels.length) {
+        const liveTitle = document.createElement('div');
+        liveTitle.className = 'channels-section-title';
+        liveTitle.innerHTML = `🔴 Live Now <span style="font-size:0.7rem;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--muted);">(${liveChannels.length})</span>`;
+        container.appendChild(liveTitle);
+        const liveGrid = document.createElement('div');
+        liveGrid.className = 'channels-grid';
+        liveChannels.forEach(ch => liveGrid.appendChild(buildChannelCard(ch)));
+        container.appendChild(liveGrid);
+      }
+
+      // Group remaining channels by country
       const groups = {};
-      channels.forEach(ch => {
+      allChannels.forEach(ch => {
         const code = (ch.code || 'other').toLowerCase();
         if (!groups[code]) groups[code] = [];
         groups[code].push(ch);
       });
-
       const priority = ['gb', 'us'];
-      const sorted = [...priority.filter(c => groups[c]), ...Object.keys(groups).filter(c => !priority.includes(c)).sort()];
+      const sortedCodes = [...priority.filter(c => groups[c]), ...Object.keys(groups).filter(c => !priority.includes(c)).sort()];
 
-      const container = document.createElement('div');
-      sorted.forEach(code => {
+      const allTitle = document.createElement('div');
+      allTitle.className = 'channels-section-title';
+      allTitle.textContent = '📺 All Channels';
+      container.appendChild(allTitle);
+
+      sortedCodes.forEach(code => {
         const chs = groups[code];
         const countryName = COUNTRY_NAMES[code] || code.toUpperCase();
         const title = document.createElement('div');
         title.className = 'channels-section-title';
+        title.style.cssText = 'font-size:0.9rem;color:var(--muted);margin-top:0.75rem;';
         title.textContent = countryName;
         container.appendChild(title);
         const grid = document.createElement('div');
         grid.className = 'channels-grid';
-        chs.forEach(ch => {
-          const card = document.createElement('div');
-          card.className = 'channel-card';
-          const logo = ch.image ? `<img class="channel-logo" src="${ch.image}" alt="" onerror="this.style.display='none'">` : `<div style="font-size:1.5rem">📺</div>`;
-          const viewers = ch.viewers > 0 ? `<div style="font-size:0.6rem;color:var(--muted);margin-top:2px">👁 ${ch.viewers}</div>` : '';
-          card.innerHTML = `${logo}<div class="channel-name">${ch.name || 'Channel'}</div>${viewers}`;
-          card.addEventListener('click', () => window.open(ch.url, '_blank', 'noopener,noreferrer'));
-          grid.appendChild(card);
-        });
+        chs.forEach(ch => grid.appendChild(buildChannelCard(ch)));
         container.appendChild(grid);
       });
 
