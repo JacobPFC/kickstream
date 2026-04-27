@@ -163,26 +163,18 @@
     .main { margin-left: 0; padding: 0.75rem; padding-bottom: 5rem; }
     .player-inner { grid-template-columns: 1fr; }
     .player-panel { border-left: none; border-top: 1px solid var(--border); }
-
-    /* Show filter tabs on mobile */
     .filter-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .filter-tabs::-webkit-scrollbar { display: none; }
     .filter-tab { padding: 4px 11px; font-size: 0.75rem; white-space: nowrap; }
-
-    /* Header adjustments */
     header { padding: 0 0.75rem; gap: 0.6rem; }
     .header-search { display: none; }
     .discord-btn { display: none; }
     .mobile-search-btn { display: flex !important; }
     .settings-gear-btn { font-size: 0.72rem; padding: 5px 8px; }
-
-    /* Match cards - 2 per row on mobile */
     .matches-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .card-title { font-size: 0.75rem; }
     .card-watch { font-size: 0.68rem; }
     .card-share, .card-multi { font-size: 0.68rem; padding: 5px 6px; }
-
-    /* TV Channels - 2 per row on mobile */
     .channels-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .channel-card { padding: 10px 8px; gap: 6px; }
     .channel-logo { width: 50px; height: 28px; }
@@ -249,7 +241,6 @@
   body.reduce-motion * { animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
-<!-- popunder loaded deferred below -->
 </head>
 <body>
 
@@ -319,12 +310,14 @@
         </div>
       </div>
     </div>
+
     <div id="channel-search-bar" style="display:none;margin-bottom:1rem;">
       <div class="header-search" style="max-width:100%;position:relative;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
         <input type="text" placeholder="Search channels..." id="channel-search-input" oninput="filterChannels(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px 8px 36px;font-size:0.82rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;">
       </div>
     </div>
+
     <div id="matches-container">
       <div class="skel-grid">
         <div class="skel"></div><div class="skel"></div><div class="skel"></div>
@@ -584,7 +577,6 @@
       return;
     }
 
-    // Fetch all stream sources in parallel and build embed URLs from streamed API data
     const results = await Promise.all(
       sources.map(s =>
         fetch(`${W}/api/stream/${s.source}/${s.id}`)
@@ -595,7 +587,6 @@
               ...stream,
               _source: s.source,
               _id: s.id,
-              // Always build embed URL from streamed API fields — don't trust s.embedUrl
               embedUrl: `https://embedsports.top/embed/${s.source}/${s.id}/${stream.streamNo || 1}`
             }));
           })
@@ -611,7 +602,6 @@
       return;
     }
 
-    // Store streams globally so auto-failover can access them
     currentStreams = streams;
     currentStreamIndex = 0;
 
@@ -619,11 +609,9 @@
     list.innerHTML = '';
     streams.forEach((s, i) => {
       const embedUrl = s.embedUrl;
-
       const item = document.createElement('div');
       item.className = 'stream-item';
       item.dataset.index = i;
-      item.style.cursor = 'pointer';
       item.innerHTML = `
         <div class="stream-lang">${s.language || 'Stream'} #${s.streamNo || i + 1}</div>
         ${s.hd ? '<div class="stream-hd">HD</div>' : ''}
@@ -646,7 +634,6 @@
       list.appendChild(wrap);
     });
 
-    // Auto-load first stream
     if (streams[0]?.embedUrl) {
       const first = list.querySelector('.stream-item');
       if (first) embedStream(streams[0].embedUrl, first);
@@ -657,11 +644,9 @@
     document.querySelectorAll('.stream-item').forEach(el => el.style.background = '');
     if (itemEl) itemEl.style.background = 'rgba(0,230,118,0.08)';
     const playerWrap = document.getElementById('player-wrap');
-    const autoplay = getSetting('autoplay', true);
-    const iframeSrc = autoplay ? embedUrl : embedUrl;
     playerWrap.innerHTML = `
       <div class="player-iframe-wrap">
-        <iframe id="stream-iframe" src="${iframeSrc}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
+        <iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
         <div id="player-blocked" style="display:none" class="player-blocked">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0010 10A10 10 0 0022 12 10 10 0 0012 2z"/></svg>
           <p>This stream can't be embedded.</p>
@@ -669,7 +654,6 @@
         </div>
       </div>`;
 
-    // Check if stream loaded — if not, auto switch to next
     setTimeout(() => {
       const iframe = document.getElementById('stream-iframe');
       const blocked = document.getElementById('player-blocked');
@@ -680,7 +664,6 @@
         if (!doc || doc.URL === 'about:blank') failed = true;
       } catch(e) {}
       if (failed) {
-        // Try next stream automatically
         if (currentStreams.length > 1 && currentStreamIndex < currentStreams.length - 1) {
           currentStreamIndex++;
           const nextStream = currentStreams[currentStreamIndex];
@@ -688,7 +671,6 @@
           showToast(`Stream failed — switching to stream ${currentStreamIndex + 1}`);
           embedStream(nextStream.embedUrl, nextItem);
         } else {
-          // No more streams to try
           iframe.style.display = 'none';
           blocked.style.display = 'flex';
         }
@@ -709,12 +691,9 @@
   let hlsInstance = null;
 
   function playChannel(streamUrl, channelName, cardEl) {
-    // Close sports player if open
     closePlayer();
     document.querySelectorAll('.channel-card').forEach(c => c.classList.remove('active'));
     if (cardEl) cardEl.classList.add('active');
-
-    // Remove existing channel player if present
     const existing = document.getElementById('channel-player-section');
     if (existing) existing.remove();
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
@@ -765,7 +744,6 @@
       const name = c.querySelector('.channel-name')?.textContent.toLowerCase() || '';
       c.style.display = (!q || name.includes(q)) ? '' : 'none';
     });
-    // Hide section titles if all cards in that section are hidden
     document.querySelectorAll('.channels-section-title').forEach(title => {
       const grid = title.nextElementSibling;
       if (!grid) return;
@@ -785,7 +763,6 @@
     if (channelsLoaded) return;
     document.getElementById('matches-container').innerHTML = `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
     try {
-      // Fetch channels and all sports events in parallel
       const [chRes, evRes] = await Promise.all([
         fetch('https://api.cdnlivetv.tv/api/v1/channels/?user=cdnlivetv&plan=free'),
         fetch('https://api.cdnlivetv.tv/api/v1/events/sports/?user=cdnlivetv&plan=free')
@@ -793,7 +770,6 @@
       const chData = await chRes.json();
       const evData = await evRes.json();
 
-      // Build a map of channel_code -> what's currently live on it
       const nowShowing = {};
       const events = Array.isArray(evData) ? evData : (evData.events || []);
       events.forEach(ev => {
@@ -804,27 +780,21 @@
                 ? `${ev.homeTeam} vs ${ev.awayTeam}`
                 : (ev.event || ev.tournament || '');
               nowShowing[ch.channel_code] = {
-                title,
-                tournament: ev.tournament || '',
+                title, tournament: ev.tournament || '',
                 viewers: parseInt(ch.viewers) || 0,
-                homeImg: ev.homeTeamIMG || null,
-                awayImg: ev.awayTeamIMG || null,
+                homeImg: ev.homeTeamIMG || null, awayImg: ev.awayTeamIMG || null,
               };
             }
           });
         }
       });
 
-      // Filter to online channels only, attach live info, sort by viewers desc
       const channels = (chData.channels || [])
         .filter(ch => ch.status === 'online' && ch.url)
         .map(ch => ({ ...ch, live: nowShowing[ch.code] || null, totalViewers: nowShowing[ch.code]?.viewers || parseInt(ch.viewers) || 0 }))
         .sort((a, b) => b.totalViewers - a.totalViewers);
 
-      // Split into two sections: live now, and all channels
       const liveChannels = channels.filter(ch => ch.live);
-      const allChannels = channels;
-
       const container = document.createElement('div');
 
       function buildChannelCard(ch) {
@@ -839,7 +809,6 @@
         return card;
       }
 
-      // Live Now section
       if (liveChannels.length) {
         const liveTitle = document.createElement('div');
         liveTitle.className = 'channels-section-title';
@@ -851,9 +820,8 @@
         container.appendChild(liveGrid);
       }
 
-      // Group remaining channels by country
       const groups = {};
-      allChannels.forEach(ch => {
+      channels.forEach(ch => {
         const code = (ch.code || 'other').toLowerCase();
         if (!groups[code]) groups[code] = [];
         groups[code].push(ch);
@@ -901,16 +869,13 @@
   }
 
   // Multistream
-  let multistreams = []; // [{match, embedUrl}]
+  let multistreams = [];
 
   async function addToMultistream(match, btn) {
     if (multistreams.length >= 4) { showToast('Maximum 4 streams at once'); return; }
     if (multistreams.find(m => m.match.id === match.id)) { showToast('Already in multistream'); return; }
-
     btn.classList.add('added');
     btn.textContent = '⊞ Added';
-
-    // Fetch first available stream
     const sources = match.sources || [];
     let embedUrl = null;
     for (const s of sources) {
@@ -923,9 +888,7 @@
         }
       } catch(e) {}
     }
-
     if (!embedUrl) { showToast('No stream available'); btn.classList.remove('added'); btn.textContent = '⊞'; return; }
-
     multistreams.push({ match, embedUrl });
     renderMultistream();
     document.getElementById('multistream-section').classList.add('visible');
@@ -943,8 +906,7 @@
       cell.innerHTML = `
         <iframe src="${item.embedUrl}" allow="autoplay; fullscreen; encrypted-media" scrolling="no"></iframe>
         <div class="multistream-cell-label">${item.match.title}</div>
-        <button class="multistream-cell-remove" onclick="removeFromMultistream(${i})">✕</button>
-      `;
+        <button class="multistream-cell-remove" onclick="removeFromMultistream(${i})">✕</button>`;
       grid.appendChild(cell);
     });
   }
@@ -952,11 +914,9 @@
   function removeFromMultistream(index) {
     const removed = multistreams[index];
     multistreams.splice(index, 1);
-    // Reset the card button
     document.querySelectorAll('.card-multi.added').forEach(btn => {
       if (btn.closest('.match-card')?.querySelector('.card-title')?.textContent === removed.match.title) {
-        btn.classList.remove('added');
-        btn.textContent = '⊞';
+        btn.classList.remove('added'); btn.textContent = '⊞';
       }
     });
     if (!multistreams.length) {
@@ -981,14 +941,11 @@
     }
   }
 
-
   // ── SETTINGS ──
   function getSetting(key, def) {
     try { const v = localStorage.getItem('ks_s_'+key); return v === null ? def : JSON.parse(v); } catch(e) { return def; }
   }
-  function saveSetting(key, val) {
-    localStorage.setItem('ks_s_'+key, JSON.stringify(val));
-  }
+  function saveSetting(key, val) { localStorage.setItem('ks_s_'+key, JSON.stringify(val)); }
   function openSettings() {
     document.getElementById('settings-panel').classList.add('open');
     document.getElementById('settings-overlay').classList.add('open');
@@ -997,22 +954,12 @@
     document.getElementById('settings-panel').classList.remove('open');
     document.getElementById('settings-overlay').classList.remove('open');
   }
-  function toggleCompact(on) {
-    saveSetting('compact', on);
-    document.body.classList.toggle('compact-view', on);
-  }
-  function toggleReduceMotion(on) {
-    saveSetting('reduceMotion', on);
-    document.body.classList.toggle('reduce-motion', on);
-  }
+  function toggleCompact(on) { saveSetting('compact', on); document.body.classList.toggle('compact-view', on); }
+  function toggleReduceMotion(on) { saveSetting('reduceMotion', on); document.body.classList.toggle('reduce-motion', on); }
   async function toggleNotifications(on) {
     if (on) {
       const perm = await Notification.requestPermission();
-      if (perm !== 'granted') {
-        showToast('Notifications blocked by browser');
-        document.getElementById('sp-notifs').checked = false;
-        return;
-      }
+      if (perm !== 'granted') { showToast('Notifications blocked by browser'); document.getElementById('sp-notifs').checked = false; return; }
       showToast('Notifications enabled');
     }
     saveSetting('notifs', on);
@@ -1022,13 +969,8 @@
     location.reload();
   }
   function applySettings() {
-    // Default filter
-    const df = getSetting('defaultFilter', 'live');
-    document.getElementById('sp-default-filter').value = df;
-    // Default sport
-    const ds = getSetting('defaultSport', 'all');
-    document.getElementById('sp-default-sport').value = ds;
-    // Toggles
+    document.getElementById('sp-default-filter').value = getSetting('defaultFilter', 'live');
+    document.getElementById('sp-default-sport').value = getSetting('defaultSport', 'all');
     document.getElementById('sp-autoplay').checked = getSetting('autoplay', true);
     document.getElementById('sp-prefer-hd').checked = getSetting('preferHD', true);
     document.getElementById('sp-hide-finished').checked = getSetting('hideFinished', false);
@@ -1036,7 +978,6 @@
     document.getElementById('sp-reduce-motion').checked = getSetting('reduceMotion', false);
     document.getElementById('sp-notifs').checked = getSetting('notifs', false);
     document.getElementById('sp-clock').value = getSetting('clock', '12');
-    // Apply
     if (getSetting('compact', false)) document.body.classList.add('compact-view');
     if (getSetting('reduceMotion', false)) document.body.classList.add('reduce-motion');
   }
@@ -1072,7 +1013,7 @@
     });
   }
 
-  loadSports()
+  loadSports();
   loadMatches();
   checkUrlMatch();
 
@@ -1080,6 +1021,7 @@
     try { document.getElementById('live-count').textContent = (await fetch(W+'/api/matches/live').then(r=>r.json())).length; } catch(e) {}
   }, 60000);
 </script>
+
 <!-- Search Overlay (mobile) -->
 <div id="search-overlay" onclick="closeSearchOverlay(event)">
   <div class="search-overlay-box">
@@ -1171,47 +1113,45 @@
 <!-- Banner Ad -->
 <div style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
   <script>
-    atOptions = {
-      'key' : '227d90309c60d025e7698e00ceca60ed',
-      'format' : 'iframe',
-      'height' : 60,
-      'width' : 468,
-      'params' : {}
-    };
+    atOptions = {'key':'227d90309c60d025e7698e00ceca60ed','format':'iframe','height':60,'width':468,'params':{}};
   </script>
   <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
 </div>
-<script>applySettings();</script>
+
 <script>
-// Load popunder/social bar after page is fully loaded and idle
-// This prevents it firing as a pop-over on the current tab
+applySettings();
+
 window.addEventListener('load', function() {
   setTimeout(function() {
+    // Intercept window.open — force any _self/_top/_parent targets into a new tab
+    const _open = window.open.bind(window);
+    window.open = function(url, target, features) {
+      if (!target || target === '_self' || target === '_top' || target === '_parent') {
+        return _open(url, '_blank', 'noopener,noreferrer');
+      }
+      return _open(url, target, features);
+    };
+
+    // Intercept location assignment to prevent tab hijacking
+    try {
+      const locDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+      if (!locDescriptor || locDescriptor.configurable) {
+        Object.defineProperty(window, 'location', {
+          get: function() { return location; },
+          set: function(v) { window.open(String(v), '_blank', 'noopener,noreferrer'); },
+          configurable: true
+        });
+      }
+    } catch(e) {}
+
+    // Load popunder scripts
     var s1 = document.createElement('script');
     s1.src = 'https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';
     document.body.appendChild(s1);
     var s2 = document.createElement('script');
     s2.src = 'https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';
     document.body.appendChild(s2);
-  }, 2000); // 2 second delay after load
-});
-
-// If the page loses focus (ad opened new tab/window), re-focus this tab
-document.addEventListener('click', function() {
-  setTimeout(function() {
-    if (document.hidden) {
-      window.focus();
-    }
-  }, 100);
-});
-
-// Prevent any script from navigating the current tab away
-window.addEventListener('beforeunload', function(e) {
-  if (!window._allowUnload) {
-    e.preventDefault();
-    window.focus();
-    return false;
-  }
+  }, 2000);
 });
 </script>
 </body>
