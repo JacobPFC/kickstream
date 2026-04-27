@@ -239,6 +239,11 @@
 
   /* ── REDUCE MOTION ── */
   body.reduce-motion * { animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+
+  /* ── ADS HIDDEN ── */
+  body.no-ads #banner-ad { display:none !important; }
+  body.no-ads #native-ad { display:none !important; }
+  body.no-ads .main { padding-bottom: 1.5rem; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 </head>
@@ -326,10 +331,11 @@
     </div>
 
     <!-- Native Ad -->
-    <div style="margin: 1rem 0;">
+    <div id="native-ad" style="margin: 1rem 0;">
       <script async="async" data-cfasync="false" src="https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js"></script>
       <div id="container-3571a161b12859500250b6695f54b5c2"></div>
     </div>
+
     <div class="legal-notice">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
   </main>
 </div>
@@ -956,6 +962,12 @@
   }
   function toggleCompact(on) { saveSetting('compact', on); document.body.classList.toggle('compact-view', on); }
   function toggleReduceMotion(on) { saveSetting('reduceMotion', on); document.body.classList.toggle('reduce-motion', on); }
+  function toggleAds(on) {
+    // on = ads enabled, off = ads hidden
+    saveSetting('adsEnabled', on);
+    document.body.classList.toggle('no-ads', !on);
+    document.getElementById('banner-ad').style.display = on ? '' : 'none';
+  }
   async function toggleNotifications(on) {
     if (on) {
       const perm = await Notification.requestPermission();
@@ -965,7 +977,7 @@
     saveSetting('notifs', on);
   }
   function resetSettings() {
-    ['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs'].forEach(k => localStorage.removeItem('ks_s_'+k));
+    ['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs','adsEnabled'].forEach(k => localStorage.removeItem('ks_s_'+k));
     location.reload();
   }
   function applySettings() {
@@ -978,6 +990,12 @@
     document.getElementById('sp-reduce-motion').checked = getSetting('reduceMotion', false);
     document.getElementById('sp-notifs').checked = getSetting('notifs', false);
     document.getElementById('sp-clock').value = getSetting('clock', '12');
+    const adsOn = getSetting('adsEnabled', true);
+    document.getElementById('sp-ads').checked = adsOn;
+    if (!adsOn) {
+      document.body.classList.add('no-ads');
+      document.getElementById('banner-ad').style.display = 'none';
+    }
     if (getSetting('compact', false)) document.body.classList.add('compact-view');
     if (getSetting('reduceMotion', false)) document.body.classList.add('reduce-motion');
   }
@@ -1091,6 +1109,9 @@
     <div class="sp-row"><span>Reduce motion</span>
       <label class="sp-toggle"><input type="checkbox" id="sp-reduce-motion" onchange="toggleReduceMotion(this.checked)"><span class="sp-toggle-slider"></span></label>
     </div>
+    <div class="sp-row"><span>Show ads</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-ads" onchange="toggleAds(this.checked)" checked><span class="sp-toggle-slider"></span></label>
+    </div>
   </div>
 
   <div class="sp-section">
@@ -1111,7 +1132,7 @@
 </div>
 
 <!-- Banner Ad -->
-<div style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
+<div id="banner-ad" style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
   <script>
     atOptions = {'key':'227d90309c60d025e7698e00ceca60ed','format':'iframe','height':60,'width':468,'params':{}};
   </script>
@@ -1123,7 +1144,6 @@ applySettings();
 
 window.addEventListener('load', function() {
   setTimeout(function() {
-    // Intercept window.open — force any _self/_top/_parent targets into a new tab
     const _open = window.open.bind(window);
     window.open = function(url, target, features) {
       if (!target || target === '_self' || target === '_top' || target === '_parent') {
@@ -1131,8 +1151,6 @@ window.addEventListener('load', function() {
       }
       return _open(url, target, features);
     };
-
-    // Intercept location assignment to prevent tab hijacking
     try {
       const locDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
       if (!locDescriptor || locDescriptor.configurable) {
@@ -1144,13 +1162,15 @@ window.addEventListener('load', function() {
       }
     } catch(e) {}
 
-    // Load popunder scripts
-    var s1 = document.createElement('script');
-    s1.src = 'https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';
-    document.body.appendChild(s1);
-    var s2 = document.createElement('script');
-    s2.src = 'https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';
-    document.body.appendChild(s2);
+    // Only load popunder scripts if ads are enabled
+    if (getSetting('adsEnabled', true)) {
+      var s1 = document.createElement('script');
+      s1.src = 'https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';
+      document.body.appendChild(s1);
+      var s2 = document.createElement('script');
+      s2.src = 'https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';
+      document.body.appendChild(s2);
+    }
   }, 2000);
 });
 </script>
