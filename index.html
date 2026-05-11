@@ -518,16 +518,13 @@
     // Subscribe to stream sync
     partyChannel.subscribe('sync', msg => {
       if (partyRole === 'guest') {
-        const { embedUrl, matchId, matchTitle } = msg.data;
-        // Load the match if different
-        if (currentItem?.id !== matchId) {
-          // Just load the embed directly for guests
-          document.getElementById('player-section').classList.add('visible');
-          document.getElementById('now-playing-title').textContent = matchTitle || '';
-          embedStreamDirect(embedUrl);
-        } else {
-          embedStreamDirect(embedUrl);
-        }
+        const { embedUrl, matchTitle } = msg.data;
+        document.getElementById('player-section').classList.add('visible');
+        document.getElementById('player-section').scrollIntoView({behavior:'smooth',block:'start'});
+        document.getElementById('now-playing-title').textContent = matchTitle || '';
+        document.getElementById('teams-row').style.display = 'none';
+        document.getElementById('stream-list').innerHTML = '<div class="no-streams">Synced with host</div>';
+        embedStreamDirect(embedUrl);
       }
     });
 
