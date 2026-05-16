@@ -500,7 +500,7 @@ body.no-ads .main{padding-bottom:1.5rem;}
   <div style="font-size:0.65rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.5;">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
 </div>
 
-<div id="banner-ad" style="display:flex;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
+<div id="banner-ad" style="display:none;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
   <script>atOptions={'key':'227d90309c60d025e7698e00ceca60ed','format':'iframe','height':60,'width':468,'params':{}};</script>
   <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
 </div>
@@ -1129,18 +1129,25 @@ setInterval(()=>{if(!channelsView)loadMatches();},180000);
 
 <script>
 window.addEventListener('load',function(){
+  // Intercept popunder tab hijacks immediately
+  const _open=window.open.bind(window);
+  window.open=function(url,target,features){
+    if(!target||target==='_self'||target==='_top'||target==='_parent')return _open(url,'_blank','noopener,noreferrer');
+    return _open(url,target,features);
+  };
+  try{const ld=Object.getOwnPropertyDescriptor(window,'location');if(!ld||ld.configurable)Object.defineProperty(window,'location',{get:function(){return location;},set:function(v){window.open(String(v),'_blank','noopener,noreferrer');},configurable:true});}catch(e){}
+
+  // Delay ads by 60s so users have time to turn them off in settings
   setTimeout(function(){
-    const _open=window.open.bind(window);
-    window.open=function(url,target,features){
-      if(!target||target==='_self'||target==='_top'||target==='_parent')return _open(url,'_blank','noopener,noreferrer');
-      return _open(url,target,features);
-    };
-    try{const ld=Object.getOwnPropertyDescriptor(window,'location');if(!ld||ld.configurable)Object.defineProperty(window,'location',{get:function(){return location;},set:function(v){window.open(String(v),'_blank','noopener,noreferrer');},configurable:true});}catch(e){}
-    if(getSetting('adsEnabled',true)){
-      var s1=document.createElement('script');s1.src='https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';document.body.appendChild(s1);
-      var s2=document.createElement('script');s2.src='https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';document.body.appendChild(s2);
-    }
-  },2000);
+    if(!getSetting('adsEnabled',true))return;
+    // Show banner
+    document.getElementById('banner-ad').style.display='flex';
+    // Load popunder + social bar
+    var s1=document.createElement('script');s1.src='https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';document.body.appendChild(s1);
+    var s2=document.createElement('script');s2.src='https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';document.body.appendChild(s2);
+    // Load native ad
+    var s3=document.createElement('script');s3.async=true;s3.dataset.cfasync='false';s3.src='https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js';document.getElementById('native-ad').appendChild(s3);
+  },60000);
 });
 </script>
 </body>
