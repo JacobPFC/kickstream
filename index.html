@@ -272,24 +272,61 @@ body.no-ads .main{padding-bottom:1.5rem;}
 }
 @media (max-width:768px){
   .sidebar{display:none;}
-  .main{margin-left:0;padding:0.75rem;padding-bottom:5rem;}
+  .main{margin-left:0;padding:0.75rem;padding-bottom:calc(5.5rem + env(safe-area-inset-bottom));}
   .player-inner{grid-template-columns:1fr;}
   .player-panel{border-left:none;border-top:1px solid var(--border);}
-  header{padding:0 0.75rem;gap:0.5rem;}
+  header{padding:0 0.75rem;gap:0.5rem;height:52px;}
+  .layout{padding-top:52px;}
   .header-search{display:none;}
   .discord-btn{display:none;}
   .mobile-search-btn{display:flex!important;}
   .settings-gear-btn{font-size:0.72rem;padding:5px 8px;}
+  /* filter tabs hidden from header on mobile — cloned to bottom bar via JS */
+  header .filter-tabs{display:none!important;}
   .matches-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
   .card-title{font-size:0.75rem;}
-  .card-watch{font-size:0.68rem;}
-  .card-share,.card-multi{font-size:0.68rem;padding:5px 6px;}
+  .card-watch{font-size:0.68rem;min-height:40px;}
+  .card-share,.card-multi{font-size:0.68rem;padding:5px 6px;min-height:40px;}
+  .card-fav-btn{width:30px;height:30px;}
   .channels-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
   .live-pill{display:none;}
+  /* bigger touch targets for stream list */
+  .stream-item{padding:12px;min-height:44px;}
+  .stream-newtab-btn{min-width:44px;justify-content:center;}
+  /* toast above bottom bar */
+  .toast{bottom:calc(4.5rem + env(safe-area-inset-bottom));}
+  /* bigger action buttons */
+  .close-btn,.party-btn{min-height:44px;}
+}
+/* Mobile bottom nav bar */
+#mobile-bottom-bar{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:190;
+  background:rgba(10,14,19,0.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  padding:6px 0.75rem calc(6px + env(safe-area-inset-bottom));
+  gap:4px;
+}
+#mobile-bottom-bar .filter-tab{
+  flex:1;text-align:center;padding:8px 4px;font-size:0.72rem;border-radius:8px;min-height:44px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:transparent;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:600;white-space:nowrap;
+}
+#mobile-bottom-bar .filter-tab.active{background:var(--accent);color:#000;}
+@media (max-width:768px){
+  #mobile-bottom-bar{display:flex;}
 }
 </style>
 </head>
-<body>
+<body class="no-ads">
+
+<!-- Mobile bottom navigation bar (mirrors header filter tabs) -->
+<div id="mobile-bottom-bar">
+  <button class="filter-tab active" onclick="setFilter('live',this);syncBottomBar(this)">🔴 Live</button>
+  <button class="filter-tab" onclick="setFilter('today',this);syncBottomBar(this)">Today</button>
+  <button class="filter-tab" onclick="setFilter('all',this);syncBottomBar(this)">All</button>
+  <button class="filter-tab" onclick="showChannels(this);syncBottomBar(this)">📺 Channels</button>
+</div>
 
 <div id="name-modal">
   <div class="name-modal-box">
@@ -752,6 +789,21 @@ function openSearchOverlay(){document.getElementById('search-overlay').classList
 function closeSearchOverlay(e){if(e&&e.target!==document.getElementById('search-overlay'))return;document.getElementById('search-overlay').classList.remove('open');document.getElementById('search-ov-results').innerHTML='';document.getElementById('search-ov-input').value='';}
 function overlayFilterSearch(q){q=q.toLowerCase().trim();const res=document.getElementById('search-ov-results');if(!q){res.innerHTML='';return;}const matches=allMatches.filter(m=>m.title.toLowerCase().includes(q)).slice(0,10);if(!matches.length){res.innerHTML='<div style="padding:0.75rem;color:var(--muted);font-size:0.82rem;">No matches found</div>';return;}res.innerHTML='';matches.forEach(match=>{const el=document.createElement('div');el.className='search-ov-item';const t=new Date(match.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});el.innerHTML=`<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${match.sources?.length||0} streams</div></div>`;el.addEventListener('click',()=>{document.getElementById('search-overlay').classList.remove('open');openMatch(match);});res.appendChild(el);});}
 
+
+function syncBottomBar(activeBtn){
+  // Keep header tabs and bottom bar in sync
+  const label=activeBtn.textContent.trim();
+  document.querySelectorAll('#mobile-bottom-bar .filter-tab').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===label);
+  });
+  document.querySelectorAll('header .filter-tab').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===label);
+  });
+}
+// Wire existing header tabs to also sync bottom bar
+document.querySelectorAll('header .filter-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>syncBottomBar(btn));
+});
 applySettings();
 fetch(W+'/api/matches/live',{method:'HEAD'}).catch(()=>{});
 loadSports();loadMatches();checkUrlMatch();
@@ -764,13 +816,7 @@ window.addEventListener('load',function(){
   const _open=window.open.bind(window);
   window.open=function(url,target,features){if(!target||target==='_self'||target==='_top'||target==='_parent')return _open(url,'_blank','noopener,noreferrer');return _open(url,target,features);};
   try{const ld=Object.getOwnPropertyDescriptor(window,'location');if(!ld||ld.configurable)Object.defineProperty(window,'location',{get:function(){return location;},set:function(v){window.open(String(v),'_blank','noopener,noreferrer');},configurable:true});}catch(e){}
-  setTimeout(function(){
-    if(!getSetting('adsEnabled',true))return;
-    document.getElementById('banner-ad').style.display='flex';
-    var s1=document.createElement('script');s1.src='https://pl29069423.profitablecpmratenetwork.com/7e/58/11/7e5811a07a0893265dc12d8260a1a304.js';document.body.appendChild(s1);
-    var s2=document.createElement('script');s2.src='https://pl29090521.profitablecpmratenetwork.com/86/f6/60/86f660fa4f55f9365ab4b6761c651817.js';document.body.appendChild(s2);
-    var s3=document.createElement('script');s3.async=true;s3.dataset.cfasync='false';s3.src='https://pl29072448.profitablecpmratenetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js';document.getElementById('native-ad').appendChild(s3);
-  },60000);
+  /* Ads suppressed */
 });
 </script>
 </body>
