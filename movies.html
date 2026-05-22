@@ -365,12 +365,12 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
     <span class="sp-label">Playback</span>
     <div class="sp-row"><span>Default source</span>
       <select class="sp-select" id="sp-default-src" onchange="mvSave('defaultSrc',parseInt(this.value))">
-        <option value="0">Aiden</option>
-        <option value="1">Maya</option>
-        <option value="2">Liam</option>
-        <option value="3">Sofia</option>
-        <option value="4">Noah</option>
-        <option value="5">Elena</option>
+        <option value="0">VidKing</option>
+        <option value="1">Aiden</option>
+        <option value="2">Maya</option>
+        <option value="3">Liam</option>
+        <option value="4">Sofia</option>
+        <option value="5">Noah</option>
         <option value="6">Lucas</option>
         <option value="7">Chloe</option>
       </select>
@@ -524,8 +524,8 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
         <div class="player-left">
           <div class="player-wrap">
             <iframe id="player-iframe" src=""
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture; web-share"
-              allowfullscreen="true"
+              allow="autoplay; fullscreen *; encrypted-media; picture-in-picture; web-share"
+              allowfullscreen
               webkitallowfullscreen="true"
               mozallowfullscreen="true"
               referrerpolicy="no-referrer-when-downgrade"
@@ -587,14 +587,14 @@ const IMG_BIG = 'https://image.tmdb.org/t/p/original';
 const API = 'https://api.themoviedb.org/3';
 
 const SOURCES = [
-  { name:'Aiden',  movie: id=>`https://vidsrc.cc/v3/embed/movie/${id}`,        tv:(id,s,e)=>`https://vidsrc.cc/v3/embed/tv/${id}/${s}/${e}` },
-  { name:'Maya',   movie: id=>`https://vidsrc.me/embed/movie/${id}`,            tv:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
-  { name:'Liam',   movie: id=>`https://autoembed.cc/movie/tmdb/${id}`,          tv:(id,s,e)=>`https://autoembed.cc/tv/tmdb/${id}-${s}-${e}` },
-  { name:'Sofia',  movie: id=>`https://multiembed.mov/?video_id=${id}&tmdb=1`,  tv:(id,s,e)=>`https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-  { name:'Noah',   movie: id=>`https://embed.su/embed/movie/${id}`,             tv:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
-  { name:'Elena',  movie: id=>`https://player.embed-api.stream/?id=${id}`,      tv:(id,s,e)=>`https://player.embed-api.stream/?id=${id}&s=${s}&e=${e}` },
-  { name:'Lucas',  movie: id=>`https://vidsrc.icu/embed/movie/${id}`,           tv:(id,s,e)=>`https://vidsrc.icu/embed/tv/${id}/${s}/${e}` },
-  { name:'Chloe',  movie: id=>`https://www.2embed.cc/embed/${id}`,              tv:(id,s,e)=>`https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+  { name:'VidKing', movie: id=>`https://www.vidking.net/embed/movie/${id}`,     tv:(id,s,e)=>`https://www.vidking.net/embed/tv/${id}/${s}/${e}` },
+  { name:'Aiden',   movie: id=>`https://vidsrc.cc/v3/embed/movie/${id}`,        tv:(id,s,e)=>`https://vidsrc.cc/v3/embed/tv/${id}/${s}/${e}` },
+  { name:'Maya',    movie: id=>`https://vidsrc.me/embed/movie/${id}`,            tv:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
+  { name:'Liam',    movie: id=>`https://autoembed.cc/movie/tmdb/${id}`,          tv:(id,s,e)=>`https://autoembed.cc/tv/tmdb/${id}-${s}-${e}` },
+  { name:'Sofia',   movie: id=>`https://multiembed.mov/?video_id=${id}&tmdb=1`,  tv:(id,s,e)=>`https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { name:'Noah',    movie: id=>`https://embed.su/embed/movie/${id}`,             tv:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
+  { name:'Lucas',   movie: id=>`https://vidsrc.icu/embed/movie/${id}`,           tv:(id,s,e)=>`https://vidsrc.icu/embed/tv/${id}/${s}/${e}` },
+  { name:'Chloe',   movie: id=>`https://www.2embed.cc/embed/${id}`,              tv:(id,s,e)=>`https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
 ];
 
 let currentType='movie', currentCat=null, currentPage=1;
