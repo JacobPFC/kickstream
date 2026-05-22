@@ -181,6 +181,11 @@ header.solid { background: rgba(10,14,19,0.97); backdrop-filter: blur(12px); -we
 .player-left { display: flex; flex-direction: column; min-width: 0; }
 .player-wrap { position: relative; aspect-ratio: 16/9; background: #000; }
 .player-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+.player-wrap:-webkit-full-screen { position: fixed; inset: 0; width: 100vw; height: 100vh; aspect-ratio: unset; z-index: 9999; background: #000; }
+.player-wrap:-moz-full-screen { position: fixed; inset: 0; width: 100vw; height: 100vh; aspect-ratio: unset; z-index: 9999; background: #000; }
+.player-wrap:fullscreen { position: fixed; inset: 0; width: 100vw; height: 100vh; aspect-ratio: unset; z-index: 9999; background: #000; }
+.player-wrap:fullscreen iframe { width: 100%; height: 100%; }
+.player-wrap:-webkit-full-screen iframe { width: 100%; height: 100%; }
 .player-meta { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .player-show-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 1px; }
 .player-ep-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
@@ -534,6 +539,7 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
             <div class="player-controls">
               <label class="autonext-toggle"><input type="checkbox" id="autonext-cb" checked> Auto Next</label>
               <button class="ctrl-btn primary" id="next-ep-btn" style="display:none" onclick="playNextEpisode()">⏭ Next</button>
+              <button class="ctrl-btn" id="fs-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
               <button class="ctrl-btn" onclick="closePlayer()">✕ Close</button>
             </div>
           </div>
@@ -876,6 +882,28 @@ function startAutoNext(){
 function cancelAutoNext(){if(autoNextTimer){clearInterval(autoNextTimer);autoNextTimer=null;}document.getElementById('autonext-bar').classList.remove('visible');}
 function closePlayer(){cancelAutoNext();currentItem=null;document.getElementById('player-section').classList.remove('visible');document.getElementById('player-iframe').src='';document.getElementById('ep-sidebar').style.display='none';document.getElementById('next-ep-btn').style.display='none';document.querySelectorAll('.movie-card').forEach(c=>c.classList.remove('active'));}
 window.addEventListener('message',e=>{if(e.data?.type==='PLAYER_EVENT'&&e.data.data?.event==='complete')startAutoNext();});
+
+// ── FULLSCREEN ──
+function toggleFullscreen(){
+  const wrap = document.querySelector('.player-wrap');
+  const btn  = document.getElementById('fs-btn');
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+  if(!isFs){
+    const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen || wrap.msRequestFullscreen;
+    if(req) req.call(wrap).catch(()=>{});
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if(exit) exit.call(document);
+  }
+}
+document.addEventListener('fullscreenchange',      updateFsBtn);
+document.addEventListener('webkitfullscreenchange',updateFsBtn);
+document.addEventListener('mozfullscreenchange',   updateFsBtn);
+function updateFsBtn(){
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+  const btn  = document.getElementById('fs-btn');
+  if(btn) btn.textContent = isFs ? '✕ Exit Fullscreen' : '⛶ Fullscreen';
+}
 
 // ── INIT ──
 loadHero();
