@@ -448,7 +448,7 @@ body.no-ads .main{padding-bottom:1.5rem;}
       <div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
     </div>
 
-    <div id="native-ad" style="margin:1rem 0;"></div>
+    <div id="native-ad" style="display:none!important;"></div>
     <div class="legal-notice">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
   </main>
 </div>
@@ -483,7 +483,6 @@ body.no-ads .main{padding-bottom:1.5rem;}
     <div class="sp-row"><span>Compact card view</span><label class="sp-toggle"><input type="checkbox" id="sp-compact" onchange="toggleCompact(this.checked)"><span class="sp-toggle-slider"></span></label></div>
     <div class="sp-row"><span>Clock format</span><select class="sp-select" id="sp-clock" onchange="saveSetting('clock',this.value)"><option value="12">12-hour</option><option value="24">24-hour</option></select></div>
     <div class="sp-row"><span>Reduce motion</span><label class="sp-toggle"><input type="checkbox" id="sp-reduce-motion" onchange="toggleReduceMotion(this.checked)"><span class="sp-toggle-slider"></span></label></div>
-    <div class="sp-row"><span>Show ads</span><label class="sp-toggle"><input type="checkbox" id="sp-ads" onchange="toggleAds(this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
   </div>
   <div class="sp-section">
     <span class="sp-label">Notifications</span>
@@ -497,10 +496,7 @@ body.no-ads .main{padding-bottom:1.5rem;}
   <div style="font-size:0.65rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.5;">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
 </div>
 
-<div id="banner-ad" style="display:none;justify-content:center;align-items:center;padding:8px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:150;">
-  <script>atOptions={'key':'227d90309c60d025e7698e00ceca60ed','format':'iframe','height':60,'width':468,'params':{}};</script>
-  <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js"></script>
-</div>
+<div id="banner-ad" style="display:none!important;"></div>
 
 <script>
 const W='https://cold-term-f5a2.sebythewilly.workers.dev';
@@ -714,7 +710,27 @@ function embedStream(embedUrl,itemEl){
   const pw=document.getElementById('player-wrap');
   pw.innerHTML=`<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
   publishSync(embedUrl);
-  setTimeout(()=>{const iframe=document.getElementById('stream-iframe'),blocked=document.getElementById('player-blocked');if(!iframe||!blocked)return;let failed=false;try{const doc=iframe.contentDocument||iframe.contentWindow?.document;if(!doc||doc.URL==='about:blank')failed=true;}catch(e){}if(failed){if(currentStreams.length>1&&currentStreamIndex<currentStreams.length-1){currentStreamIndex++;const ns=currentStreams[currentStreamIndex];const ni=document.querySelector(`.stream-item[data-index="${currentStreamIndex}"]`);showToast(`Switching to stream ${currentStreamIndex+1}`);embedStream(ns.embedUrl,ni);}else{iframe.style.display='none';blocked.style.display='flex';}}},3000);
+  // Try next stream automatically on failure, with increasing wait
+  function tryNextStream(attempt){
+    const iframe=document.getElementById('stream-iframe'),blocked=document.getElementById('player-blocked');
+    if(!iframe||!blocked)return;
+    let failed=false;
+    try{const doc=iframe.contentDocument||iframe.contentWindow?.document;if(!doc||doc.URL==='about:blank')failed=true;}catch(e){}
+    if(failed){
+      if(currentStreams.length>1&&currentStreamIndex<currentStreams.length-1){
+        currentStreamIndex++;
+        const ns=currentStreams[currentStreamIndex];
+        const ni=document.querySelector(`.stream-item[data-index="${currentStreamIndex}"]`);
+        showToast(`Stream ${currentStreamIndex} failed — trying stream ${currentStreamIndex+1}`);
+        embedStream(ns.embedUrl,ni);
+      } else {
+        iframe.style.display='none';blocked.style.display='flex';
+      }
+    }
+  }
+  // Check at 3s, then again at 7s if still not loaded
+  setTimeout(()=>tryNextStream(1),3000);
+  setTimeout(()=>{const iframe=document.getElementById('stream-iframe');if(iframe&&iframe.style.display!=='none')tryNextStream(2);},7000);
 }
 function embedStreamDirect(embedUrl){document.getElementById('player-wrap').innerHTML=`<div class="player-iframe-wrap"><iframe src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen scrolling="no"></iframe></div>`;}
 
@@ -725,7 +741,7 @@ function closePlayer(){
 }
 
 let hlsInstance=null;
-function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal)showToast('Stream unavailable');});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
+function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
 function closeChannelPlayer(){if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const el=document.getElementById('channel-player-section');if(el)el.remove();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));}
 
 function filterChannels(q){q=q.toLowerCase().trim();document.querySelectorAll('.channel-card').forEach(c=>{const n=c.querySelector('.channel-name')?.textContent.toLowerCase()||'';c.style.display=(!q||n.includes(q))?'':'none';});document.querySelectorAll('.channels-section-title').forEach(t=>{const g=t.nextElementSibling;if(!g)return;const v=[...g.querySelectorAll('.channel-card')].some(c=>c.style.display!=='none');t.style.display=v?'':'none';});}
@@ -775,13 +791,12 @@ function openSettings(){document.getElementById('settings-panel').classList.add(
 function closeSettings(){document.getElementById('settings-panel').classList.remove('open');document.getElementById('settings-overlay').classList.remove('open');}
 function toggleCompact(on){saveSetting('compact',on);document.body.classList.toggle('compact-view',on);}
 function toggleReduceMotion(on){saveSetting('reduceMotion',on);document.body.classList.toggle('reduce-motion',on);}
-function toggleAds(on){saveSetting('adsEnabled',on);document.body.classList.toggle('no-ads',!on);document.getElementById('banner-ad').style.display=on?'flex':'none';}
+function toggleAds(on){/* ads permanently disabled */}
 async function toggleNotifications(on){if(on){const p=await Notification.requestPermission();if(p!=='granted'){showToast('Notifications blocked');document.getElementById('sp-notifs').checked=false;return;}showToast('Notifications enabled');}saveSetting('notifs',on);}
 function resetSettings(){['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs','adsEnabled'].forEach(k=>localStorage.removeItem('ks_s_'+k));location.reload();}
 function applySettings(){
   document.getElementById('sp-default-filter').value=getSetting('defaultFilter','live');document.getElementById('sp-default-sport').value=getSetting('defaultSport','all');document.getElementById('sp-autoplay').checked=getSetting('autoplay',true);document.getElementById('sp-prefer-hd').checked=getSetting('preferHD',true);document.getElementById('sp-hide-finished').checked=getSetting('hideFinished',false);document.getElementById('sp-compact').checked=getSetting('compact',false);document.getElementById('sp-reduce-motion').checked=getSetting('reduceMotion',false);document.getElementById('sp-notifs').checked=getSetting('notifs',false);document.getElementById('sp-clock').value=getSetting('clock','12');
-  const adsOn=getSetting('adsEnabled',true);document.getElementById('sp-ads').checked=adsOn;
-  if(!adsOn){document.body.classList.add('no-ads');document.getElementById('banner-ad').style.display='none';}
+  document.body.classList.add('no-ads');
   if(getSetting('compact',false))document.body.classList.add('compact-view');if(getSetting('reduceMotion',false))document.body.classList.add('reduce-motion');
 }
 
@@ -812,12 +827,86 @@ setInterval(()=>{if(!channelsView)loadMatches();},180000);
 </script>
 
 <script>
-window.addEventListener('load',function(){
-  const _open=window.open.bind(window);
-  window.open=function(url,target,features){if(!target||target==='_self'||target==='_top'||target==='_parent')return _open(url,'_blank','noopener,noreferrer');return _open(url,target,features);};
-  try{const ld=Object.getOwnPropertyDescriptor(window,'location');if(!ld||ld.configurable)Object.defineProperty(window,'location',{get:function(){return location;},set:function(v){window.open(String(v),'_blank','noopener,noreferrer');},configurable:true});}catch(e){}
-  /* Ads suppressed */
-});
+(function(){
+  // ── FORCE ADS OFF PERMANENTLY ──
+  document.body.classList.add('no-ads');
+
+  // ── BLOCK ALL POPUPS & REDIRECTS ──
+  const _open = window.open.bind(window);
+  window.open = function(url, target, features) {
+    // Block anything that tries to open without explicit user gesture on a new window
+    if (!target || target === '_self' || target === '_top' || target === '_parent') return null;
+    // Strip any suspicious ad domains
+    try {
+      const u = new URL(url, location.href);
+      const blocked = /highperformanceformat|popads|adnxs|doubleclick|googlesyndication|adsystem|adservice|exoclick|trafficjunky|juicyads|hilltopads|propellerads|plugrush|adsterra|admaven|popcash|popunder|clickunder/i;
+      if (blocked.test(u.hostname)) return null;
+    } catch(e) {}
+    return _open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Block location hijack
+  try {
+    const ld = Object.getOwnPropertyDescriptor(window, 'location');
+    if (!ld || ld.configurable) {
+      Object.defineProperty(window, 'location', {
+        get: function(){ return location; },
+        set: function(v){
+          // Only allow same-origin navigation, block everything else
+          try { const u = new URL(String(v), location.href); if(u.origin === location.origin) location.href = v; } catch(e){}
+        },
+        configurable: true
+      });
+    }
+  } catch(e) {}
+
+  // ── NUKE INJECTED AD OVERLAYS / POPUNDERS ──
+  const AD_SELECTORS = [
+    'iframe[src*="highperformanceformat"]','iframe[src*="adnxs"]','iframe[src*="doubleclick"]',
+    'iframe[src*="googlesyndication"]','iframe[src*="exoclick"]','iframe[src*="trafficjunky"]',
+    'iframe[src*="juicyads"]','iframe[src*="propellerads"]','iframe[src*="popcash"]',
+    'iframe[src*="adsterra"]','iframe[src*="admaven"]','iframe[src*="hilltopads"]',
+    '[id*="pop"]:not(#name-modal):not(#search-overlay):not(#settings-panel):not(#settings-overlay)',
+    '[class*="popunder"]','[class*="popup-ad"]','[id*="ad-overlay"]','[id*="adOverlay"]'
+  ];
+
+  function nukeAds(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') root = document;
+    AD_SELECTORS.forEach(sel => {
+      try { root.querySelectorAll(sel).forEach(el => el.remove()); } catch(e){}
+    });
+    // Also kill any fixed/absolute full-screen overlays that are NOT ours
+    const KNOWN_IDS = new Set(['name-modal','search-overlay','settings-panel','settings-overlay','player-section','multistream-section','mobile-bottom-bar','party-bar','party-chat','banner-ad','native-ad']);
+    try {
+      document.querySelectorAll('body > *:not(header):not(.layout):not(#mobile-bottom-bar):not(#name-modal):not(#search-overlay):not(#settings-overlay):not(#settings-panel):not(.toast)').forEach(el => {
+        if (KNOWN_IDS.has(el.id)) return;
+        const s = window.getComputedStyle(el);
+        if ((s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 900 && (parseInt(s.width) > window.innerWidth * 0.5 || parseInt(s.height) > window.innerHeight * 0.5)) {
+          el.remove();
+        }
+      });
+    } catch(e) {}
+  }
+
+  window.addEventListener('load', nukeAds);
+  // Watch for dynamically injected ad nodes
+  new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(function(node) {
+        if (node.nodeType !== 1) return;
+        // Remove ad scripts
+        if (node.tagName === 'SCRIPT') {
+          const src = node.src || '';
+          if (/highperformanceformat|popads|adnxs|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra|admaven|hilltopads/i.test(src)) {
+            node.remove(); return;
+          }
+        }
+        nukeAds(document);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+})();
 </script>
 </body>
 </html>
