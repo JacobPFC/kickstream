@@ -6,7 +6,10 @@
 <title>KickStream — Movies & TV</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://api.themoviedb.org">
+<link rel="dns-prefetch" href="https://image.tmdb.org">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ── THEMES ── */
 :root {
@@ -37,7 +40,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; transition: background 0.4s, color 0.4s; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; min-height: 100vh; overflow-x: hidden; transition: background 0.4s, color 0.4s; }
 
 /* ── HEADER ── */
 header { position: fixed; top: 0; left: 0; right: 0; z-index: 400; background: transparent; transition: background 0.4s; height: 56px; display: flex; align-items: center; padding: 0 1.25rem; gap: 0.75rem; }
@@ -573,7 +576,7 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
 <script>
 const TMDB_KEY = '4ef0d7355d9ffb5151e987764708ce96';
 const IMG = 'https://image.tmdb.org/t/p/w300';
-const IMG_BIG = 'https://image.tmdb.org/t/p/original';
+const IMG_BIG = 'https://image.tmdb.org/t/p/w1280';
 const API = 'https://api.themoviedb.org/3';
 
 const SOURCES = [
@@ -761,7 +764,7 @@ async function loadContent(append=false){
   const adultParam=hideAdult?'&include_adult=false':'';
   const ratingParam=minRating>0?`&vote_average.gte=${minRating}`:'';
   const url=base+lang+genreParam+extra+adultParam+ratingParam;
-  try{const data=await fetch(url).then(r=>r.json());renderGrid(data.results||[],append);}
+  try{const data=await cachedFetch(url);renderGrid(data.results||[],append);}
   catch(e){container.innerHTML='<div class="empty">Could not load content.</div>';}
 }
 
@@ -801,11 +804,21 @@ function renderGrid(items,append=false,mixed=false){
   if(!mixed){const btn=document.createElement('button');btn.className='load-more';btn.textContent='Load More';btn.onclick=()=>{currentPage++;loadContent(true);};container.appendChild(btn);}
 }
 
+// ── API CACHE (session) ──
+const _apiCache = new Map();
+async function cachedFetch(url, ttl=300000) {
+  const hit = _apiCache.get(url);
+  if (hit && Date.now() - hit.ts < ttl) return hit.data;
+  const data = await fetch(url).then(r => { if(!r.ok) throw new Error(r.status); return r.json(); });
+  _apiCache.set(url, { data, ts: Date.now() });
+  return data;
+}
+
 // ── HOME ROWS ──
 async function loadRow(containerId,url,type){
   const el=document.getElementById(containerId);if(!el)return;
   el.innerHTML='<div class="skel"></div>'.repeat(8);
-  try{const data=await fetch(url).then(r=>r.json());el.className='cards-scroll';el.innerHTML='';(data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));}
+  try{const data=await cachedFetch(url);el.className='cards-scroll';el.innerHTML='';(data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));}
   catch(e){}
 }
 
@@ -896,6 +909,9 @@ function updateFsBtn(){
 }
 
 // ── INIT ──
+applyMvSettings();
+
+// ── PRIORITY LOAD: hero + trending first, then defer genre rows ──
 loadHero();
 renderRW();
 loadRow('row-trend-movie',`${API}/trending/movie/week?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
@@ -903,15 +919,21 @@ loadRow('row-trend-tv',`${API}/trending/tv/week?api_key=${TMDB_KEY}&with_origina
 loadRow('row-top-movie',`${API}/movie/top_rated?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
 loadRow('row-top-tv',`${API}/tv/top_rated?api_key=${TMDB_KEY}&with_original_language=en`,'tv');
 loadRow('row-new-movie',`${API}/movie/now_playing?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
-loadRow('row-action',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=28&sort_by=popularity.desc&with_original_language=en`,'movie');
-loadRow('row-comedy',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=35&sort_by=popularity.desc&with_original_language=en`,'movie');
-loadRow('row-horror',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=27&sort_by=popularity.desc&with_original_language=en`,'movie');
-loadRow('row-scifi',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=878&sort_by=popularity.desc&with_original_language=en`,'movie');
-loadRow('row-drama',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=18&sort_by=vote_average.desc&vote_count.gte=1000&with_original_language=en`,'movie');
-loadRow('row-crime',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=80&sort_by=popularity.desc&with_original_language=en`,'movie');
-loadRow('row-anim',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc&with_original_language=en`,'movie');
 
-applyMvSettings();
+// Genre rows deferred — load after initial paint is done
+setTimeout(()=>{
+  loadRow('row-action',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=28&sort_by=popularity.desc&with_original_language=en`,'movie');
+  loadRow('row-comedy',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=35&sort_by=popularity.desc&with_original_language=en`,'movie');
+  loadRow('row-horror',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=27&sort_by=popularity.desc&with_original_language=en`,'movie');
+},300);
+setTimeout(()=>{
+  loadRow('row-scifi',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=878&sort_by=popularity.desc&with_original_language=en`,'movie');
+  loadRow('row-drama',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=18&sort_by=vote_average.desc&vote_count.gte=1000&with_original_language=en`,'movie');
+  loadRow('row-crime',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=80&sort_by=popularity.desc&with_original_language=en`,'movie');
+},700);
+setTimeout(()=>{
+  loadRow('row-anim',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc&with_original_language=en`,'movie');
+},1100);
 const _auto=sessionStorage.getItem('autoOpen');
 if(_auto){sessionStorage.removeItem('autoOpen');try{const a=JSON.parse(_auto);showBrowse(a.type);setTimeout(()=>openItem({id:a.id,_type:a.type,title:a.title,name:a.title}),600);}catch(e){}}
 </script>
