@@ -368,14 +368,14 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
     <span class="sp-label">Playback</span>
     <div class="sp-row"><span>Default source</span>
       <select class="sp-select" id="sp-default-src" onchange="mvSave('defaultSrc',parseInt(this.value))">
-        <option value="0">VidKing</option>
-        <option value="1">Aiden</option>
-        <option value="2">Maya</option>
-        <option value="3">Liam</option>
-        <option value="4">Sofia</option>
-        <option value="5">Noah</option>
-        <option value="6">Lucas</option>
-        <option value="7">Chloe</option>
+        <option value="0">Aiden</option>
+        <option value="1">Noah</option>
+        <option value="2">Lucas</option>
+        <option value="3">Maya</option>
+        <option value="4">Liam</option>
+        <option value="5">Sofia</option>
+        <option value="6">Chloe</option>
+        <option value="7">VidKing</option>
       </select>
     </div>
     <div class="sp-row"><span>Auto-play next episode</span>
@@ -576,20 +576,20 @@ const IMG_BIG = 'https://image.tmdb.org/t/p/w1280';
 const API = 'https://api.themoviedb.org/3';
 
 const SOURCES = [
-  { name:'VidKing', movie: id=>`https://www.vidking.net/embed/movie/${id}`,     tv:(id,s,e)=>`https://www.vidking.net/embed/tv/${id}/${s}/${e}` },
   { name:'Aiden',   movie: id=>`https://vidsrc.cc/v3/embed/movie/${id}`,        tv:(id,s,e)=>`https://vidsrc.cc/v3/embed/tv/${id}/${s}/${e}` },
+  { name:'Noah',    movie: id=>`https://embed.su/embed/movie/${id}`,             tv:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
+  { name:'Lucas',   movie: id=>`https://vidsrc.icu/embed/movie/${id}`,           tv:(id,s,e)=>`https://vidsrc.icu/embed/tv/${id}/${s}/${e}` },
   { name:'Maya',    movie: id=>`https://vidsrc.me/embed/movie/${id}`,            tv:(id,s,e)=>`https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}` },
   { name:'Liam',    movie: id=>`https://autoembed.cc/movie/tmdb/${id}`,          tv:(id,s,e)=>`https://autoembed.cc/tv/tmdb/${id}-${s}-${e}` },
   { name:'Sofia',   movie: id=>`https://multiembed.mov/?video_id=${id}&tmdb=1`,  tv:(id,s,e)=>`https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
-  { name:'Noah',    movie: id=>`https://embed.su/embed/movie/${id}`,             tv:(id,s,e)=>`https://embed.su/embed/tv/${id}/${s}/${e}` },
-  { name:'Lucas',   movie: id=>`https://vidsrc.icu/embed/movie/${id}`,           tv:(id,s,e)=>`https://vidsrc.icu/embed/tv/${id}/${s}/${e}` },
   { name:'Chloe',   movie: id=>`https://www.2embed.cc/embed/${id}`,              tv:(id,s,e)=>`https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+  { name:'VidKing', movie: id=>`https://www.vidking.net/embed/movie/${id}`,      tv:(id,s,e)=>`https://www.vidking.net/embed/tv/${id}/${s}/${e}` },
 ];
 
 let currentType='movie', currentCat=null, currentPage=1;
 let currentSort='popularity.desc', englishOnly=true, specialFilter=null;
 let currentItem=null, currentSeason=1, currentEpisode=1, totalEpisodes=0;
-let tvSeasons=[], autoNextTimer=null, currentSourceIndex=0, inBrowse=false;
+let tvSeasons=[], autoNextTimer=null, currentSourceIndex=1, inBrowse=false;
 let heroSlides=[], heroIdx=0, heroTimer=null, heroProgTimer=null, heroProgVal=0;
 const HERO_DUR=6000;
 
