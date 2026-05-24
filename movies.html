@@ -528,10 +528,6 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
           <div class="player-wrap">
             <iframe id="player-iframe" src=""
               allow="autoplay; fullscreen *; encrypted-media; picture-in-picture; web-share"
-              allowfullscreen
-              webkitallowfullscreen="true"
-              mozallowfullscreen="true"
-              referrerpolicy="no-referrer-when-downgrade"
               scrolling="no"></iframe>
           </div>
           <div class="player-meta">
@@ -711,13 +707,6 @@ function showBrowse(type,genre){
 }
 
 // ── HERO ──
-async function loadHero(){
-  try{
-    const [mv,tv]=await Promise.all([fetch(`${API}/trending/movie/week?api_key=${TMDB_KEY}&with_original_language=en`).then(r=>r.json()),fetch(`${API}/trending/tv/week?api_key=${TMDB_KEY}&with_original_language=en`).then(r=>r.json())]);
-    heroSlides=[...mv.results.slice(0,6).map(m=>({...m,_type:'movie'})),...tv.results.slice(0,4).map(s=>({...s,_type:'tv',title:s.name,release_date:s.first_air_date}))].sort(()=>Math.random()-0.5).slice(0,10);
-    renderHero();startHero();
-  }catch(e){}
-}
 function renderHero(){
   const cont=document.getElementById('hero-slides'),dots=document.getElementById('hero-dots');
   cont.innerHTML='';dots.innerHTML='';
@@ -910,30 +899,49 @@ function updateFsBtn(){
 
 // ── INIT ──
 applyMvSettings();
-
-// ── PRIORITY LOAD: hero + trending first, then defer genre rows ──
-loadHero();
 renderRW();
-loadRow('row-trend-movie',`${API}/trending/movie/week?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
-loadRow('row-trend-tv',`${API}/trending/tv/week?api_key=${TMDB_KEY}&with_original_language=en`,'tv');
+
+// Kick off the two trending fetches ONCE — hero and rows share the same promises
+const trendMovieUrl=`${API}/trending/movie/week?api_key=${TMDB_KEY}&with_original_language=en`;
+const trendTvUrl=`${API}/trending/tv/week?api_key=${TMDB_KEY}&with_original_language=en`;
+const trendMovieP=cachedFetch(trendMovieUrl);
+const trendTvP=cachedFetch(trendTvUrl);
+
+// Hero uses the already-in-flight promises
+(async()=>{
+  try{
+    const [mv,tv]=await Promise.all([trendMovieP,trendTvP]);
+    heroSlides=[...mv.results.slice(0,6).map(m=>({...m,_type:'movie'})),...tv.results.slice(0,4).map(s=>({...s,_type:'tv',title:s.name,release_date:s.first_air_date}))].sort(()=>Math.random()-0.5).slice(0,10);
+    renderHero();startHero();
+  }catch(e){}
+})();
+
+// Priority rows — cache is warm by the time these resolve (same in-flight requests)
+async function loadRowFromPromise(containerId,p,type){
+  const el=document.getElementById(containerId);if(!el)return;
+  try{const data=await p;el.className='cards-scroll';el.innerHTML='';(data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));}
+  catch(e){}
+}
+loadRowFromPromise('row-trend-movie',trendMovieP,'movie');
+loadRowFromPromise('row-trend-tv',trendTvP,'tv');
 loadRow('row-top-movie',`${API}/movie/top_rated?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
 loadRow('row-top-tv',`${API}/tv/top_rated?api_key=${TMDB_KEY}&with_original_language=en`,'tv');
 loadRow('row-new-movie',`${API}/movie/now_playing?api_key=${TMDB_KEY}&with_original_language=en`,'movie');
 
-// Genre rows deferred — load after initial paint is done
-setTimeout(()=>{
+// Genre rows deferred until browser is idle
+const _ric = window.requestIdleCallback || (cb=>setTimeout(cb,200));
+_ric(()=>{
   loadRow('row-action',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=28&sort_by=popularity.desc&with_original_language=en`,'movie');
   loadRow('row-comedy',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=35&sort_by=popularity.desc&with_original_language=en`,'movie');
   loadRow('row-horror',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=27&sort_by=popularity.desc&with_original_language=en`,'movie');
-},300);
-setTimeout(()=>{
+});
+_ric(()=>{
   loadRow('row-scifi',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=878&sort_by=popularity.desc&with_original_language=en`,'movie');
   loadRow('row-drama',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=18&sort_by=vote_average.desc&vote_count.gte=1000&with_original_language=en`,'movie');
   loadRow('row-crime',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=80&sort_by=popularity.desc&with_original_language=en`,'movie');
-},700);
-setTimeout(()=>{
   loadRow('row-anim',`${API}/discover/movie?api_key=${TMDB_KEY}&with_genres=16&sort_by=popularity.desc&with_original_language=en`,'movie');
-},1100);
+});
+
 const _auto=sessionStorage.getItem('autoOpen');
 if(_auto){sessionStorage.removeItem('autoOpen');try{const a=JSON.parse(_auto);showBrowse(a.type);setTimeout(()=>openItem({id:a.id,_type:a.type,title:a.title,name:a.title}),600);}catch(e){}}
 </script>
