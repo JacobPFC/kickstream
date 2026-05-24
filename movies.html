@@ -754,7 +754,7 @@ async function loadContent(append=false){
   const ratingParam=minRating>0?`&vote_average.gte=${minRating}`:'';
   const url=base+lang+genreParam+extra+adultParam+ratingParam;
   try{const data=await cachedFetch(url);renderGrid(data.results||[],append);}
-  catch(e){container.innerHTML='<div class="empty">Could not load content.</div>';}
+  catch(e){container.innerHTML=`<div class="empty">${e.name==='AbortError'?'Request timed out — check your connection':'Could not load content. Try refreshing.'}</div>`;}
 }
 
 // ── SEARCH ──
@@ -798,17 +798,35 @@ const _apiCache = new Map();
 async function cachedFetch(url, ttl=300000) {
   const hit = _apiCache.get(url);
   if (hit && Date.now() - hit.ts < ttl) return hit.data;
-  const data = await fetch(url).then(r => { if(!r.ok) throw new Error(r.status); return r.json(); });
-  _apiCache.set(url, { data, ts: Date.now() });
-  return data;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const r = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    _apiCache.set(url, { data, ts: Date.now() });
+    return data;
+  } catch(e) {
+    clearTimeout(timeout);
+    throw e;
+  }
 }
 
 // ── HOME ROWS ──
 async function loadRow(containerId,url,type){
   const el=document.getElementById(containerId);if(!el)return;
   el.innerHTML='<div class="skel"></div>'.repeat(8);
-  try{const data=await cachedFetch(url);el.className='cards-scroll';el.innerHTML='';(data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));}
-  catch(e){}
+  try{
+    const data=await cachedFetch(url);
+    el.className='cards-scroll';
+    el.innerHTML='';
+    (data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));
+    if(!el.children.length) el.innerHTML='<div class="empty" style="padding:1rem;font-size:0.8rem;">Nothing to show.</div>';
+  } catch(e){
+    el.className='cards-scroll';
+    el.innerHTML=`<div class="empty" style="padding:1rem;font-size:0.8rem;color:var(--muted);">${e.name==='AbortError'?'Request timed out — check your connection':'Could not load'}</div>`;
+  }
 }
 
 // ── PLAYER ──
@@ -919,8 +937,15 @@ const trendTvP=cachedFetch(trendTvUrl);
 // Priority rows — cache is warm by the time these resolve (same in-flight requests)
 async function loadRowFromPromise(containerId,p,type){
   const el=document.getElementById(containerId);if(!el)return;
-  try{const data=await p;el.className='cards-scroll';el.innerHTML='';(data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));}
-  catch(e){}
+  try{
+    const data=await p;
+    el.className='cards-scroll';el.innerHTML='';
+    (data.results||[]).filter(i=>i.original_language==='en').slice(0,12).forEach(item=>el.appendChild(buildCard({...item,_type:type},type)));
+    if(!el.children.length) el.innerHTML='<div class="empty" style="padding:1rem;font-size:0.8rem;">Nothing to show.</div>';
+  } catch(e){
+    el.className='cards-scroll';
+    el.innerHTML='<div class="empty" style="padding:1rem;font-size:0.8rem;color:var(--muted);">Could not load</div>';
+  }
 }
 loadRowFromPromise('row-trend-movie',trendMovieP,'movie');
 loadRowFromPromise('row-trend-tv',trendTvP,'tv');
