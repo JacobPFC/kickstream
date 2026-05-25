@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KickStream API — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c10;
+  --surface: #0e1520;
+  --surface2: #151e2d;
+  --border: #1a2a3d;
+  --accent: #00e676;
+  --accent2: #00b0ff;
+  --accent3: #7c4dff;
+  --live: #ff1744;
+  --text: #e2e8f0;
+  --muted: #4a6280;
+  --muted2: #2a3d52;
+  --get: #00e676;
+  --post: #ff9800;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ── GRID LINES ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,12,16,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.logo span { color: var(--text); }
+.logo sup {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent2);
+  vertical-align: super;
+  margin-left: 4px;
+  background: rgba(0,176,255,0.12);
+  border: 1px solid rgba(0,176,255,0.25);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.header-links { display: flex; gap: 1rem; align-items: center; }
+.header-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.header-link:hover { color: var(--text); border-color: var(--border); }
+.header-link.cta {
+  background: rgba(0,230,118,0.1);
+  border-color: rgba(0,230,118,0.3);
+  color: var(--accent);
+}
+.header-link.cta:hover { background: rgba(0,230,118,0.18); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: calc(100vh - 60px);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── SIDEBAR ── */
+nav {
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  background: rgba(14,21,32,0.6);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+nav::-webkit-scrollbar { width: 3px; }
+nav::-webkit-scrollbar-thumb { background: var(--border); }
+.nav-section { margin-bottom: 1.5rem; }
+.nav-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 1.5rem;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 1.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,230,118,0.04); }
+.nav-method {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0,230,118,0.15);
+  color: var(--get);
+  flex-shrink: 0;
+}
+
+/* ── MAIN ── */
+main { padding: 3rem 3.5rem 6rem; max-width: 900px; }
+
+/* ── HERO ── */
+.hero {
+  margin-bottom: 4rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid var(--border);
+}
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-eyebrow::before { content: '//'; color: var(--muted); }
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.5rem);
+  letter-spacing: 3px;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+.hero h1 span { color: var(--accent); }
+.hero p {
+  font-size: 1rem;
+  color: rgba(226,232,240,0.7);
+  line-height: 1.7;
+  max-width: 560px;
+  margin-bottom: 1.5rem;
+}
+.base-url-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent2);
+}
+.base-url-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  transition: color 0.2s;
+}
+.copy-btn:hover { color: var(--accent); }
+
+/* ── STAT PILLS ── */
+.stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.78rem;
+}
+.stat-val { font-weight: 700; color: var(--accent); }
+.stat-key { color: var(--muted); }
+
+/* ── SECTION ── */
+.section { margin-bottom: 4rem; scroll-margin-top: 80px; }
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title span { color: var(--accent); }
+.section-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* ── ENDPOINT CARD ── */
+.endpoint {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.endpoint-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.endpoint-head:hover { background: rgba(255,255,255,0.02); }
+.method-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0,230,118,0.15);
+  color: var(--get);
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.endpoint-path {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  flex: 1;
+}
+.endpoint-path .param { color: var(--accent2); }
+.endpoint-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  flex: 1;
+  text-align: right;
+}
+.endpoint-chevron {
+  color: var(--muted);
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.endpoint.open .endpoint-chevron { transform: rotate(180deg); }
+.endpoint-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  background: rgba(0,0,0,0.2);
+}
+.endpoint.open .endpoint-body { display: block; }
+
+/* ── PARAMS TABLE ── */
+.params-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.params-table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; }
+.params-table th {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.params-table td {
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(26,42,61,0.5);
+  vertical-align: top;
+}
+.params-table tr:last-child td { border-bottom: none; }
+.param-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent2);
+}
+.param-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--accent3);
+}
+.param-req {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.req { background: rgba(255,23,68,0.15); color: var(--live); }
+.opt { background: rgba(74,98,128,0.2); color: var(--muted); }
+.param-desc { color: rgba(226,232,240,0.7); line-height: 1.5; }
+
+/* ── CODE BLOCK ── */
+.code-wrap { position: relative; }
+.code-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+.code-lang {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+pre .k { color: var(--accent3); }
+pre .s { color: #f9a825; }
+pre .c { color: var(--muted); font-style: italic; }
+pre .n { color: var(--accent2); }
+pre .v { color: var(--accent); }
+pre .p { color: var(--text); }
+
+/* ── RESPONSE EXAMPLE ── */
+.resp-example {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.8;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+.rk { color: var(--accent2); }
+.rv { color: var(--accent); }
+.rs { color: #f9a825; }
+.rb { color: var(--accent3); }
+.rn { color: var(--muted); }
+
+/* ── ALERT BOXES ── */
+.alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+.alert-info { background: rgba(0,176,255,0.07); border: 1px solid rgba(0,176,255,0.2); }
+.alert-warn { background: rgba(255,152,0,0.07); border: 1px solid rgba(255,152,0,0.2); color: #ffb74d; }
+.alert-icon { flex-shrink: 0; font-size: 1rem; }
+
+/* ── CODE TABS ── */
+.code-tabs { display: flex; gap: 4px; margin-bottom: 0.5rem; }
+.code-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.code-tab.active { background: var(--surface2); color: var(--text); border-color: var(--muted2); }
+.code-panel { display: none; }
+.code-panel.active { display: block; }
+
+/* ── ERROR TABLE ── */
+.error-grid { display: grid; grid-template-columns: 80px 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.error-cell { background: var(--surface); padding: 10px 16px; font-size: 0.8rem; }
+.error-cell.head { background: var(--surface2); font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.error-code { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.e200 { color: var(--accent); }
+.e400 { color: #ff9800; }
+.e401 { color: var(--live); }
+.e404 { color: var(--accent2); }
+.e502 { color: #ce93d8; }
+
+/* ── TOAST ── */
+.toast-pop {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+  pointer-events: none;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  nav { display: none; }
+  main { padding: 2rem 1.25rem 5rem; }
+  .hero h1 { font-size: 2.4rem; }
+  .endpoint-desc { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">Kick<span>Stream</span><sup>API</sup></a>
+  <div class="header-links">
+    <a class="header-link" href="movies.html">← Back to Site</a>
+    <a class="header-link" href="#authentication">Auth</a>
+    <a class="header-link" href="#endpoints">Endpoints</a>
+    <a class="header-link cta" href="#quickstart">Quickstart</a>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav>
+    <div class="nav-section">
+      <span class="nav-label">Overview</span>
+      <a class="nav-item active" href="#introduction">Introduction</a>
+      <a class="nav-item" href="#quickstart">Quickstart</a>
+      <a class="nav-item" href="#authentication">Authentication</a>
+      <a class="nav-item" href="#errors">Errors & Limits</a>
+    </div>
+    <div class="nav-section">
+      <span class="nav-label">Endpoints</span>
+      <a class="nav-item" href="#ep-health"><span class="nav-method">GET</span> /health</a>
+      <a class="nav-item" href="#ep-trending"><span class="nav-method">GET</span> /trending</a>
+      <a class="nav-item" href="#ep-search"><span class="nav-method">GET</span> /search</a>
+      <a class="nav-item" href="#ep-discover"><span class="nav-method">GET</span> /discover</a>
+      <a class="nav-item" href="#ep-movie"><span class="nav-method">GET</span> /movie/:id</a>
+      <a class="nav-item" href="#ep-movie-similar"><span class="nav-method">GET</span> /movie/:id/similar</a>
+      <a class="nav-item" href="#ep-movie-videos"><span class="nav-method">GET</span> /movie/:id/videos</a>
+      <a class="nav-item" href="#ep-tv"><span class="nav-method">GET</span> /tv/:id</a>
+      <a class="nav-item" href="#ep-tv-season"><span class="nav-method">GET</span> /tv/:id/season/:n</a>
+      <a class="nav-item" href="#ep-tv-similar"><span class="nav-method">GET</span> /tv/:id/similar</a>
+      <a class="nav-item" href="#ep-tv-videos"><span class="nav-method">GET</span> /tv/:id/videos</a>
+      <a class="nav-item" href="#ep-sources"><span class="nav-method">GET</span> /sources/:type/:id</a>
+      <a class="nav-item" href="#ep-sources-tv"><span class="nav-method">GET</span> /sources/tv/:id/:s/:e</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- HERO -->
+    <div class="hero" id="introduction">
+      <div class="hero-eyebrow">Public REST API</div>
+      <h1>KickStream <span>API</span></h1>
+      <p>A free, edge-cached REST API for movie and TV show data. Built on Cloudflare Workers — fast responses from 300+ locations globally. Powered by TMDB.</p>
+      <div class="base-url-block">
+        <span class="base-url-label">Base URL</span>
+        <span id="base-url">https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api</span>
+        <button class="copy-btn" onclick="copyBase()">⎘ Copy</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-val">100K</span><span class="stat-key">req / day free</span></div>
+        <div class="stat"><span class="stat-val">300+</span><span class="stat-key">edge locations</span></div>
+        <div class="stat"><span class="stat-val">0ms</span><span class="stat-key">cold start</span></div>
+        <div class="stat"><span class="stat-val">CORS</span><span class="stat-key">enabled</span></div>
+        <div class="stat"><span class="stat-val">JSON</span><span class="stat-key">only</span></div>
+      </div>
+    </div>
+
+    <!-- QUICKSTART -->
+    <div class="section" id="quickstart">
+      <div class="section-title">Quick<span>start</span></div>
+      <div class="section-sub">Get trending movies in under 30 seconds. No sign-up required for open access.</div>
+
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="switchTab(this,'qs','fetch')">fetch</button>
+        <button class="code-tab" onclick="switchTab(this,'qs','axios')">axios</button>
+        <button class="code-tab" onclick="switchTab(this,'qs','python')">python</button>
+      </div>
+
+      <div id="qs-fetch" class="code-panel active">
+        <pre><span class="c">// Get trending movies</span>
+<span class="k">const</span> res = <span class="k">await</span> fetch(<span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api/trending?type=movie'</span>);
+<span class="k">const</span> data = <span class="k">await</span> res.json();
+console.log(data.results); <span class="c">// array of movie objects</span>
+
+<span class="c">// Search for a title</span>
+<span class="k">const</span> search = <span class="k">await</span> fetch(<span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api/search?q=inception&amp;type=movie'</span>);
+<span class="k">const</span> results = <span class="k">await</span> search.json();
+
+<span class="c">// Get embed sources for a movie (TMDB id: 27205)</span>
+<span class="k">const</span> sources = <span class="k">await</span> fetch(<span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api/sources/movie/27205'</span>);
+<span class="k">const</span> { sources: srcs } = <span class="k">await</span> sources.json();
+console.log(srcs[0].url); <span class="c">// embed URL ready to drop into an iframe</span></pre>
+      </div>
+
+      <div id="qs-axios" class="code-panel">
+        <pre><span class="k">import</span> axios <span class="k">from</span> <span class="s">'axios'</span>;
+
+<span class="k">const</span> api = axios.create({
+  baseURL: <span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api'</span>,
+});
+
+<span class="c">// Trending TV shows</span>
+<span class="k">const</span> { data } = <span class="k">await</span> api.get(<span class="s">'/trending'</span>, { params: { type: <span class="s">'tv'</span> } });
+console.log(data.results);
+
+<span class="c">// Movie details</span>
+<span class="k">const</span> { data: movie } = <span class="k">await</span> api.get(<span class="s">'/movie/550'</span>); <span class="c">// Fight Club</span>
+console.log(movie.title, movie.vote_average);</pre>
+      </div>
+
+      <div id="qs-python" class="code-panel">
+        <pre><span class="k">import</span> requests
+
+BASE = <span class="s">"https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api"</span>
+
+<span class="c"># Trending movies</span>
+r = requests.get(f<span class="s">"{BASE}/trending"</span>, params={<span class="s">"type"</span>: <span class="s">"movie"</span>})
+movies = r.json()[<span class="s">"results"</span>]
+
+<span class="c"># Search</span>
+r = requests.get(f<span class="s">"{BASE}/search"</span>, params={<span class="s">"q"</span>: <span class="s">"inception"</span>, <span class="s">"type"</span>: <span class="s">"all"</span>})
+results = r.json()[<span class="s">"results"</span>]
+
+<span class="c"># Embed sources</span>
+r = requests.get(f<span class="s">"{BASE}/sources/movie/27205"</span>)
+sources = r.json()[<span class="s">"sources"</span>]
+print(sources[0][<span class="s">"url"</span>])  <span class="c"># drop into an &lt;iframe&gt;</span></pre>
+      </div>
+    </div>
+
+    <!-- AUTH -->
+    <div class="section" id="authentication">
+      <div class="section-title">Authen<span>tication</span></div>
+      <div class="section-sub">The API is open by default. The owner can optionally enable key-based auth.</div>
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <span>If the API owner has set a <code>PUBLIC_API_KEY</code> secret on the Worker, you'll need to include it with every request. Otherwise no auth is required.</span>
+      </div>
+
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">Pass your key via query param or request header:</p>
+
+      <pre><span class="c">// Query param</span>
+fetch(<span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api/trending?type=movie&amp;key=YOUR_API_KEY'</span>)
+
+<span class="c">// Header (preferred)</span>
+fetch(<span class="s">'https://kickstream-api.YOUR-SUBDOMAIN.workers.dev/api/trending?type=movie'</span>, {
+  headers: { <span class="s">'X-API-Key'</span>: <span class="s">'YOUR_API_KEY'</span> }
+})</pre>
+    </div>
+
+    <!-- ENDPOINTS -->
+    <div class="section" id="endpoints">
+      <div class="section-title">End<span>points</span></div>
+    </div>
+
+    <!-- HEALTH -->
+    <div class="section" id="ep-health">
+      <div class="section-title" style="font-size:1.4rem;">Health <span>Check</span></div>
+      <div class="endpoint open">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/health</span>
+          <span class="endpoint-desc">Worker status</span>
+          <span class="endpoint-chevron">▲</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="params-label">Response</p>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"status"</span>: <span class="rs">"ok"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"timestamp"</span>: <span class="rs">"2024-11-01T12:00:00.000Z"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"worker"</span>: <span class="rs">"kickstream-api"</span><br>
+}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRENDING -->
+    <div class="section" id="ep-trending">
+      <div class="section-title" style="font-size:1.4rem;">Tren<span>ding</span></div>
+      <div class="endpoint">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/trending</span>
+          <span class="endpoint-desc">Weekly trending movies or TV</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <p class="params-label">Query Parameters</p>
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            <tr><td class="param-name">type</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc"><code>movie</code> or <code>tv</code>. Default: <code>movie</code></td></tr>
+          </table>
+          <p class="params-label">Example</p>
+          <pre>GET /api/trending?type=tv</pre>
+          <p class="params-label">Response</p>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"results"</span>: [ <span class="rb">{ ... }</span> ],&nbsp;<span class="rn">// array of TMDB objects</span><br>
+&nbsp;&nbsp;<span class="rk">"total_results"</span>: <span class="rv">20</span>,<br>
+&nbsp;&nbsp;<span class="rk">"type"</span>: <span class="rs">"tv"</span><br>
+}
+          </div>
+          <div class="alert alert-info" style="margin-top:1rem;">
+            <span class="alert-icon">⚡</span>
+            <span>Cached for <strong>5 minutes</strong> at Cloudflare's edge.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="section" id="ep-search">
+      <div class="section-title" style="font-size:1.4rem;">Sea<span>rch</span></div>
+      <div class="endpoint">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/search</span>
+          <span class="endpoint-desc">Search movies, TV, or both</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            <tr><td class="param-name">q</td><td class="param-type">string</td><td><span class="param-req req">required</span></td><td class="param-desc">Search query</td></tr>
+            <tr><td class="param-name">type</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc"><code>all</code>, <code>movie</code>, or <code>tv</code>. Default: <code>all</code></td></tr>
+            <tr><td class="param-name">page</td><td class="param-type">number</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Page number. Default: <code>1</code></td></tr>
+            <tr><td class="param-name">lang</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Language code. Default: <code>en-US</code></td></tr>
+          </table>
+          <pre>GET /api/search?q=breaking+bad&amp;type=tv</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"results"</span>: [ <span class="rb">{ ... }</span> ],<br>
+&nbsp;&nbsp;<span class="rk">"total_results"</span>: <span class="rv">12</span>,<br>
+&nbsp;&nbsp;<span class="rk">"query"</span>: <span class="rs">"breaking bad"</span><br>
+}
+          </div>
+          <div class="alert alert-info" style="margin-top:1rem;">
+            <span class="alert-icon">💡</span>
+            <span>When <code>type=all</code>, results from both movies and TV are merged and sorted by popularity.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCOVER -->
+    <div class="section" id="ep-discover">
+      <div class="section-title" style="font-size:1.4rem;">Dis<span>cover</span></div>
+      <div class="endpoint">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/discover</span>
+          <span class="endpoint-desc">Browse with filters</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            <tr><td class="param-name">type</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc"><code>movie</code> or <code>tv</code>. Default: <code>movie</code></td></tr>
+            <tr><td class="param-name">genre</td><td class="param-type">number</td><td><span class="param-req opt">optional</span></td><td class="param-desc">TMDB genre ID (e.g. <code>28</code> = Action, <code>35</code> = Comedy)</td></tr>
+            <tr><td class="param-name">sort</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc"><code>popularity.desc</code>, <code>vote_average.desc</code>, <code>release_date.desc</code></td></tr>
+            <tr><td class="param-name">page</td><td class="param-type">number</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Page number. Default: <code>1</code></td></tr>
+            <tr><td class="param-name">min_rating</td><td class="param-type">number</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Minimum vote average (0–10)</td></tr>
+            <tr><td class="param-name">lang</td><td class="param-type">string</td><td><span class="param-req opt">optional</span></td><td class="param-desc">Set to <code>0</code> to disable English-only filter</td></tr>
+          </table>
+          <pre>GET /api/discover?type=movie&amp;genre=27&amp;sort=popularity.desc&amp;min_rating=6</pre>
+          <p style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem;">Common genre IDs: 28 Action · 35 Comedy · 18 Drama · 27 Horror · 878 Sci-Fi · 53 Thriller · 80 Crime · 16 Animation · 10749 Romance · 99 Documentary</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVIE -->
+    <div class="section" id="ep-movie">
+      <div class="section-title" style="font-size:1.4rem;">Mo<span>vie</span></div>
+
+      <div class="endpoint" id="ep-movie">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/movie/<span class="param">:id</span></span>
+          <span class="endpoint-desc">Movie details by TMDB ID</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            <tr><td class="param-name">:id</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">TMDB movie ID</td></tr>
+          </table>
+          <pre>GET /api/movie/27205</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"id"</span>: <span class="rv">27205</span>,<br>
+&nbsp;&nbsp;<span class="rk">"title"</span>: <span class="rs">"Inception"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"overview"</span>: <span class="rs">"..."</span>,<br>
+&nbsp;&nbsp;<span class="rk">"vote_average"</span>: <span class="rv">8.4</span>,<br>
+&nbsp;&nbsp;<span class="rk">"release_date"</span>: <span class="rs">"2010-07-15"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"poster_path"</span>: <span class="rs">"/path.jpg"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"backdrop_path"</span>: <span class="rs">"/path.jpg"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"genres"</span>: [ <span class="rb">{ "id": 28, "name": "Action" }</span> ],<br>
+&nbsp;&nbsp;<span class="rk">"runtime"</span>: <span class="rv">148</span><br>
+}
+          </div>
+          <p style="font-size:0.75rem;color:var(--muted);margin-top:0.75rem;">Image base URL: <code style="color:var(--accent2)">https://image.tmdb.org/t/p/w300</code> + poster_path</p>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-movie-similar">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/movie/<span class="param">:id</span>/similar</span>
+          <span class="endpoint-desc">Similar movies</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/movie/27205/similar</pre>
+          <div class="resp-example">{ <span class="rk">"results"</span>: [ <span class="rb">{ ... }</span> ] }</div>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-movie-videos">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/movie/<span class="param">:id</span>/videos</span>
+          <span class="endpoint-desc">Trailers & clips</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/movie/27205/videos</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"results"</span>: [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"key"</span>: <span class="rs">"YoHD9XEInc0"</span>,&nbsp;<span class="rn">// YouTube key → youtube.com/watch?v=key</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"name"</span>: <span class="rs">"Official Trailer"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"type"</span>: <span class="rs">"Trailer"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"site"</span>: <span class="rs">"YouTube"</span><br>
+&nbsp;&nbsp;}]<br>
+}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TV -->
+    <div class="section" id="ep-tv">
+      <div class="section-title" style="font-size:1.4rem;">TV <span>Shows</span></div>
+
+      <div class="endpoint">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/tv/<span class="param">:id</span></span>
+          <span class="endpoint-desc">Show details by TMDB ID</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/tv/1396</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"id"</span>: <span class="rv">1396</span>,<br>
+&nbsp;&nbsp;<span class="rk">"name"</span>: <span class="rs">"Breaking Bad"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"number_of_seasons"</span>: <span class="rv">5</span>,<br>
+&nbsp;&nbsp;<span class="rk">"number_of_episodes"</span>: <span class="rv">62</span>,<br>
+&nbsp;&nbsp;<span class="rk">"seasons"</span>: [ <span class="rb">{ "season_number": 1, "episode_count": 7 }</span> ]<br>
+}
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-tv-season">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/tv/<span class="param">:id</span>/season/<span class="param">:n</span></span>
+          <span class="endpoint-desc">Season episode list</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/tv/1396/season/1</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"season_number"</span>: <span class="rv">1</span>,<br>
+&nbsp;&nbsp;<span class="rk">"episodes"</span>: [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"episode_number"</span>: <span class="rv">1</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"name"</span>: <span class="rs">"Pilot"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"air_date"</span>: <span class="rs">"2008-01-20"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rk">"runtime"</span>: <span class="rv">58</span><br>
+&nbsp;&nbsp;}]<br>
+}
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-tv-similar">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/tv/<span class="param">:id</span>/similar</span>
+          <span class="endpoint-desc">Similar shows</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/tv/1396/similar</pre>
+          <div class="resp-example">{ <span class="rk">"results"</span>: [ <span class="rb">{ ... }</span> ] }</div>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-tv-videos">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/tv/<span class="param">:id</span>/videos</span>
+          <span class="endpoint-desc">Trailers & clips</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/tv/1396/videos</pre>
+          <div class="resp-example">{ <span class="rk">"results"</span>: [ <span class="rb">{ "key": "...", "type": "Trailer" }</span> ] }</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOURCES -->
+    <div class="section" id="ep-sources">
+      <div class="section-title" style="font-size:1.4rem;">Stream <span>Sources</span></div>
+      <div class="section-sub">Returns all embed URLs for a title — ready to drop into an iframe. This is the unique endpoint you won't find in a standard TMDB wrapper.</div>
+
+      <div class="endpoint">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/sources/<span class="param">:type</span>/<span class="param">:id</span></span>
+          <span class="endpoint-desc">All embed sources for a movie</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="params-table">
+            <tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr>
+            <tr><td class="param-name">:type</td><td class="param-type">string</td><td><span class="param-req req">required</span></td><td class="param-desc"><code>movie</code> or <code>tv</code></td></tr>
+            <tr><td class="param-name">:id</td><td class="param-type">number</td><td><span class="param-req req">required</span></td><td class="param-desc">TMDB ID</td></tr>
+          </table>
+          <pre>GET /api/sources/movie/27205</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"id"</span>: <span class="rs">"27205"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"type"</span>: <span class="rs">"movie"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"sources"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="rk">"name"</span>: <span class="rs">"VidKing"</span>, <span class="rk">"url"</span>: <span class="rs">"https://www.vidking.net/embed/movie/27205"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="rk">"name"</span>: <span class="rs">"Aiden"</span>,   <span class="rk">"url"</span>: <span class="rs">"https://vidsrc.cc/v3/embed/movie/27205"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rn">// ... 6 more sources</span><br>
+&nbsp;&nbsp;]<br>
+}
+          </div>
+          <div class="alert alert-warn" style="margin-top:1rem;">
+            <span class="alert-icon">⚠️</span>
+            <span>Source URLs are not cached — they're generated fresh each request. Availability of each source may vary.</span>
+          </div>
+          <p class="params-label" style="margin-top:1rem;">Usage in a web page</p>
+          <pre><span class="k">const</span> { sources } = <span class="k">await</span> fetch(<span class="s">'/api/sources/movie/27205'</span>).then(r => r.json());
+<span class="k">const</span> iframe = document.getElementById(<span class="s">'player'</span>);
+iframe.src = sources[<span class="n">0</span>].url; <span class="c">// use VidKing first</span></pre>
+        </div>
+      </div>
+
+      <div class="endpoint" id="ep-sources-tv">
+        <div class="endpoint-head" onclick="toggleEp(this)">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">/sources/tv/<span class="param">:id</span>/<span class="param">:season</span>/<span class="param">:episode</span></span>
+          <span class="endpoint-desc">Embed sources for a TV episode</span>
+          <span class="endpoint-chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <pre>GET /api/sources/tv/1396/1/1</pre>
+          <div class="resp-example">
+{<br>
+&nbsp;&nbsp;<span class="rk">"id"</span>: <span class="rs">"1396"</span>, <span class="rk">"season"</span>: <span class="rs">"1"</span>, <span class="rk">"episode"</span>: <span class="rs">"1"</span>,<br>
+&nbsp;&nbsp;<span class="rk">"sources"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="rk">"name"</span>: <span class="rs">"VidKing"</span>, <span class="rk">"url"</span>: <span class="rs">"https://www.vidking.net/embed/tv/1396/1/1"</span> },<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="rn">// ...</span><br>
+&nbsp;&nbsp;]<br>
+}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERRORS -->
+    <div class="section" id="errors">
+      <div class="section-title">Errors &amp; <span>Limits</span></div>
+      <div class="section-sub">All errors return JSON with an <code>error</code> string and <code>status</code> code.</div>
+
+      <div class="error-grid">
+        <div class="error-cell head">Code</div>
+        <div class="error-cell head">Meaning</div>
+        <div class="error-cell"><span class="error-code e200">200</span></div>
+        <div class="error-cell">Success</div>
+        <div class="error-cell"><span class="error-code e400">400</span></div>
+        <div class="error-cell">Bad request — missing or invalid parameter</div>
+        <div class="error-cell"><span class="error-code e401">401</span></div>
+        <div class="error-cell">Unauthorised — API key missing or invalid</div>
+        <div class="error-cell"><span class="error-code e404">404</span></div>
+        <div class="error-cell">Unknown endpoint</div>
+        <div class="error-cell"><span class="error-code e502">502</span></div>
+        <div class="error-cell">TMDB upstream error</div>
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <p class="params-label">Rate Limits (Cloudflare Free Tier)</p>
+        <div class="stats" style="margin-top:0.5rem;">
+          <div class="stat"><span class="stat-val">100K</span><span class="stat-key">requests / day</span></div>
+          <div class="stat"><span class="stat-val">10ms</span><span class="stat-key">CPU per request</span></div>
+          <div class="stat"><span class="stat-val">∞</span><span class="stat-key">bandwidth</span></div>
+        </div>
+        <p style="margin-top:1rem;font-size:0.8rem;color:var(--muted);">Cloudflare does not expose per-IP rate limiting on the free tier. If you need stricter controls, upgrade to Workers Paid and use <code>Rate Limiting</code> rules in the dashboard.</p>
+      </div>
+
+      <div style="margin-top:1.5rem;">
+        <p class="params-label">Cache TTLs</p>
+        <table class="params-table" style="margin-top:0.5rem;">
+          <tr><th>Endpoint</th><th>Cache Duration</th></tr>
+          <tr><td class="param-name">/trending</td><td class="param-desc">5 minutes</td></tr>
+          <tr><td class="param-name">/search</td><td class="param-desc">1 minute</td></tr>
+          <tr><td class="param-name">/movie/:id, /tv/:id</td><td class="param-desc">1 hour</td></tr>
+          <tr><td class="param-name">/tv/:id/season/:n</td><td class="param-desc">30 minutes</td></tr>
+          <tr><td class="param-name">/*/videos</td><td class="param-desc">24 hours</td></tr>
+          <tr><td class="param-name">/sources/*</td><td class="param-desc">No cache (always fresh)</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function toggleEp(head) {
+  const ep = head.closest('.endpoint');
+  const isOpen = ep.classList.contains('open');
+  ep.classList.toggle('open', !isOpen);
+  head.querySelector('.endpoint-chevron').textContent = isOpen ? '▼' : '▲';
+}
+
+function switchTab(btn, group, id) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  btn.closest('.code-tabs').querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`${group}-${id}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+function copyBase() {
+  const text = document.getElementById('base-url').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Base URL copied!'));
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast-pop';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// Highlight active nav item on scroll
+const sections = document.querySelectorAll('.section, .hero');
+const navItems = document.querySelectorAll('.nav-item');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
