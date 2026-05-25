@@ -609,6 +609,7 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
             <div class="player-controls">
               <label class="autonext-toggle"><input type="checkbox" id="autonext-cb" checked> Auto Next</label>
               <button class="ctrl-btn primary" id="next-ep-btn" style="display:none" onclick="playNextEpisode()">⏭ Next</button>
+              <button class="ctrl-btn" onclick="downloadCurrent()">⬇ Download</button>
               <button class="ctrl-btn" onclick="if(currentItem)openTrailerForItem(currentItem)">🎬 Trailer</button>
               <button class="ctrl-btn" id="fs-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
               <button class="ctrl-btn" onclick="closePlayer()">✕ Close</button>
@@ -1055,6 +1056,17 @@ function updateFsBtn(){
   const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
   const btn  = document.getElementById('fs-btn');
   if(btn) btn.textContent = isFs ? '✕ Exit Fullscreen' : '⛶ Fullscreen';
+}
+
+// ── DOWNLOAD ──
+function downloadCurrent(){
+  if(!currentItem){showToast('No title selected');return;}
+  const title=encodeURIComponent(currentItem.title||currentItem.name||'');
+  const id=currentItem.id;
+  // Open dl-buddy which indexes from TMDB id
+  const url=`https://dl.vidsrc.vip/${currentItem._type==='tv'?'tv':'movie'}/${id}`;
+  window.open(url,'_blank','noopener,noreferrer');
+  showToast('Opening download page…');
 }
 
 // ── RESUME POSITION ──
