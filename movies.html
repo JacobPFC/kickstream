@@ -321,6 +321,40 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
 .resume-toast button { background: var(--accent2); color: #000; border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .resume-toast .rt-dismiss { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
+/* ── DOWNLOAD MODAL ── */
+#dl-modal { display: none; position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 1rem; }
+#dl-modal.open { display: flex; }
+.dl-box { width: min(92vw, 500px); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.7); animation: dlSlideIn 0.25s cubic-bezier(0.4,0,0.2,1); }
+@keyframes dlSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.dl-header { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border); gap: 10px; }
+.dl-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dl-poster { width: 38px; height: 56px; object-fit: cover; border-radius: 5px; flex-shrink: 0; background: var(--surface2); }
+.dl-title-wrap { min-width: 0; }
+.dl-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-subtitle { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+.dl-close { background: transparent; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color 0.2s; flex-shrink: 0; }
+.dl-close:hover { color: var(--text); }
+.dl-body { padding: 1rem 1.1rem; }
+.dl-section-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; display: block; }
+.dl-quality-row { display: flex; gap: 6px; margin-bottom: 1rem; }
+.dl-q-btn { flex: 1; padding: 7px 4px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; text-align: center; -webkit-appearance: none; }
+.dl-q-btn:hover { color: var(--text); border-color: var(--muted); }
+.dl-q-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,230,118,0.08); }
+.dl-q-btn .dl-q-note { font-size: 0.58rem; font-weight: 400; color: var(--muted); display: block; margin-top: 2px; }
+.dl-q-btn.active .dl-q-note { color: rgba(0,230,118,0.6); }
+.dl-sources { display: flex; flex-direction: column; gap: 7px; margin-bottom: 1rem; }
+.dl-src-btn { display: flex; align-items: center; gap: 10px; padding: 10px 13px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.15s; text-decoration: none; color: var(--text); font-family: 'DM Sans', sans-serif; -webkit-appearance: none; width: 100%; text-align: left; }
+.dl-src-btn:hover { border-color: var(--accent); background: rgba(0,230,118,0.05); }
+.dl-src-icon { font-size: 1.1rem; flex-shrink: 0; width: 26px; text-align: center; }
+.dl-src-info { flex: 1; min-width: 0; }
+.dl-src-name { font-size: 0.82rem; font-weight: 600; }
+.dl-src-desc { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+.dl-src-badge { font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+.dl-src-badge.free { background: rgba(0,230,118,0.15); color: var(--accent); }
+.dl-src-badge.fast { background: rgba(0,176,255,0.15); color: var(--accent2); }
+.dl-src-badge.p2p  { background: rgba(232,112,64,0.15); color: #e87040; }
+.dl-notice { font-size: 0.65rem; color: var(--muted); line-height: 1.5; text-align: center; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+
 /* ── MOBILE ── */
 @media (max-width: 768px) {
   header { padding: 0 0.75rem; gap: 0.5rem; }
@@ -641,6 +675,36 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
 </div>
 
 
+
+<!-- ═══ DOWNLOAD MODAL ═══ -->
+<div id="dl-modal" onclick="if(event.target===this)closeDlModal()">
+  <div class="dl-box">
+    <div class="dl-header">
+      <div class="dl-header-left">
+        <img class="dl-poster" id="dl-poster" src="" alt="" onerror="this.style.display='none'">
+        <div class="dl-title-wrap">
+          <div class="dl-title" id="dl-modal-title">Download</div>
+          <div class="dl-subtitle" id="dl-modal-subtitle"></div>
+        </div>
+      </div>
+      <button class="dl-close" onclick="closeDlModal()">✕</button>
+    </div>
+    <div class="dl-body">
+      <span class="dl-section-label">Quality</span>
+      <div class="dl-quality-row">
+        <button class="dl-q-btn active" data-q="2160" onclick="selectDlQuality(this)">4K<span class="dl-q-note">2160p</span></button>
+        <button class="dl-q-btn" data-q="1080" onclick="selectDlQuality(this)">FHD<span class="dl-q-note">1080p</span></button>
+        <button class="dl-q-btn" data-q="720" onclick="selectDlQuality(this)">HD<span class="dl-q-note">720p</span></button>
+        <button class="dl-q-btn" data-q="480" onclick="selectDlQuality(this)">SD<span class="dl-q-note">480p</span></button>
+      </div>
+
+      <span class="dl-section-label">Choose Source</span>
+      <div class="dl-sources" id="dl-sources"></div>
+
+      <div class="dl-notice">⚠️ Links open third-party sites. We do not host any files. Use a VPN for privacy.</div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ TRAILER MODAL ═══ -->
 <div id="trailer-modal" onclick="if(event.target===this)closeTrailer()">
@@ -1058,15 +1122,122 @@ function updateFsBtn(){
   if(btn) btn.textContent = isFs ? '✕ Exit Fullscreen' : '⛶ Fullscreen';
 }
 
-// ── DOWNLOAD ──
-function downloadCurrent(){
-  if(!currentItem){showToast('No title selected');return;}
-  const title=encodeURIComponent(currentItem.title||currentItem.name||'');
-  const id=currentItem.id;
-  // Open dl-buddy which indexes from TMDB id
-  const url=`https://dl.vidsrc.vip/${currentItem._type==='tv'?'tv':'movie'}/${id}`;
-  window.open(url,'_blank','noopener,noreferrer');
-  showToast('Opening download page…');
+// ── DOWNLOAD MODAL ──
+let _dlQuality = '2160';
+
+const DL_SOURCES = [
+  {
+    name: 'YTS',
+    icon: '🎬',
+    desc: 'High-quality torrents — movies only',
+    badge: 'free', badgeText: 'Free',
+    url: (item, q) => `https://yts.mx/browse-movies/${encodeURIComponent(item.title||item.name||'')}`,
+    types: ['movie'],
+  },
+  {
+    name: 'VidSrc DL',
+    icon: '⬇️',
+    desc: 'Direct download index via TMDB ID',
+    badge: 'free', badgeText: 'Free',
+    url: (item, q) => `https://dl.vidsrc.vip/${item._type==='tv'?'tv':'movie'}/${item.id}`,
+    types: ['movie','tv'],
+  },
+  {
+    name: 'The Pirate Bay',
+    icon: '🏴‍☠️',
+    desc: 'P2P torrent search',
+    badge: 'p2p', badgeText: 'P2P',
+    url: (item, q) => `https://thepiratebay.org/search.php?q=${encodeURIComponent(item.title||item.name||'')}+${q}p&cat=200`,
+    types: ['movie','tv'],
+  },
+  {
+    name: '1337x',
+    icon: '📦',
+    desc: 'Large torrent library',
+    badge: 'p2p', badgeText: 'P2P',
+    url: (item, q) => `https://1337x.to/search/${encodeURIComponent(item.title||item.name||'')}+${q}p/1/`,
+    types: ['movie','tv'],
+  },
+  {
+    name: 'RARBG Mirror',
+    icon: '🔗',
+    desc: 'RARBG archive mirror',
+    badge: 'p2p', badgeText: 'P2P',
+    url: (item, q) => `https://rargb.to/search/?search=${encodeURIComponent(item.title||item.name||'')}`,
+    types: ['movie','tv'],
+  },
+  {
+    name: 'Internet Archive',
+    icon: '🏛️',
+    desc: 'Free public domain & classic films',
+    badge: 'free', badgeText: 'Free',
+    url: (item, q) => `https://archive.org/search?query=${encodeURIComponent(item.title||item.name||'')}`,
+    types: ['movie','tv'],
+  },
+];
+
+function openDlModal() {
+  if (!currentItem) { showToast('No title selected'); return; }
+  const item = currentItem;
+  const title = item.title || item.name || '';
+  const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+
+  document.getElementById('dl-modal-title').textContent = title;
+  document.getElementById('dl-modal-subtitle').textContent =
+    (item._type === 'tv' ? 'TV Series' : 'Movie') + (year ? ' · ' + year : '');
+
+  const poster = document.getElementById('dl-poster');
+  if (item.poster_path) {
+    poster.src = IMG + item.poster_path;
+    poster.style.display = '';
+  } else {
+    poster.style.display = 'none';
+  }
+
+  renderDlSources();
+  document.getElementById('dl-modal').classList.add('open');
+}
+
+function closeDlModal() {
+  document.getElementById('dl-modal').classList.remove('open');
+}
+
+function selectDlQuality(btn) {
+  document.querySelectorAll('.dl-q-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _dlQuality = btn.dataset.q;
+  renderDlSources();
+}
+
+function renderDlSources() {
+  if (!currentItem) return;
+  const wrap = document.getElementById('dl-sources');
+  wrap.innerHTML = '';
+  const type = currentItem._type || 'movie';
+
+  DL_SOURCES.filter(s => s.types.includes(type)).forEach(src => {
+    const btn = document.createElement('button');
+    btn.className = 'dl-src-btn';
+    btn.innerHTML = `
+      <span class="dl-src-icon">${src.icon}</span>
+      <span class="dl-src-info">
+        <span class="dl-src-name">${src.name}</span>
+        <span class="dl-src-desc">${src.desc}</span>
+      </span>
+      <span class="dl-src-badge ${src.badge}">${src.badgeText}</span>
+    `;
+    btn.addEventListener('click', () => {
+      const url = src.url(currentItem, _dlQuality);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      showToast('Opening ' + src.name + '…');
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+// Keep old function name so the existing button still works
+function downloadCurrent() {
+  openDlModal();
 }
 
 // ── RESUME POSITION ──
