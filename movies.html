@@ -1137,9 +1137,9 @@ const DL_SOURCES = [
   {
     name: 'VidSrc',
     icon: '▶️',
-    desc: 'Streaming links via direct embed',
+    desc: 'Streaming embed player',
     badge: 'free', badgeText: 'Free',
-    url: (item, q) => `https://vidsrc.to/search?query=${encodeURIComponent(item.title||item.name||'')}`,
+    url: (item, q) => `https://vidsrc-embed.ru/embed/${item._type==='tv'?'tv':'movie'}?tmdb=${item.id}`,
     types: ['movie','tv'],
   },
   {
