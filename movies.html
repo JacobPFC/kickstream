@@ -1135,11 +1135,11 @@ const DL_SOURCES = [
     types: ['movie'],
   },
   {
-    name: 'VidSrc DL',
-    icon: '⬇️',
-    desc: 'Direct download index via TMDB ID',
+    name: 'VidSrc',
+    icon: '▶️',
+    desc: 'Streaming links via direct embed',
     badge: 'free', badgeText: 'Free',
-    url: (item, q) => `https://dl.vidsrc.vip/${item._type==='tv'?'tv':'movie'}/${item.id}`,
+    url: (item, q) => `https://vidsrc.to/search?query=${encodeURIComponent(item.title||item.name||'')}`,
     types: ['movie','tv'],
   },
   {
