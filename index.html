@@ -449,6 +449,24 @@ body.no-ads .main{padding-bottom:1.5rem;}
     </div>
 
     <div id="native-ad" style="display:none!important;"></div>
+
+    <!-- Download Section -->
+    <div id="download-section" style="margin:1.5rem 0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;margin-bottom:0.5rem;display:flex;align-items:center;gap:8px;">
+        <span>⬇️</span> Download Movies & TV
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">
+        Looking for high-quality movies and TV shows to download? Visit YTS for the largest library of HD torrents.
+      </p>
+      <a href="https://yts.bz/" target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--accent);padding:9px 20px;border-radius:8px;font-size:0.85rem;font-weight:600;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;"
+         onmouseover="this.style.background='rgba(0,230,118,0.2)'"
+         onmouseout="this.style.background='rgba(0,230,118,0.1)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+        Visit YTS.bz
+      </a>
+    </div>
+
     <div class="legal-notice">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
   </main>
 </div>
@@ -751,29 +769,9 @@ async function showChannels(btn){
   channelsView=true;
   document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   closePlayer();document.getElementById('search-input').value='';
-  document.getElementById('channel-search-bar').style.display='block';document.getElementById('channel-search-input').value='';
-  if(channelsLoaded){
-    if(document.querySelector('.channels-grid'))return;
-    channelsLoaded=false;
-  }
-  document.getElementById('matches-container').innerHTML=`<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
-  try{
-    const [chRes,evRes]=await Promise.all([fetch('https://api.cdnlivetv.tv/api/v1/channels/?user=cdnlivetv&plan=free'),fetch('https://api.cdnlivetv.tv/api/v1/events/sports/?user=cdnlivetv&plan=free')]);
-    if(chRes.url.includes('non-javascript')||evRes.url.includes('non-javascript')){document.getElementById('matches-container').innerHTML=`<div class="empty"><p>Channels blocked by your browser.</p><p style="margin-top:10px;font-size:0.8rem;color:#4a6280">🦁 Brave users: click the <strong>Shield icon</strong> in the address bar → turn off <strong>Block Scripts</strong> → hard refresh (<strong>Ctrl+Shift+R</strong>).</p></div>`;return;}
-    const chData=await chRes.json(),evData=await evRes.json();
-    const nowShowing={},events=Array.isArray(evData)?evData:(evData.events||[]);
-    events.forEach(ev=>{if(ev.status==='live'&&ev.channels){ev.channels.forEach(ch=>{if(!nowShowing[ch.channel_code]){nowShowing[ch.channel_code]={title:ev.homeTeam&&ev.awayTeam?`${ev.homeTeam} vs ${ev.awayTeam}`:(ev.event||ev.tournament||''),viewers:parseInt(ch.viewers)||0};}});}});
-    const channels=(chData.channels||[]).filter(ch=>ch.status==='online'&&ch.url).map(ch=>({...ch,live:nowShowing[ch.code]||null,totalViewers:nowShowing[ch.code]?.viewers||parseInt(ch.viewers)||0})).sort((a,b)=>b.totalViewers-a.totalViewers);
-    const liveChannels=channels.filter(ch=>ch.live);
-    const container=document.createElement('div');
-    function buildChannelCard(ch){const card=document.createElement('div');card.className='channel-card'+(ch.live?' channel-live':'');const logo=ch.image?`<img class="channel-logo" src="${ch.image}" alt="" loading="lazy" onerror="this.style.display='none'">`:`<div style="font-size:1.5rem">📺</div>`;const liveTag=ch.live?`<div style="font-size:0.58rem;font-weight:700;background:var(--live);color:#fff;padding:1px 5px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>`:'';const showingNow=ch.live?`<div style="font-size:0.62rem;color:var(--accent);line-height:1.2;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>`:'';const viewers=ch.totalViewers>0?`<div style="font-size:0.6rem;color:var(--muted);margin-top:2px">👁 ${ch.totalViewers}</div>`:'';card.innerHTML=`${logo}${liveTag}<div class="channel-name">${ch.name||'Channel'}</div>${showingNow}${viewers}`;card.addEventListener('click',()=>window.open(ch.url,'_blank','noopener,noreferrer'));return card;}
-    if(liveChannels.length){const lt=document.createElement('div');lt.className='channels-section-title';lt.innerHTML=`🔴 Live Now <span style="font-size:0.7rem;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--muted);">(${liveChannels.length})</span>`;container.appendChild(lt);const lg=document.createElement('div');lg.className='channels-grid';liveChannels.forEach(ch=>lg.appendChild(buildChannelCard(ch)));container.appendChild(lg);}
-    const groups={};channels.forEach(ch=>{const code=(ch.code||'other').toLowerCase();if(!groups[code])groups[code]=[];groups[code].push(ch);});
-    const priority=['gb','us'];const sortedCodes=[...priority.filter(c=>groups[c]),...Object.keys(groups).filter(c=>!priority.includes(c)).sort()];
-    const at=document.createElement('div');at.className='channels-section-title';at.textContent='📺 All Channels';container.appendChild(at);
-    sortedCodes.forEach(code=>{const chs=groups[code];const ct=document.createElement('div');ct.className='channels-section-title';ct.style.cssText='font-size:0.9rem;color:var(--muted);margin-top:0.75rem;';ct.textContent=COUNTRY_NAMES[code]||code.toUpperCase();container.appendChild(ct);const cg=document.createElement('div');cg.className='channels-grid';chs.forEach(ch=>cg.appendChild(buildChannelCard(ch)));container.appendChild(cg);});
-    document.getElementById('matches-container').innerHTML='';document.getElementById('matches-container').appendChild(container);channelsLoaded=true;
-  }catch(e){document.getElementById('matches-container').innerHTML='<div class="empty">Could not load channels.</div>';}
+  document.getElementById('channel-search-bar').style.display='none';
+  document.getElementById('matches-container').innerHTML='<div class="empty"><p style="font-size:1rem;margin-bottom:1rem;">📺 Channels Temporarily Unavailable</p><p style="font-size:0.85rem;color:var(--muted);">The channels API is currently offline. Please check back soon or use the matches view to find live sports.</p></div>';
+  channelsLoaded=true;
 }
 
 async function checkUrlMatch(){const params=new URLSearchParams(location.search);const partyParam=params.get('party'),matchId=params.get('match');if(partyParam){if(!partyUserName){pendingPartyJoin=partyParam;openNameModal();}else{joinPartyFlow(partyParam);}return;}if(matchId){try{const ms=await fetch(W+'/api/matches/all').then(r=>r.json());const m=ms.find(x=>x.id===matchId);if(m)openMatch(m);}catch(e){}}}
