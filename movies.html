@@ -1127,6 +1127,15 @@ let _dlQuality = '2160';
 
 const DL_SOURCES = [
   {
+    name: 'YTS API',
+    icon: '⚡',
+    desc: 'Live YTS torrent results via API — movies only',
+    badge: 'free', badgeText: 'API',
+    url: (item, q) => `https://yts.bz/browse-movies/${encodeURIComponent(item.title||item.name||'')}`,
+    types: ['movie'],
+    apiSearch: true, // flag to trigger live API lookup
+  },
+  {
     name: 'YTS',
     icon: '🎬',
     desc: 'High-quality torrents — movies only',
@@ -1209,6 +1218,76 @@ function selectDlQuality(btn) {
   renderDlSources();
 }
 
+async function fetchYtsResults(item, quality) {
+  const title = encodeURIComponent(item.title || item.name || '');
+  const year = (item.release_date || '').slice(0, 4);
+  // YTS public API endpoint
+  const url = `https://yts.bz/api/v2/list_movies.json?query_term=${title}&quality=${quality === '2160' ? '2160p' : quality === '1080' ? '1080p' : quality === '720' ? '720p' : '480p'}&sort_by=seeds&limit=5`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return (data.data && data.data.movies) ? data.data.movies : [];
+}
+
+function renderYtsApiCard(wrap, item, quality) {
+  const card = document.createElement('div');
+  card.className = 'dl-src-btn';
+  card.style.flexDirection = 'column';
+  card.style.alignItems = 'flex-start';
+  card.style.gap = '8px';
+  card.style.cursor = 'default';
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <span class="dl-src-icon">⚡</span>
+      <span class="dl-src-info">
+        <span class="dl-src-name">YTS API — Live Results</span>
+        <span class="dl-src-desc">Real-time torrent data from yts.bz</span>
+      </span>
+      <span class="dl-src-badge free">API</span>
+    </div>
+    <div id="yts-api-results" style="width:100%;display:flex;flex-direction:column;gap:6px;padding-top:4px;">
+      <div style="color:var(--muted);font-size:0.78rem;display:flex;align-items:center;gap:6px;"><div class="spinner"></div>Querying YTS API…</div>
+    </div>
+  `;
+  wrap.appendChild(card);
+
+  fetchYtsResults(item, quality).then(movies => {
+    const resultsEl = card.querySelector('#yts-api-results');
+    if (!movies.length) {
+      resultsEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;">No YTS results found for this title.</div>`;
+      return;
+    }
+    resultsEl.innerHTML = '';
+    movies.forEach(movie => {
+      (movie.torrents || []).forEach(torrent => {
+        const row = document.createElement('button');
+        row.className = 'dl-src-btn';
+        row.style.padding = '8px 10px';
+        row.style.cursor = 'pointer';
+        const sizeStr = torrent.size || '';
+        const seeds = torrent.seeds || 0;
+        const seedColor = seeds > 50 ? '#00e676' : seeds > 10 ? '#f5c518' : '#ff1744';
+        row.innerHTML = `
+          <span class="dl-src-icon">🧲</span>
+          <span class="dl-src-info" style="flex:1">
+            <span class="dl-src-name">${movie.title} (${movie.year}) · ${torrent.quality}</span>
+            <span class="dl-src-desc">${sizeStr} &nbsp;·&nbsp; <span style="color:${seedColor}">▲ ${seeds} seeds</span> &nbsp;·&nbsp; ${torrent.type || 'bluray'}</span>
+          </span>
+          <span class="dl-src-badge free">Magnet</span>
+        `;
+        row.addEventListener('click', () => {
+          const magnet = torrent.url || `https://yts.bz/torrent/download/${torrent.hash}`;
+          window.open(magnet, '_blank', 'noopener,noreferrer');
+          showToast('Opening YTS torrent…');
+        });
+        resultsEl.appendChild(row);
+      });
+    });
+  }).catch(() => {
+    const resultsEl = card.querySelector('#yts-api-results');
+    resultsEl.innerHTML = `<div style="color:var(--muted);font-size:0.78rem;">⚠️ YTS API unavailable. Try the manual YTS link below.</div>`;
+  });
+}
+
 function renderDlSources() {
   if (!currentItem) return;
   const wrap = document.getElementById('dl-sources');
@@ -1216,6 +1295,11 @@ function renderDlSources() {
   const type = currentItem._type || 'movie';
 
   DL_SOURCES.filter(s => s.types.includes(type)).forEach(src => {
+    if (src.apiSearch) {
+      // Render the live YTS API card inline
+      renderYtsApiCard(wrap, currentItem, _dlQuality);
+      return;
+    }
     const btn = document.createElement('button');
     btn.className = 'dl-src-btn';
     btn.innerHTML = `
