@@ -450,8 +450,8 @@ body[data-card-size="large"] .cards-scroll { grid-template-columns: repeat(auto-
     <div class="sp-row"><span>English only</span>
       <label class="sp-toggle"><input type="checkbox" id="sp-english" onchange="mvSave('englishOnly',this.checked);englishOnly=this.checked;currentPage=1;if(inBrowse)loadContent()"><span class="sp-slider"></span></label>
     </div>
-    <div class="sp-row"><span>Hide adult content</span>
-      <label class="sp-toggle"><input type="checkbox" id="sp-adult" onchange="mvSave('hideAdult',this.checked);currentPage=1;if(inBrowse)loadContent()"><span class="sp-slider"></span></label>
+    <div class="sp-row"><span>🔞 NSFW Filter</span>
+      <label class="sp-toggle"><input type="checkbox" id="sp-adult" onchange="hideAdult=this.checked;mvSave('hideAdult',this.checked);currentPage=1;showToast(this.checked?'🔞 NSFW filter ON':'🔞 NSFW filter OFF');if(inBrowse)loadContent()"><span class="sp-slider"></span></label>
     </div>
     <div class="sp-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
       <span>Min. rating: <span class="sp-rating-val" id="sp-rating-val">0</span>★</span>
@@ -745,7 +745,7 @@ const SOURCES = [
 ];
 
 let currentType='movie', currentCat=null, currentPage=1;
-let currentSort='popularity.desc', englishOnly=true, specialFilter=null;
+let currentSort='popularity.desc', englishOnly=true, hideAdult=true, specialFilter=null;
 let currentItem=null, currentSeason=1, currentEpisode=1, totalEpisodes=0;
 let tvSeasons=[], autoNextTimer=null, currentSourceIndex=1, inBrowse=false;
 let heroSlides=[], heroIdx=0, heroTimer=null, heroProgTimer=null, heroProgVal=0;
@@ -774,7 +774,8 @@ function applyMvSettings(){
   englishOnly=eng;
   document.getElementById('sp-english').checked=eng;
   document.getElementById('english-filter')?.classList.toggle('active',eng);
-  document.getElementById('sp-adult').checked=mvGet('hideAdult',false);
+  hideAdult=mvGet('hideAdult',true);
+  document.getElementById('sp-adult').checked=hideAdult;
   const mr=mvGet('minRating',0);
   document.getElementById('sp-min-rating').value=mr;
   document.getElementById('sp-rating-val').textContent=mr;
@@ -815,6 +816,7 @@ async function overlaySearch(q){
       ]);
       let results=[...(mv.results||[]).map(m=>({...m,_type:'movie'})),...(tv.results||[]).map(s=>({...s,_type:'tv',title:s.name,release_date:s.first_air_date}))].sort((a,b)=>b.popularity-a.popularity).slice(0,8);
       if(englishOnly) results=results.filter(r=>r.original_language==='en');
+      if(hideAdult) results=results.filter(r=>!r.adult);
       res.innerHTML='';
       if(!results.length){res.innerHTML='<div style="padding:0.75rem;color:var(--muted);font-size:0.82rem;">No results found.</div>';return;}
       results.forEach(item=>{
@@ -926,8 +928,8 @@ async function loadContent(append=false){
   const genreParam=genre?'&with_genres='+genre:'';
   let extra='';
   Object.entries(params).forEach(([k,v])=>{if(!['sort','vote_count','with_genres'].includes(k))extra+=`&${k}=${v}`;});
-  const hideAdult=mvGet('hideAdult',false),minRating=mvGet('minRating',0);
-  const adultParam=hideAdult?'&include_adult=false':'';
+  const minRating=mvGet('minRating',0);
+  const adultParam=hideAdult?'&include_adult=false&without_genres=10749,27':'';
   const ratingParam=minRating>0?`&vote_average.gte=${minRating}`:'';
   const url=base+lang+genreParam+extra+adultParam+ratingParam;
   try{const data=await cachedFetch(url);renderGrid(data.results||[],append);}
@@ -944,6 +946,7 @@ async function doSearch(){
     const [mv,tv]=await Promise.all([fetch(`${API}/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}${lang}`).then(r=>r.json()),fetch(`${API}/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}${lang}`).then(r=>r.json())]);
     let results=[...(mv.results||[]).map(m=>({...m,_type:'movie'})),...(tv.results||[]).map(s=>({...s,_type:'tv',title:s.name,release_date:s.first_air_date}))].sort((a,b)=>b.popularity-a.popularity);
     if(englishOnly) results=results.filter(r=>r.original_language==='en');
+    if(hideAdult) results=results.filter(r=>!r.adult);
     renderGrid(results,false,true);
   }catch(e){document.getElementById('content-container').innerHTML='<div class="empty">Search failed.</div>';}
 }
