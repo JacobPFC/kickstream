@@ -79,7 +79,7 @@
         <div class="platform-hint">
             <span class="pill"><svg viewBox="0 0 24 24"><path d="M10.333 0c-5.522 0-10 4.478-10 10 0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm3.701 14.077c-1.752 1.057-4.098 1.044-5.852-.004-1.754-1.049-1.754-2.744 0-3.793 1.754-1.048 4.1-1.061 5.852-.004 1.753 1.048 1.753 2.744 0 3.793zm-4.084-1.767c-.497.296-1.033.296-1.53 0-.497-.297-.497-.778 0-1.075.497-.296 1.033-.296 1.53 0 .497.297.497.778 0 1.075z"/></svg> YouTube</span>
             <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.467c.168 1.302-.219 2.664-.766 3.914-.62 1.414-1.539 2.672-2.614 3.704-1.178 1.131-2.562 2.036-4.131 2.557-1.561.519-3.095.633-4.727.324-1.746-.329-3.311-1.134-4.638-2.299-.93-.817-1.642-1.806-2.157-2.922-.554-1.203-.893-2.455-.965-3.748-.072-1.293.112-2.57.541-3.792.407-1.158 1.014-2.254 1.79-3.198.746-.905 1.654-1.665 2.67-2.252.988-.568 2.11-.969 3.246-1.126 1.139-.157 2.295-.058 3.382.294.995.323 1.956.861 2.777 1.544.812.673 1.5 1.489 2.024 2.415.509.902.833 1.896.976 2.927z"/></svg> TikTok</span>
-            <span style="opacity:0.4;font-size:0.6rem;">— multi‑fallback proxy & API</span>
+            <span style="opacity:0.4;font-size:0.6rem;">— using CORS-friendly APIs</span>
         </div>
 
         <div id="status">
@@ -111,25 +111,63 @@
     </div>
 
     <script>
-        /* ── Proxies (ordered by likelihood to work) ── */
-        const PROXIES = [
-            // 1. Direct fetch (some APIs allow CORS)
-            url => url,
-            // 2. ThingProxy (often permissive)
-            url => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`,
-            // 3. CORSProxy.io (with correct encoding)
-            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-            // 4. AllOrigins (fallback)
-            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-        ];
+        /* ── Direct fetch (no proxy needed for Invidious) ── */
+        async function fetchDirect(url, timeout = 15000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeout);
+            try {
+                const res = await fetch(url, {
+                    signal: controller.signal,
+                    credentials: 'omit',
+                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                });
+                clearTimeout(timer);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const text = await res.text();
+                try { return JSON.parse(text); } catch (_) { throw new Error('Invalid JSON'); }
+            } catch (err) {
+                clearTimeout(timer);
+                throw err;
+            }
+        }
 
-        /* ── YouTube APIs (fallback) ── */
-        const YT_APIS = [
-            // 1. ytmate.com (returns video & audio)
-            id => `https://api.ytmate.com/api/url?url=https://www.youtube.com/watch?v=${id}`,
-            // 2. yt-dl.org (fallback)
-            id => `https://api.yt-dl.org/url?url=https://www.youtube.com/watch?v=${id}`
-        ];
+        /* ── Fallback proxy (if direct fails) ── */
+        async function fetchViaProxy(url, timeout = 15000) {
+            const proxyUrls = [
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`
+            ];
+            let lastError = null;
+            for (const proxyUrl of proxyUrls) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), timeout);
+                    const res = await fetch(proxyUrl, {
+                        signal: controller.signal,
+                        credentials: 'omit',
+                        headers: { 'User-Agent': 'Mozilla/5.0' }
+                    });
+                    clearTimeout(timer);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const text = await res.text();
+                    try { return JSON.parse(text); } catch (_) { throw new Error('Invalid JSON'); }
+                } catch (err) {
+                    lastError = err;
+                    continue;
+                }
+            }
+            throw new Error(`All proxies failed: ${lastError?.message || 'unknown'}`);
+        }
+
+        /* ── Smart fetch: try direct, then proxy ── */
+        async function smartFetch(url, timeout = 15000) {
+            try {
+                return await fetchDirect(url, timeout);
+            } catch (e) {
+                console.warn('Direct fetch failed, trying proxy:', e.message);
+                return await fetchViaProxy(url, timeout);
+            }
+        }
 
         /* ── Helpers ── */
         const $ = id => document.getElementById(id);
@@ -195,91 +233,86 @@
             return platform === 'youtube' ? '▶' : '♪';
         }
 
-        /* ── Fetch with proxy rotation ── */
-        async function fetchWithProxyRotation(url, timeout = 20000) {
-            let lastError = null;
-            for (const proxyFn of PROXIES) {
-                try {
-                    const targetUrl = proxyFn(url);
-                    console.log('[Attempt]', targetUrl); // debug
-                    const controller = new AbortController();
-                    const timer = setTimeout(() => controller.abort(), timeout);
-                    const res = await fetch(targetUrl, {
-                        signal: controller.signal,
-                        credentials: 'omit',
-                        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-                    });
-                    clearTimeout(timer);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const contentType = res.headers.get('content-type') || '';
-                    if (contentType.includes('text/html')) {
-                        const text = await res.text();
-                        try { return JSON.parse(text); } catch (_) { throw new Error('Proxy returned HTML'); }
-                    }
-                    return await res.json();
-                } catch (err) {
-                    lastError = err;
-                    console.warn('Proxy failed:', err.message);
-                    continue;
-                }
-            }
-            throw new Error(`All proxies failed: ${lastError?.message || 'unknown'}`);
-        }
-
-        /* ── YouTube fetch (tries multiple APIs) ── */
+        /* ── YouTube via Invidious (CORS-friendly) ── */
         async function fetchYouTube(id) {
-            // Get oembed metadata (no proxy needed)
-            let oembedData = { title: 'YouTube Video', thumbnail_url: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-                author_name: '—', duration: null };
-            try {
-                const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, {
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (res.ok) oembedData = await res.json();
-            } catch (_) { /* ignore */ }
+            // Use Invidious API (public instance with CORS)
+            const apiUrl = `https://invidious.fdn.fr/api/v1/videos/${id}`;
+            const data = await smartFetch(apiUrl);
 
-            let lastError = null;
-            for (const apiFn of YT_APIS) {
-                try {
-                    const apiUrl = apiFn(id);
-                    const data = await fetchWithProxyRotation(apiUrl);
+            // Invidious returns: { title, videoId, videoThumbnails, lengthSeconds, viewCount, author, adaptiveFormats, formatStreams }
+            if (!data || !data.videoId) {
+                throw new Error('Invidious API returned invalid data');
+            }
 
-                    // ytmate response: { success: true, data: { title, thumbnail, duration, video: { url, quality }, audio: { url } } }
-                    // yt-dl response may have similar structure
-                    if (data && data.success && data.data) {
-                        const info = data.data;
-                        const video = info.video || {};
-                        const audio = info.audio || {};
-                        return {
-                            id,
-                            title: info.title || oembedData.title || 'YouTube Video',
-                            thumbnail: info.thumbnail || oembedData.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-                            duration: info.duration ? formatDuration(info.duration) : (oembedData.duration ? formatDuration(oembedData.duration) : '—'),
-                            author: info.author || oembedData.author_name || '—',
-                            views: info.views ? formatNumber(info.views) : '—',
-                            platform: 'youtube',
-                            downloads: {
-                                mp4: video.url || null,
-                                mp3: audio.url || null,
-                                hd: video.url && video.quality === 'hd' ? video.url : null
-                            }
-                        };
-                    }
-                    // If we got here, the API returned unexpected format
-                    lastError = new Error('Unexpected API response');
-                } catch (err) {
-                    lastError = err;
-                    console.warn('YouTube API failed:', err.message);
-                    continue;
+            // Extract video streams (adaptiveFormats contains both video and audio)
+            const formats = data.adaptiveFormats || [];
+            // Also include formatStreams for progressive (video+audio) if needed
+            const progressive = data.formatStreams || [];
+
+            // Find best video (non-dash) and audio streams
+            let videoUrl = null;
+            let audioUrl = null;
+            let hdVideoUrl = null;
+
+            // Prefer high quality video (adaptive)
+            const videoFormats = formats.filter(f => f.type && f.type.startsWith('video/'));
+            // Sort by quality (resolution)
+            videoFormats.sort((a, b) => (b.qualityLabel || '').localeCompare(a.qualityLabel || ''));
+            if (videoFormats.length > 0) {
+                hdVideoUrl = videoFormats[0].url || null;
+                // Also get lower quality as fallback
+                if (videoFormats.length > 1) {
+                    videoUrl = videoFormats[1].url || videoFormats[0].url;
+                } else {
+                    videoUrl = videoFormats[0].url;
                 }
             }
-            throw new Error(`All YouTube APIs failed: ${lastError?.message || 'unknown'}`);
+
+            // If no adaptive video, try progressive
+            if (!videoUrl && progressive.length > 0) {
+                const progVideo = progressive.find(f => f.type && f.type.startsWith('video/'));
+                if (progVideo) {
+                    videoUrl = progVideo.url;
+                    hdVideoUrl = videoUrl; // same
+                }
+            }
+
+            // Audio: find best audio format
+            const audioFormats = formats.filter(f => f.type && f.type.startsWith('audio/'));
+            audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
+            if (audioFormats.length > 0) {
+                audioUrl = audioFormats[0].url || null;
+            }
+
+            // If no audio, try mime type audio/mp4 etc.
+            if (!audioUrl) {
+                const anyAudio = formats.find(f => f.type && f.type.includes('audio'));
+                if (anyAudio) audioUrl = anyAudio.url;
+            }
+
+            // Fallback: use direct YouTube download (maybe via proxy) – we'll skip for now
+
+            return {
+                id,
+                title: data.title || 'YouTube Video',
+                thumbnail: data.videoThumbnails && data.videoThumbnails.length > 0 ? data.videoThumbnails[data.videoThumbnails
+                    .length - 1].url : `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                duration: data.lengthSeconds ? formatDuration(data.lengthSeconds) : '—',
+                author: data.author || '—',
+                views: data.viewCount ? formatNumber(data.viewCount) : '—',
+                platform: 'youtube',
+                downloads: {
+                    mp4: videoUrl || null,
+                    hd: hdVideoUrl || null,
+                    mp3: audioUrl || null
+                }
+            };
         }
 
-        /* ── TikTok fetch using tikwm.com (via proxy) ── */
+        /* ── TikTok via TikWM (uses proxy if needed) ── */
         async function fetchTikTok(url) {
             const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
-            const data = await fetchWithProxyRotation(apiUrl);
+            const data = await smartFetch(apiUrl);
 
             if (!data || data.code !== 0 || !data.data) {
                 throw new Error('TikTok API returned invalid response');
@@ -320,7 +353,7 @@
             }
 
             fetchBtn.disabled = true;
-            setStatus(`Fetching ${platformLabel(platform)} (multiple fallbacks)…`, 'loading');
+            setStatus(`Fetching ${platformLabel(platform)}…`, 'loading');
             showResult(false);
 
             try {
@@ -335,7 +368,8 @@
                     throw new Error('Unsupported platform');
                 }
 
-                const hasLinks = data.downloads && (data.downloads.mp4 || data.downloads.hd || data.downloads.mp3 || data.downloads.audio);
+                const hasLinks = data.downloads && (data.downloads.mp4 || data.downloads.hd || data.downloads.mp3 || data
+                    .downloads.audio);
                 renderResult(data);
                 if (hasLinks) {
                     setStatus('✅ Ready to download', 'success');
@@ -373,7 +407,8 @@
 
             if (downloadsContainer.children.length === 0) {
                 const msg = document.createElement('div');
-                msg.style.cssText = 'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
+                msg.style.cssText =
+                    'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
                 msg.textContent = 'No downloadable formats found for this video.';
                 downloadsContainer.appendChild(msg);
             }
@@ -391,7 +426,8 @@
 
         /* ── Event listeners ── */
         urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchMedia(); });
-        window.addEventListener('load', () => { urlInput.focus(); setStatus('Paste a YouTube or TikTok link', ''); });
+        window.addEventListener('load', () => { urlInput.focus();
+            setStatus('Paste a YouTube or TikTok link', ''); });
 
         (function checkUrlParam() {
             const params = new URLSearchParams(window.location.search);
@@ -402,7 +438,7 @@
             }
         })();
 
-        console.log('🎥 KickStream Downloader v5 – multi‑fallback proxies & APIs');
+        console.log('🎥 KickStream Downloader v6 – Invidious API + smart fetch');
     </script>
 </body>
 </html>
