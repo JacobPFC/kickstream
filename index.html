@@ -25,6 +25,10 @@ body.light-mode{
   --text:#1a2533;--muted:#6b7f96;--card-hover:#eaf0f7;--surface:#fff;
   --score-bg:rgba(0,180,90,0.08);--score-border:rgba(0,180,90,0.2);
 }
+/* High contrast mode */
+body.high-contrast{--text:#ffffff;--muted:#b0c4de;--border:#4a6a8a;--surface:#0a0a0a;--surface2:#1a1a2e;}
+body.high-contrast .match-card{border-width:2px;}
+body.high-contrast .sport-link.active{border-left-width:4px;}
 *{margin:0;padding:0;box-sizing:border-box;touch-action:manipulation;}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
 html,body{background:var(--bg);overscroll-behavior:none;}
@@ -70,6 +74,8 @@ body.light-mode header{background:rgba(240,244,248,0.97);}
 .league-btn:hover{color:var(--text);background:var(--surface2);}
 .league-btn.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,230,118,0.04);}
 .main{margin-left:var(--sidebar-w);flex:1;padding:1.5rem;padding-bottom:5rem;min-width:0;}
+body.sidebar-hidden .sidebar{display:none;}
+body.sidebar-hidden .main{margin-left:0;}
 #score-ticker{display:none;background:var(--score-bg);border:1px solid var(--score-border);border-radius:10px;padding:8px 14px;margin-bottom:1.25rem;overflow:hidden;}
 #score-ticker.visible{display:block;}
 .score-ticker-inner{display:flex;gap:0;align-items:center;white-space:nowrap;animation:ticker-scroll 30s linear infinite;}
@@ -148,7 +154,11 @@ body.light-mode header{background:rgba(240,244,248,0.97);}
 .sport-section{margin-bottom:2rem;}
 .sport-section-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px;}
 .sport-section-count{font-size:0.68rem;font-weight:600;background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:10px;color:var(--muted);font-family:'DM Sans',sans-serif;}
-.matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.matches-grid{display:grid;gap:10px;}
+.matches-grid.cols-auto{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+.matches-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.matches-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.matches-grid.cols-4{grid-template-columns:repeat(4,1fr);}
 .match-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
 .match-card:hover{border-color:#2a3d52;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
 .match-card.live-card{border-color:rgba(255,23,68,0.25);}
@@ -254,7 +264,7 @@ body.light-mode header{background:rgba(240,244,248,0.97);}
 .name-modal-btn{width:100%;padding:10px;background:rgba(255,214,0,0.1);border:1px solid rgba(255,214,0,0.3);color:var(--fav);font-size:0.85rem;font-weight:700;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 #settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:498;}
 #settings-overlay.open{display:block;}
-#settings-panel{position:fixed;top:0;right:-340px;width:320px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:499;padding:1.5rem 1.25rem;transition:right 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,0.5);}
+#settings-panel{position:fixed;top:0;right:-380px;width:360px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:499;padding:1.5rem 1.25rem;transition:right 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,0.5);}
 #settings-panel.open{right:0;}
 .sp-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;}
 .sp-close{background:transparent;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px;}
@@ -270,9 +280,13 @@ body.light-mode header{background:rgba(240,244,248,0.97);}
 .sp-toggle input:checked+.sp-toggle-slider{background:var(--accent);}
 .sp-toggle input:checked+.sp-toggle-slider::before{transform:translateX(16px);}
 .sp-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;-webkit-appearance:none;}
+.sp-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.8rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
 .sp-btn{width:100%;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;margin-top:4px;}
-.sp-btn:hover{color:var(--live);border-color:var(--live);}
+.sp-btn:hover{color:var(--text);border-color:var(--muted);}
 .sp-btn.sp-btn-green:hover{color:var(--accent);border-color:var(--accent);}
+.sp-btn.sp-btn-danger:hover{color:var(--live);border-color:var(--live);}
+.sp-btn.sp-btn-primary{background:var(--accent);color:#000;border-color:var(--accent);}
+.sp-btn.sp-btn-primary:hover{background:var(--accent2);border-color:var(--accent2);}
 #search-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding-top:70px;}
 #search-overlay.open{display:flex;}
 .search-overlay-box{width:min(92vw,480px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
@@ -311,7 +325,7 @@ body.no-ads #banner-ad{display:none!important;}
   .header-search{display:none;}
   .discord-btn,.live-pill{display:none;}
   header .filter-tabs{display:none!important;}
-  .matches-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .matches-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
   .channels-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
   .stream-item{padding:12px;min-height:44px;}
   .stream-newtab-btn{min-width:44px;justify-content:center;}
@@ -512,34 +526,81 @@ body.no-ads #banner-ad{display:none!important;}
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
   <div class="sp-title">Settings <button class="sp-close" onclick="closeSettings()">✕</button></div>
+
+  <!-- General -->
   <div class="sp-section">
-    <span class="sp-label">Default View</span>
-    <div class="sp-row"><span>Open on</span><select class="sp-select" id="sp-default-filter" onchange="saveSetting('defaultFilter',this.value)"><option value="live">🔴 Live</option><option value="today">Today</option><option value="all">All Matches</option></select></div>
+    <span class="sp-label">General</span>
+    <div class="sp-row"><span>Default View</span><select class="sp-select" id="sp-default-filter" onchange="saveSetting('defaultFilter',this.value)"><option value="live">🔴 Live</option><option value="today">Today</option><option value="all">All Matches</option></select></div>
     <div class="sp-row"><span>Default Sport</span><select class="sp-select" id="sp-default-sport" onchange="saveSetting('defaultSport',this.value)"><option value="all">All Sports</option><option value="football">⚽ Football</option><option value="basketball">🏀 Basketball</option><option value="tennis">🎾 Tennis</option><option value="hockey">🏒 Hockey</option><option value="baseball">⚾ Baseball</option><option value="mma">🥊 MMA</option><option value="boxing">🥊 Boxing</option><option value="rugby">🏉 Rugby</option><option value="cricket">🏏 Cricket</option></select></div>
+    <div class="sp-row"><span>Clock format</span><select class="sp-select" id="sp-clock" onchange="saveSetting('clock',this.value)"><option value="12">12-hour</option><option value="24">24-hour</option></select></div>
+    <div class="sp-row"><span>Light mode</span><label class="sp-toggle"><input type="checkbox" id="sp-light" onchange="toggleTheme(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>High contrast</span><label class="sp-toggle"><input type="checkbox" id="sp-high-contrast" onchange="toggleHighContrast(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Hide sidebar</span><label class="sp-toggle"><input type="checkbox" id="sp-hide-sidebar" onchange="toggleSidebar(this.checked)"><span class="sp-toggle-slider"></span></label></div>
   </div>
+
+  <!-- Stream Sources -->
   <div class="sp-section">
-    <span class="sp-label">Streams</span>
+    <span class="sp-label">Stream Sources</span>
+    <div class="sp-row"><span>Enable Primary (Worker)</span><label class="sp-toggle"><input type="checkbox" id="sp-enable-primary" onchange="saveSetting('enablePrimary',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Enable PPV.to</span><label class="sp-toggle"><input type="checkbox" id="sp-enable-ppv" onchange="saveSetting('enablePPV',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Enable WatchFooty</span><label class="sp-toggle"><input type="checkbox" id="sp-enable-wf" onchange="saveSetting('enableWF',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Preferred source order</span>
+      <select class="sp-select" id="sp-source-order" onchange="saveSetting('sourceOrder',this.value)">
+        <option value="ppv_wf_primary">PPV.to → WatchFooty → Primary</option>
+        <option value="wf_ppv_primary">WatchFooty → PPV.to → Primary</option>
+        <option value="primary_ppv_wf">Primary → PPV.to → WatchFooty</option>
+        <option value="primary_wf_ppv">Primary → WatchFooty → PPV.to</option>
+        <option value="wf_primary_ppv">WatchFooty → Primary → PPV.to</option>
+        <option value="ppv_primary_wf">PPV.to → Primary → WatchFooty</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>Hide matches with no streams</span><label class="sp-toggle"><input type="checkbox" id="sp-hide-empty" onchange="saveSetting('hideEmpty',this.checked)"><span class="sp-toggle-slider"></span></label></div>
+  </div>
+
+  <!-- Player -->
+  <div class="sp-section">
+    <span class="sp-label">Player & Playback</span>
     <div class="sp-row"><span>Auto-play streams</span><label class="sp-toggle"><input type="checkbox" id="sp-autoplay" onchange="saveSetting('autoplay',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
     <div class="sp-row"><span>Prefer HD streams</span><label class="sp-toggle"><input type="checkbox" id="sp-prefer-hd" onchange="saveSetting('preferHD',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Auto-fullscreen on watch</span><label class="sp-toggle"><input type="checkbox" id="sp-auto-fullscreen" onchange="saveSetting('autoFullscreen',this.checked)"><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Default volume (0–100)</span><input class="sp-input" type="number" id="sp-volume" min="0" max="100" value="80" onchange="saveSetting('volume',this.value)"></div>
     <div class="sp-row"><span>Hide finished matches</span><label class="sp-toggle"><input type="checkbox" id="sp-hide-finished" onchange="saveSetting('hideFinished',this.checked)"><span class="sp-toggle-slider"></span></label></div>
   </div>
+
+  <!-- Display -->
   <div class="sp-section">
     <span class="sp-label">Display</span>
-    <div class="sp-row"><span>Light mode</span><label class="sp-toggle"><input type="checkbox" id="sp-light" onchange="toggleTheme(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Match grid columns</span>
+      <select class="sp-select" id="sp-grid-cols" onchange="saveSetting('gridCols',this.value)">
+        <option value="auto">Auto</option>
+        <option value="2">2 columns</option>
+        <option value="3">3 columns</option>
+        <option value="4">4 columns</option>
+      </select>
+    </div>
+    <div class="sp-row"><span>Show stream count on cards</span><label class="sp-toggle"><input type="checkbox" id="sp-show-stream-count" onchange="saveSetting('showStreamCount',this.checked)" checked><span class="sp-toggle-slider"></span></label></div>
     <div class="sp-row"><span>Compact card view</span><label class="sp-toggle"><input type="checkbox" id="sp-compact" onchange="toggleCompact(this.checked)"><span class="sp-toggle-slider"></span></label></div>
-    <div class="sp-row"><span>Clock format</span><select class="sp-select" id="sp-clock" onchange="saveSetting('clock',this.value)"><option value="12">12-hour</option><option value="24">24-hour</option></select></div>
     <div class="sp-row"><span>Reduce motion</span><label class="sp-toggle"><input type="checkbox" id="sp-reduce-motion" onchange="toggleReduceMotion(this.checked)"><span class="sp-toggle-slider"></span></label></div>
     <div class="sp-row"><span>Score ticker</span><label class="sp-toggle"><input type="checkbox" id="sp-scores" onchange="saveSetting('scoreTicker',this.checked);toggleScoreTicker()" checked><span class="sp-toggle-slider"></span></label></div>
   </div>
+
+  <!-- Notifications -->
   <div class="sp-section">
     <span class="sp-label">Notifications</span>
-    <div class="sp-row"><span>Match go-live alerts</span><label class="sp-toggle"><input type="checkbox" id="sp-notifs" onchange="toggleNotifications(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+    <div class="sp-row"><span>Match go‑live alerts</span><label class="sp-toggle"><input type="checkbox" id="sp-notifs" onchange="toggleNotifications(this.checked)"><span class="sp-toggle-slider"></span></label></div>
   </div>
+
+  <!-- Data -->
   <div class="sp-section">
     <span class="sp-label">Data</span>
-    <button class="sp-btn" onclick="clearFavourites()">⭐ Clear Favourite Teams</button>
-    <button class="sp-btn sp-btn-green" onclick="resetSettings()">↺ Reset All Settings</button>
+    <button class="sp-btn sp-btn-green" onclick="clearFavourites()">⭐ Clear Favourite Teams</button>
+    <button class="sp-btn" onclick="exportFavourites()">📤 Export Favourites</button>
+    <button class="sp-btn" onclick="document.getElementById('import-fav-input').click()">📥 Import Favourites</button>
+    <input type="file" id="import-fav-input" accept=".json" style="display:none" onchange="importFavourites(event)">
+    <button class="sp-btn sp-btn-danger" onclick="clearCache()">🧹 Clear Cached Matches</button>
+    <button class="sp-btn sp-btn-primary" onclick="resetSettings()">↺ Reset All Settings</button>
   </div>
+
   <div style="font-size:0.65rem;color:var(--muted);text-align:center;margin-top:1rem;line-height:1.5;">KickStream does not host any streams. Content is linked from third-party services.</div>
 </div>
 
@@ -759,6 +820,8 @@ function triggerPWAInstall(){if(deferredInstall){deferredInstall.prompt();deferr
 function dismissPWA(){document.getElementById('pwa-banner').classList.remove('visible');saveSetting('pwaDismissed',true);}
 
 function toggleTheme(forceState){const light=forceState!==undefined?forceState:!document.body.classList.contains('light-mode');document.body.classList.toggle('light-mode',light);saveSetting('lightMode',light);document.getElementById('sp-light').checked=light;}
+function toggleHighContrast(on){saveSetting('highContrast',on);document.body.classList.toggle('high-contrast',on);}
+function toggleSidebar(on){saveSetting('hideSidebar',on);document.body.classList.toggle('sidebar-hidden',on);}
 
 document.addEventListener('keydown',e=>{
   const tag=document.activeElement.tagName;
@@ -880,42 +943,51 @@ async function loadSports(){try{const sports=await fetch(W+'/api/sports').then(r
 const _cache=new Map();
 async function cachedFetch(url,ttl=60000){const hit=_cache.get(url);if(hit&&Date.now()-hit.ts<ttl)return hit.data;const data=await fetch(url).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();});_cache.set(url,{data,ts:Date.now()});return data;}
 
-// ── UPDATED: loadMatches merges ppv.to + watchfooty ──
+// ── loadMatches with new source toggles and ordering ──
 async function loadMatches(){
   if(channelsView)return;
   document.getElementById('matches-container').innerHTML=`<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
   try{
-    const [primaryRes,ppvRes,wfRes] = await Promise.allSettled([
-      cachedFetch(getEndpoint()),
-      fetchPPVTo(),
-      fetchWatchFooty()
-    ]);
-    const primary = primaryRes.status==='fulfilled' ? primaryRes.value : [];
-    const ppvAll = ppvRes.status==='fulfilled' ? ppvRes.value : [];
-    const wfAll = wfRes.status==='fulfilled' ? wfRes.value : [];
+    const enablePrimary = getSetting('enablePrimary', true);
+    const enablePPV = getSetting('enablePPV', true);
+    const enableWF = getSetting('enableWF', true);
 
-    // Filter ppv.to by current view
+    const promises = [];
+    if(enablePrimary) promises.push(cachedFetch(getEndpoint()));
+    else promises.push(Promise.resolve([]));
+    if(enablePPV) promises.push(fetchPPVTo());
+    else promises.push(Promise.resolve([]));
+    if(enableWF) promises.push(fetchWatchFooty());
+    else promises.push(Promise.resolve([]));
+
+    const [primaryRes, ppvAll, wfAll] = await Promise.all(promises);
+    const primary = Array.isArray(primaryRes)?primaryRes:[];
+    const ppv = Array.isArray(ppvAll)?ppvAll:[];
+    const wf = Array.isArray(wfAll)?wfAll:[];
+
+    // Filter by current view
     const now=Date.now();
     const todayStart=new Date();todayStart.setHours(0,0,0,0);
     const todayEnd=new Date();todayEnd.setHours(23,59,59,999);
-    const ppv=ppvAll.filter(m=>{
+    const filterByView = (list) => list.filter(m=>{
       const start=new Date(m.date).getTime();
       if(currentFilter==='live')return m.status==='live'||m.alwaysLive;
       if(currentFilter==='today')return start>=todayStart.getTime()&&start<=todayEnd.getTime();
       return true;
     });
+    const filteredPrimary = filterByView(primary);
+    const filteredPPV = filterByView(ppv);
+    const filteredWF = filterByView(wf);
 
-    // Filter watchfooty similarly
-    const wf=wfAll.filter(m=>{
-      const start=new Date(m.date).getTime();
-      if(currentFilter==='live')return m.status==='live';
-      if(currentFilter==='today')return start>=todayStart.getTime()&&start<=todayEnd.getTime();
-      return true;
-    });
+    // Merge: start with primary, then merge PPV and WF (deduplicate)
+    let merged = [...filteredPrimary];
+    merged = mergePPV(merged, filteredPPV);
+    merged = mergeWatchFooty(merged, filteredWF);
 
-    // Merge all: primary + ppv + watchfooty
-    let merged = mergePPV(primary, ppv);
-    merged = mergeWatchFooty(merged, wf);
+    // Apply "hide empty" setting
+    if(getSetting('hideEmpty', false)){
+      merged = merged.filter(m => m.sources && m.sources.length > 0);
+    }
 
     allMatches = merged;
 
@@ -941,7 +1013,8 @@ function renderMatches(matches){
   const container=document.createElement('div');
   Object.entries(groups).forEach(([sport,sportMatches])=>{
     const section=document.createElement('div');section.className='sport-section';section.innerHTML=`<div class="sport-section-title"><span>${SPORT_ICONS[sport]||'🎯'}</span> ${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
-    const grid=document.createElement('div');grid.className='matches-grid';sportMatches.forEach(match=>grid.appendChild(buildCard(match,isLiveFilter)));section.appendChild(grid);container.appendChild(section);
+    const grid=document.createElement('div');grid.className='matches-grid cols-'+getSetting('gridCols','auto');
+    sportMatches.forEach(match=>grid.appendChild(buildCard(match,isLiveFilter)));section.appendChild(grid);container.appendChild(section);
   });
   document.getElementById('matches-container').innerHTML='';document.getElementById('matches-container').appendChild(container);startCountdownTimers();
 }
@@ -964,7 +1037,8 @@ function buildCard(match,isLive){
   top.innerHTML=`<div class="card-poster-teams"><div class="poster-badge">${hn?hn[0].toUpperCase():'?'}</div><div class="poster-vs">VS</div><div class="poster-badge">${an?an[0].toUpperCase():'?'}</div></div>${tag}${cdEl}${scoreEl}${favBtnHtml}`;
   const body=document.createElement('div');body.className='card-body';
   const streamCount=match.sources?.length||0;
-  body.innerHTML=`<div class="card-title">${match.title}</div><div class="card-meta"><span>${streamCount} stream${streamCount!==1?'s':''}</span><span>${ts}</span></div>`;
+  const showCount = getSetting('showStreamCount', true);
+  body.innerHTML=`<div class="card-title">${match.title}</div><div class="card-meta"><span>${showCount ? streamCount+' stream'+(streamCount!==1?'s':'') : ''}</span><span>${ts}</span></div>`;
   const bw=document.createElement('div');bw.className='card-footer-btns';
   const watchBtn=document.createElement('button');watchBtn.className='card-watch';watchBtn.textContent='▶ Watch';watchBtn.addEventListener('click',e=>{e.stopPropagation();openMatch(match);});
   const shareBtn=document.createElement('button');shareBtn.className='card-share';shareBtn.textContent='🔗';shareBtn.title='Copy link';shareBtn.addEventListener('click',e=>{e.stopPropagation();const url=location.origin+location.pathname+'?match='+match.id;navigator.clipboard.writeText(url).then(()=>showToast('Link copied!')).catch(()=>prompt('Copy:',url));});
@@ -977,7 +1051,7 @@ function buildCard(match,isLive){
 
 function showToast(msg){const ex=document.querySelector('.toast');if(ex)ex.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
-// ── UPDATED: openMatch no longer uses embedsports.top ──
+// ── openMatch with source order and auto-fullscreen ──
 async function openMatch(match){
   currentItem=match;
   history.pushState({matchId:match.id},'',(partyId?'?party='+partyId+'&':'?')+'match='+match.id);
@@ -990,51 +1064,42 @@ async function openMatch(match){
   document.getElementById('stream-list').innerHTML=`<div class="no-streams"><span class="spinner"></span>Fetching...</div>`;
   showLiveScoreBar(match);startScorePolling(match);
 
-  // Fetch primary streams, ppv.to, and watchfooty
+  // Fetch primary streams, ppv.to, and watchfooty (respect toggles)
+  const enablePrimary = getSetting('enablePrimary', true);
+  const enablePPV = getSetting('enablePPV', true);
+  const enableWF = getSetting('enableWF', true);
+
   const [primaryStreams, ppvAll, wfAll] = await Promise.all([
     (async()=>{
-      if(!match.sources?.length)return [];
+      if(!enablePrimary || !match.sources?.length) return [];
       const results=await Promise.all(match.sources.map(s=>fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r=>r.json()).then(data=>(Array.isArray(data)?data:[]).map(st=>{
-        // Direct embed URL if available
         let embedUrl = st.embedUrl || st.iframe || st.url || st.streamUrl || null;
-        // If no direct URL, skip this stream (no embedsports.top fallback)
         if(!embedUrl) return null;
         return {...st, _source:s.source, embedUrl};
       }).filter(Boolean)).catch(()=>[])));
       return results.flat();
     })(),
-    fetchPPVTo(),
-    fetchWatchFooty()
+    enablePPV ? fetchPPVTo() : Promise.resolve([]),
+    enableWF ? fetchWatchFooty() : Promise.resolve([])
   ]);
 
-  // Build stream list: start with primary (direct embed) streams
-  let streams = [...primaryStreams];
+  let streams = [];
+
+  // Add primary streams (direct embed)
+  streams.push(...primaryStreams);
 
   // Add ppv.to iframe
-  const ppvIframe=ppvMatchFor(match,ppvAll);
-  if(ppvIframe){
-    streams.push({language:'PPV.to',streamNo:1,hd:false,_source:'ppvto',embedUrl:ppvIframe});
+  if(enablePPV){
+    const ppvIframe=ppvMatchFor(match, ppvAll);
+    if(ppvIframe) streams.push({language:'PPV.to',streamNo:1,hd:false,_source:'ppvto',embedUrl:ppvIframe});
   }
 
-  // Add watchfooty streams from the match object itself (if any)
-  if(match.sources && match.sources.length){
-    match.sources.forEach(s=>{
-      if(s.source==='watchfooty' && s.embedUrl){
-        streams.push({
-          language: s.language || 'WatchFooty',
-          streamNo: 1,
-          hd: s.hd || false,
-          _source: 'watchfooty',
-          embedUrl: s.embedUrl
-        });
-      }
-    });
-  } else {
-    // If no sources in match, try to find from wfAll by title match
-    const wfMatch = wfAll.find(w=>simplify(w.title)===simplify(match.title));
-    if(wfMatch && wfMatch.sources && wfMatch.sources.length){
-      wfMatch.sources.forEach(s=>{
-        if(s.embedUrl){
+  // Add watchfooty
+  if(enableWF){
+    // from match.sources
+    if(match.sources && match.sources.length){
+      match.sources.forEach(s=>{
+        if(s.source==='watchfooty' && s.embedUrl){
           streams.push({
             language: s.language || 'WatchFooty',
             streamNo: 1,
@@ -1044,10 +1109,43 @@ async function openMatch(match){
           });
         }
       });
+    } else {
+      const wfMatch = wfAll.find(w=>simplify(w.title)===simplify(match.title));
+      if(wfMatch && wfMatch.sources && wfMatch.sources.length){
+        wfMatch.sources.forEach(s=>{
+          if(s.embedUrl){
+            streams.push({
+              language: s.language || 'WatchFooty',
+              streamNo: 1,
+              hd: s.hd || false,
+              _source: 'watchfooty',
+              embedUrl: s.embedUrl
+            });
+          }
+        });
+      }
     }
   }
 
-  if(getSetting('preferHD',true))streams.sort((a,b)=>{if(a._source==='ppvto')return-1;if(b._source==='ppvto')return 1;if(a._source==='watchfooty')return-1;if(b._source==='watchfooty')return 1;return(b.hd?1:0)-(a.hd?1:0);});
+  // Apply source order
+  const orderMap = {
+    'ppv_wf_primary': ['ppvto','watchfooty','primary'],
+    'wf_ppv_primary': ['watchfooty','ppvto','primary'],
+    'primary_ppv_wf': ['primary','ppvto','watchfooty'],
+    'primary_wf_ppv': ['primary','watchfooty','ppvto'],
+    'wf_primary_ppv': ['watchfooty','primary','ppvto'],
+    'ppv_primary_wf': ['ppvto','primary','watchfooty']
+  };
+  const orderKey = getSetting('sourceOrder', 'ppv_wf_primary');
+  const priority = orderMap[orderKey] || ['ppvto','watchfooty','primary'];
+  streams.sort((a,b) => {
+    const aSrc = a._source || 'primary';
+    const bSrc = b._source || 'primary';
+    return priority.indexOf(aSrc) - priority.indexOf(bSrc);
+  });
+
+  // Prefer HD
+  if(getSetting('preferHD', true)) streams.sort((a,b) => (b.hd?1:0)-(a.hd?1:0));
 
   if(!streams.length){
     document.getElementById('stream-list').innerHTML='<div class="no-streams">No streams found</div>';
@@ -1069,7 +1167,16 @@ async function openMatch(match){
     const nt=document.createElement('a');nt.className='stream-newtab-btn';nt.href=s.embedUrl;nt.target='_blank';nt.rel='noopener noreferrer';nt.innerHTML='↗';
     const wrap=document.createElement('div');wrap.className='stream-item-btns';wrap.appendChild(item);wrap.appendChild(nt);list.appendChild(wrap);
   });
-  if(streams[0]?.embedUrl)embedStream(streams[0].embedUrl,list.querySelector('.stream-item'));
+
+  // Auto-fullscreen if enabled
+  if(getSetting('autoFullscreen', false)){
+    setTimeout(()=>{
+      const pw=document.getElementById('player-wrap');
+      if(pw && !document.fullscreenElement) pw.requestFullscreen?.().catch(()=>{});
+    }, 500);
+  }
+
+  if(streams[0]?.embedUrl) embedStream(streams[0].embedUrl, list.querySelector('.stream-item'));
 }
 
 function embedStream(embedUrl,itemEl){
@@ -1077,6 +1184,7 @@ function embedStream(embedUrl,itemEl){
   const pw=document.getElementById('player-wrap');
   pw.innerHTML=`<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
   publishSync(embedUrl);
+  // Try to set volume via iframe if possible (not cross-origin)
   function tryNext(attempt){const iframe=document.getElementById('stream-iframe'),blocked=document.getElementById('player-blocked');if(!iframe||!blocked)return;let failed=false;try{const doc=iframe.contentDocument||iframe.contentWindow?.document;if(!doc||doc.URL==='about:blank')failed=true;}catch(e){}if(failed){if(currentStreams.length>1&&currentStreamIndex<currentStreams.length-1){currentStreamIndex++;const ns=currentStreams[currentStreamIndex];const ni=document.querySelector(`.stream-item[data-index="${currentStreamIndex}"]`);showToast(`Trying stream ${currentStreamIndex+1}`);embedStream(ns.embedUrl,ni);}else{iframe.style.display='none';blocked.style.display='flex';}}}
   setTimeout(()=>tryNext(1),3000);setTimeout(()=>{const iframe=document.getElementById('stream-iframe');if(iframe&&iframe.style.display!=='none')tryNext(2);},7000);
 }
@@ -1091,7 +1199,10 @@ function closePlayer(){
 
 // ── CHANNELS (unchanged) ──
 let hlsInstance=null;
-function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
+function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');// apply volume
+  const vol = parseInt(getSetting('volume', 80)) / 100;
+  video.volume = vol;
+  if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
 function closeChannelPlayer(){if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const el=document.getElementById('channel-player-section');if(el)el.remove();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));}
 function filterChannels(q){q=q.toLowerCase().trim();document.querySelectorAll('.channel-card').forEach(c=>{const n=c.querySelector('.channel-name')?.textContent.toLowerCase()||'';c.style.display=(!q||n.includes(q))?'':'none';});document.querySelectorAll('.channels-section-title').forEach(t=>{const g=t.nextElementSibling;if(!g)return;const v=[...g.querySelectorAll('.channel-card')].some(c=>c.style.display!=='none');t.style.display=v?'':'none';});}
 
@@ -1126,23 +1237,25 @@ async function addToMultistream(match,btn){
   btn.classList.add('added');btn.textContent='⊞ Added';
   let embedUrl=null;
 
-  // Try ppv.to
-  const ppvAll=await fetchPPVTo();
-  const ppvIframe=ppvMatchFor(match,ppvAll);
-  if(ppvIframe)embedUrl=ppvIframe;
+  // Try ppv.to if enabled
+  if(getSetting('enablePPV',true)){
+    const ppvAll=await fetchPPVTo();
+    const ppvIframe=ppvMatchFor(match, ppvAll);
+    if(ppvIframe) embedUrl=ppvIframe;
+  }
 
-  // Try watchfooty
-  if(!embedUrl){
+  // Try watchfooty if enabled
+  if(!embedUrl && getSetting('enableWF',true)){
     const wfAll=await fetchWatchFooty();
     const wfMatch=wfAll.find(w=>simplify(w.title)===simplify(match.title));
     if(wfMatch && wfMatch.sources && wfMatch.sources.length){
       const s=wfMatch.sources[0];
-      if(s.embedUrl)embedUrl=s.embedUrl;
+      if(s.embedUrl) embedUrl=s.embedUrl;
     }
   }
 
-  // Fallback to primary (direct embed from worker)
-  if(!embedUrl && match.sources && match.sources.length){
+  // Fallback to primary
+  if(!embedUrl && getSetting('enablePrimary',true) && match.sources && match.sources.length){
     for(const s of match.sources){
       try{
         const data=await fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r=>r.json());
@@ -1164,7 +1277,7 @@ function removeFromMultistream(i){const r=multistreams[i];multistreams.splice(i,
 function clearMultistream(){multistreams=[];document.querySelectorAll('.card-multi.added').forEach(b=>{b.classList.remove('added');b.textContent='⊞';});document.getElementById('multistream-section').classList.remove('visible');}
 function toggleMultiFullscreen(){const el=document.getElementById('multistream-section');if(!document.fullscreenElement)el.requestFullscreen().catch(()=>showToast('Fullscreen not supported'));else document.exitFullscreen();}
 
-// ── SETTINGS ──
+// ── SETTINGS & DATA ──
 function getSetting(key,def){try{const v=localStorage.getItem('ks_s_'+key);return v===null?def:JSON.parse(v);}catch(e){return def;}}
 function saveSetting(key,val){localStorage.setItem('ks_s_'+key,JSON.stringify(val));}
 function openSettings(){document.getElementById('settings-panel').classList.add('open');document.getElementById('settings-overlay').classList.add('open');}
@@ -1172,7 +1285,7 @@ function closeSettings(){document.getElementById('settings-panel').classList.rem
 function toggleCompact(on){saveSetting('compact',on);document.body.classList.toggle('compact-view',on);}
 function toggleReduceMotion(on){saveSetting('reduceMotion',on);document.body.classList.toggle('reduce-motion',on);}
 async function toggleNotifications(on){if(on){const p=await Notification.requestPermission();if(p!=='granted'){showToast('Notifications blocked');document.getElementById('sp-notifs').checked=false;return;}showToast('Notifications enabled');}saveSetting('notifs',on);}
-function resetSettings(){['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs','lightMode','pwaDismissed','scoreTicker'].forEach(k=>localStorage.removeItem('ks_s_'+k));location.reload();}
+function resetSettings(){['defaultFilter','defaultSport','autoplay','preferHD','hideFinished','compact','clock','reduceMotion','notifs','lightMode','pwaDismissed','scoreTicker','enablePrimary','enablePPV','enableWF','sourceOrder','hideEmpty','autoFullscreen','volume','gridCols','showStreamCount','highContrast','hideSidebar'].forEach(k=>localStorage.removeItem('ks_s_'+k));location.reload();}
 function applySettings(){
   document.getElementById('sp-default-filter').value=getSetting('defaultFilter','live');
   document.getElementById('sp-default-sport').value=getSetting('defaultSport','all');
@@ -1185,11 +1298,27 @@ function applySettings(){
   document.getElementById('sp-clock').value=getSetting('clock','12');
   document.getElementById('sp-light').checked=getSetting('lightMode',false);
   document.getElementById('sp-scores').checked=getSetting('scoreTicker',true);
+  document.getElementById('sp-enable-primary').checked=getSetting('enablePrimary',true);
+  document.getElementById('sp-enable-ppv').checked=getSetting('enablePPV',true);
+  document.getElementById('sp-enable-wf').checked=getSetting('enableWF',true);
+  document.getElementById('sp-source-order').value=getSetting('sourceOrder','ppv_wf_primary');
+  document.getElementById('sp-hide-empty').checked=getSetting('hideEmpty',false);
+  document.getElementById('sp-auto-fullscreen').checked=getSetting('autoFullscreen',false);
+  document.getElementById('sp-volume').value=getSetting('volume',80);
+  document.getElementById('sp-grid-cols').value=getSetting('gridCols','auto');
+  document.getElementById('sp-show-stream-count').checked=getSetting('showStreamCount',true);
+  document.getElementById('sp-high-contrast').checked=getSetting('highContrast',false);
+  document.getElementById('sp-hide-sidebar').checked=getSetting('hideSidebar',false);
   document.body.classList.add('no-ads');
-  if(getSetting('lightMode',false))document.body.classList.add('light-mode');
-  if(getSetting('compact',false))document.body.classList.add('compact-view');
-  if(getSetting('reduceMotion',false))document.body.classList.add('reduce-motion');
+  if(getSetting('lightMode',false)) document.body.classList.add('light-mode');
+  if(getSetting('compact',false)) document.body.classList.add('compact-view');
+  if(getSetting('reduceMotion',false)) document.body.classList.add('reduce-motion');
+  if(getSetting('highContrast',false)) document.body.classList.add('high-contrast');
+  if(getSetting('hideSidebar',false)) document.body.classList.add('sidebar-hidden');
 }
+function clearCache(){_cache.clear();showToast('Cache cleared');}
+function exportFavourites(){const favs=getFavs();const blob=new Blob([JSON.stringify(favs,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kickstream_favourites.json';a.click();}
+function importFavourites(event){const file=event.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(Array.isArray(data)){saveFavs(data);renderFavs();renderMatches(allMatches);showToast('Favourites imported!');}else showToast('Invalid file');}catch(err){showToast('Error importing');}};reader.readAsText(file);}
 
 // ── SEARCH OVERLAY ──
 function openSearchOverlay(){document.getElementById('search-overlay').classList.add('open');setTimeout(()=>document.getElementById('search-ov-input').focus(),100);}
