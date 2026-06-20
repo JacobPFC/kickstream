@@ -546,6 +546,7 @@ body.no-ads #banner-ad{display:none!important;}
 <script>
 const W='https://cold-term-f5a2.sebythewilly.workers.dev';
 const PPVTO_API='https://ppv.to/api/streams';
+const WATCHFOOTY_API = 'https://watchfooty.st/api/matches'; // endpoint for top leagues
 const ABLY_KEY='uhrUrw.0fhsnA:Ao7bwXB6clXBCqWcRc_r__G7WF5GbxybcjltqUZagEw';
 const SPORT_ICONS={football:'⚽',basketball:'🏀',tennis:'🎾',hockey:'🏒',baseball:'⚾',mma:'🥊',boxing:'🥊',rugby:'🏉',volleyball:'🏐',cricket:'🏏',golf:'⛳',motorsport:'🏎️',cycling:'🚴',darts:'🎯',other:'🎯',fight:'🥊'};
 const SPORT_NAMES={football:'Football',basketball:'Basketball',tennis:'Tennis',hockey:'Hockey',baseball:'Baseball',mma:'MMA',boxing:'Boxing',rugby:'Rugby',volleyball:'Volleyball',cricket:'Cricket',golf:'Golf',motorsport:'Motorsport',cycling:'Cycling',darts:'Darts',other:'Other',fight:'Fight'};
@@ -642,6 +643,116 @@ function mergePPV(primary,ppv){
   const keys=new Set(primary.map(m=>simplify(m.title)));
   const unique=ppv.filter(p=>{
     const pk=simplify(p.title);
+    for(const k of keys){const sh=pk.length<k.length?pk:k,lo=pk.length<k.length?k:pk;if(lo.includes(sh)&&sh.length>5)return false;}
+    return true;
+  });
+  return[...primary,...unique];
+}
+
+// ── NEW: WatchFooty API ──
+let _watchFootyCache=null,_watchFootyCacheTs=0;
+const WATCHFOOTY_TTL=60000;
+
+async function fetchWatchFooty(){
+  if(_watchFootyCache&&Date.now()-_watchFootyCacheTs<WATCHFOOTY_TTL)return _watchFootyCache;
+  try{
+    const r=await fetch(WATCHFOOTY_API,{signal:AbortSignal.timeout(6000)});
+    if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    // Expected structure: maybe { matches: [...] } or directly array
+    let matches = Array.isArray(data) ? data : (data.matches || data.events || []);
+    if(!matches.length)throw new Error('no matches');
+    const mapped = matches.map(m=>{
+      // Try to extract teams from title or home/away fields
+      let homeName = m.home_team || m.homeTeam || m.team1 || '';
+      let awayName = m.away_team || m.awayTeam || m.team2 || '';
+      let title = m.title || m.name || `${homeName} vs ${awayName}`;
+      if(!homeName && !awayName){
+        const parts=title.split(/\s+vs\.?\s+|\s+-\s+|\s+@\s+|\s+&amp;\s+/i);
+        if(parts.length>=2){homeName=parts[0].trim();awayName=parts[1].trim();}
+      }
+      // Category mapping
+      let cat=m.sport||m.category||m.league||'football';
+      cat=cat.toLowerCase();
+      let category='other';
+      if(cat.includes('soccer')||cat.includes('football'))category='football';
+      else if(cat.includes('basketball'))category='basketball';
+      else if(cat.includes('tennis'))category='tennis';
+      else if(cat.includes('hockey'))category='hockey';
+      else if(cat.includes('baseball'))category='baseball';
+      else if(cat.includes('mma')||cat.includes('ufc'))category='mma';
+      else if(cat.includes('boxing'))category='boxing';
+      else if(cat.includes('rugby'))category='rugby';
+      else if(cat.includes('cricket'))category='cricket';
+      else if(cat.includes('golf'))category='golf';
+      else if(cat.includes('motorsport')||cat.includes('f1'))category='motorsport';
+      // Status
+      let status='upcoming';
+      if(m.status && (m.status.toLowerCase()==='live'||m.status.toLowerCase()==='inprogress'))status='live';
+      else if(m.status && m.status.toLowerCase()==='finished')status='finished';
+      // date
+      let dateStr=m.date||m.start_time||m.datetime||new Date().toISOString();
+      if(dateStr && !isNaN(Date.parse(dateStr))) dateStr=new Date(dateStr).toISOString();
+      // sources: if the API provides stream URLs, map them
+      let sources=[];
+      if(m.streams && Array.isArray(m.streams)){
+        m.streams.forEach(s=>{
+          if(s.url || s.iframe){
+            sources.push({
+              source:'watchfooty',
+              id:s.id || s.stream_id || '',
+              embedUrl: s.iframe || s.url,
+              language: s.language || 'en',
+              hd: s.quality==='hd'||s.quality==='1080p'
+            });
+          }
+        });
+      }
+      // If no sources but there is a direct embed URL
+      if(!sources.length && (m.embed_url||m.iframe)){
+        sources.push({
+          source:'watchfooty',
+          id:'direct',
+          embedUrl:m.embed_url||m.iframe,
+          language:'en',
+          hd:true
+        });
+      }
+      // If still no sources, add a placeholder so the match shows up
+      if(!sources.length && m.stream_url){
+        sources.push({
+          source:'watchfooty',
+          id:'stream',
+          embedUrl:m.stream_url,
+          language:'en',
+          hd:false
+        });
+      }
+      return {
+        id: m.id || 'wf_'+Math.random().toString(36).slice(2,8),
+        title: title,
+        category: category,
+        date: dateStr,
+        status: status,
+        sources: sources,
+        teams: (homeName||awayName)?{home:{name:homeName},away:{name:awayName}}:null,
+        score: m.score || m.result || null,
+        _watchfooty: true
+      };
+    });
+    _watchFootyCache=mapped;
+    _watchFootyCacheTs=Date.now();
+    return mapped;
+  }catch(e){
+    console.warn('[watchfooty]',e.message);
+    return _watchFootyCache||[];
+  }
+}
+
+function mergeWatchFooty(primary,wf){
+  const keys=new Set(primary.map(m=>simplify(m.title)));
+  const unique=wf.filter(m=>{
+    const pk=simplify(m.title);
     for(const k of keys){const sh=pk.length<k.length?pk:k,lo=pk.length<k.length?k:pk;if(lo.includes(sh)&&sh.length>5)return false;}
     return true;
   });
@@ -777,14 +888,19 @@ async function loadSports(){try{const sports=await fetch(W+'/api/sports').then(r
 const _cache=new Map();
 async function cachedFetch(url,ttl=60000){const hit=_cache.get(url);if(hit&&Date.now()-hit.ts<ttl)return hit.data;const data=await fetch(url).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();});_cache.set(url,{data,ts:Date.now()});return data;}
 
-// ── UPDATED: loadMatches merges ppv.to ──
+// ── UPDATED: loadMatches merges ppv.to + watchfooty ──
 async function loadMatches(){
   if(channelsView)return;
   document.getElementById('matches-container').innerHTML=`<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
   try{
-    const [primaryRes,ppvRes]=await Promise.allSettled([cachedFetch(getEndpoint()),fetchPPVTo()]);
-    const primary=primaryRes.status==='fulfilled'?primaryRes.value:[];
-    const ppvAll=ppvRes.status==='fulfilled'?ppvRes.value:[];
+    const [primaryRes,ppvRes,wfRes] = await Promise.allSettled([
+      cachedFetch(getEndpoint()),
+      fetchPPVTo(),
+      fetchWatchFooty()
+    ]);
+    const primary = primaryRes.status==='fulfilled' ? primaryRes.value : [];
+    const ppvAll = ppvRes.status==='fulfilled' ? ppvRes.value : [];
+    const wfAll = wfRes.status==='fulfilled' ? wfRes.value : [];
 
     // Filter ppv.to by current view
     const now=Date.now();
@@ -797,7 +913,19 @@ async function loadMatches(){
       return true;
     });
 
-    allMatches=mergePPV(primary,ppv);
+    // Filter watchfooty similarly
+    const wf=wfAll.filter(m=>{
+      const start=new Date(m.date).getTime();
+      if(currentFilter==='live')return m.status==='live';
+      if(currentFilter==='today')return start>=todayStart.getTime()&&start<=todayEnd.getTime();
+      return true;
+    });
+
+    // Merge all: primary + ppv + watchfooty
+    let merged = mergePPV(primary, ppv);
+    merged = mergeWatchFooty(merged, wf);
+
+    allMatches = merged;
 
     if(currentFilter==='live')document.getElementById('live-count').textContent=allMatches.filter(m=>m.status==='live'||m.alwaysLive).length;
     updateSidebarCounts(allMatches);buildLeagueList(allMatches);renderFavs();renderMatches(allMatches);buildScoreTicker(allMatches);
@@ -831,18 +959,19 @@ function buildCard(match,isLive){
   const hn=match.teams?.home?.name||'',an=match.teams?.away?.name||'';
   const isFavMatch=favs.some(f=>hn===f||an===f);
   const isPPV=!!match._ppvto;
-  card.className='match-card'+(isLive?' live-card':'')+(isFavMatch?' fav-card':'')+(isPPV?' ppvto-card':'');
+  const isWF=!!match._watchfooty;
+  card.className='match-card'+(isLive?' live-card':'')+(isFavMatch?' fav-card':'')+(isPPV?' ppvto-card':'')+(isWF?' watchfooty-card':'');
   const use24=getSetting('clock','12')==='24';
   const md=new Date(match.date),ts=md.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:!use24});
   const now=Date.now(),mt=md.getTime(),isUpcoming=!isLive&&mt>now;
   const tag=isLive?`<div class="card-live-tag"><div class="card-live-dot"></div>LIVE</div>`:`<div class="card-time-tag">${ts}</div>`;
   const cdEl=isUpcoming?`<div class="card-countdown" data-countdown="${mt}">…</div>`:'';
-  const scoreEl=match.score?`<div class="card-score-badge">${match.score}</div>`:(isPPV?'<div class="card-ppvto-badge">PPV.to</div>':'');
+  const scoreEl=match.score?`<div class="card-score-badge">${match.score}</div>`:(isPPV?'<div class="card-ppvto-badge">PPV.to</div>':(isWF?'<div class="card-ppvto-badge">WatchFooty</div>':''));
   const favBtnHtml=(hn||an)?`<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>`:'';
   const top=document.createElement('div');top.className='card-poster';
   top.innerHTML=`<div class="card-poster-teams"><div class="poster-badge">${hn?hn[0].toUpperCase():'?'}</div><div class="poster-vs">VS</div><div class="poster-badge">${an?an[0].toUpperCase():'?'}</div></div>${tag}${cdEl}${scoreEl}${favBtnHtml}`;
   const body=document.createElement('div');body.className='card-body';
-  const streamCount=match.sources?.length||(isPPV&&match._iframe?1:0);
+  const streamCount=match.sources?.length||0;
   body.innerHTML=`<div class="card-title">${match.title}</div><div class="card-meta"><span>${streamCount} stream${streamCount!==1?'s':''}</span><span>${ts}</span></div>`;
   const bw=document.createElement('div');bw.className='card-footer-btns';
   const watchBtn=document.createElement('button');watchBtn.className='card-watch';watchBtn.textContent='▶ Watch';watchBtn.addEventListener('click',e=>{e.stopPropagation();openMatch(match);});
@@ -856,7 +985,7 @@ function buildCard(match,isLive){
 
 function showToast(msg){const ex=document.querySelector('.toast');if(ex)ex.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
-// ── UPDATED: openMatch adds ppv.to as a stream source ──
+// ── UPDATED: openMatch adds watchfooty streams ──
 async function openMatch(match){
   currentItem=match;
   history.pushState({matchId:match.id},'',(partyId?'?party='+partyId+'&':'?')+'match='+match.id);
@@ -869,24 +998,59 @@ async function openMatch(match){
   document.getElementById('stream-list').innerHTML=`<div class="no-streams"><span class="spinner"></span>Fetching...</div>`;
   showLiveScoreBar(match);startScorePolling(match);
 
-  // Fetch primary streams and ppv.to in parallel
-  const [primaryStreams,ppvAll]=await Promise.all([
+  // Fetch primary streams, ppv.to, and watchfooty (if not already in match.sources)
+  const [primaryStreams, ppvAll, wfAll] = await Promise.all([
     (async()=>{
       if(!match.sources?.length)return[];
       const results=await Promise.all(match.sources.map(s=>fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r=>r.json()).then(data=>(Array.isArray(data)?data:[]).map(st=>({...st,_source:s.source,embedUrl:`https://embedsports.top/embed/${s.source}/${s.id}/${st.streamNo||1}`}))).catch(()=>[])));
       return results.flat();
     })(),
     fetchPPVTo(),
+    fetchWatchFooty()
   ]);
 
-  // Build final stream list: ppv.to first if available, then primary
-  let streams=[...primaryStreams];
+  // Build stream list: start with existing sources (if any)
+  let streams = [...primaryStreams];
+
+  // Add ppv.to iframe
   const ppvIframe=ppvMatchFor(match,ppvAll);
   if(ppvIframe){
-    streams=[{language:'PPV.to',streamNo:1,hd:false,_source:'ppvto',embedUrl:ppvIframe},...streams];
+    streams.push({language:'PPV.to',streamNo:1,hd:false,_source:'ppvto',embedUrl:ppvIframe});
   }
 
-  if(getSetting('preferHD',true))streams.sort((a,b)=>{if(a._source==='ppvto')return-1;if(b._source==='ppvto')return 1;return(b.hd?1:0)-(a.hd?1:0);});
+  // Add watchfooty streams from the match object itself (if any)
+  if(match.sources && match.sources.length){
+    // If match already has sources from watchfooty, add them
+    match.sources.forEach(s=>{
+      if(s.source==='watchfooty' && s.embedUrl){
+        streams.push({
+          language: s.language || 'WatchFooty',
+          streamNo: 1,
+          hd: s.hd || false,
+          _source: 'watchfooty',
+          embedUrl: s.embedUrl
+        });
+      }
+    });
+  } else {
+    // If no sources in match, try to find from wfAll by title match
+    const wfMatch = wfAll.find(w=>simplify(w.title)===simplify(match.title));
+    if(wfMatch && wfMatch.sources && wfMatch.sources.length){
+      wfMatch.sources.forEach(s=>{
+        if(s.embedUrl){
+          streams.push({
+            language: s.language || 'WatchFooty',
+            streamNo: 1,
+            hd: s.hd || false,
+            _source: 'watchfooty',
+            embedUrl: s.embedUrl
+          });
+        }
+      });
+    }
+  }
+
+  if(getSetting('preferHD',true))streams.sort((a,b)=>{if(a._source==='ppvto')return-1;if(b._source==='ppvto')return 1;if(a._source==='watchfooty')return-1;if(b._source==='watchfooty')return 1;return(b.hd?1:0)-(a.hd?1:0);});
 
   if(!streams.length){
     document.getElementById('stream-list').innerHTML='<div class="no-streams">No streams found</div>';
@@ -898,8 +1062,12 @@ async function openMatch(match){
   const list=document.getElementById('stream-list');list.innerHTML='';
   streams.forEach((s,i)=>{
     const isPPV=s._source==='ppvto';
+    const isWF=s._source==='watchfooty';
     const item=document.createElement('div');item.className='stream-item';item.dataset.index=i;
-    item.innerHTML=`<div class="stream-lang">${isPPV?'PPV.to':(s.language||'Stream')} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${isPPV?'🔗 ppv.to':(s._source||'')}</div>`;
+    let srcLabel = s._source || '';
+    if(isPPV) srcLabel='🔗 ppv.to';
+    else if(isWF) srcLabel='WatchFooty';
+    item.innerHTML=`<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(s.language||'Stream'))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
     item.addEventListener('click',()=>{currentStreamIndex=i;embedStream(s.embedUrl,item);});
     const nt=document.createElement('a');nt.className='stream-newtab-btn';nt.href=s.embedUrl;nt.target='_blank';nt.rel='noopener noreferrer';nt.innerHTML='↗';
     const wrap=document.createElement('div');wrap.className='stream-item-btns';wrap.appendChild(item);wrap.appendChild(nt);list.appendChild(wrap);
@@ -924,7 +1092,7 @@ function closePlayer(){
   document.getElementById('player-section').classList.remove('visible');document.getElementById('player-wrap').innerHTML=`<div class="player-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Select a stream to watch</span></div>`;document.getElementById('stream-list').innerHTML='<div class="no-streams">No match selected</div>';document.getElementById('teams-row').style.display='none';
 }
 
-// ── CHANNELS ──
+// ── CHANNELS (unchanged) ──
 let hlsInstance=null;
 function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
 function closeChannelPlayer(){if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const el=document.getElementById('channel-player-section');if(el)el.remove();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));}
@@ -961,11 +1129,22 @@ async function addToMultistream(match,btn){
   btn.classList.add('added');btn.textContent='⊞ Added';
   let embedUrl=null;
 
-  // Try ppv.to first for multistream
+  // Try ppv.to
   const ppvAll=await fetchPPVTo();
   const ppvIframe=ppvMatchFor(match,ppvAll);
   if(ppvIframe)embedUrl=ppvIframe;
 
+  // Try watchfooty
+  if(!embedUrl){
+    const wfAll=await fetchWatchFooty();
+    const wfMatch=wfAll.find(w=>simplify(w.title)===simplify(match.title));
+    if(wfMatch && wfMatch.sources && wfMatch.sources.length){
+      const s=wfMatch.sources[0];
+      if(s.embedUrl)embedUrl=s.embedUrl;
+    }
+  }
+
+  // Fallback to primary
   if(!embedUrl){
     for(const s of match.sources||[]){try{const data=await fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r=>r.json());const arr=Array.isArray(data)?data:[];if(arr.length){embedUrl=`https://embedsports.top/embed/${s.source}/${s.id}/${arr[0].streamNo||1}`;break;}}catch(e){}}
   }
@@ -1008,7 +1187,7 @@ function applySettings(){
 // ── SEARCH OVERLAY ──
 function openSearchOverlay(){document.getElementById('search-overlay').classList.add('open');setTimeout(()=>document.getElementById('search-ov-input').focus(),100);}
 function closeSearchOverlay(e){if(e&&e.target!==document.getElementById('search-overlay'))return;document.getElementById('search-overlay').classList.remove('open');document.getElementById('search-ov-results').innerHTML='';document.getElementById('search-ov-input').value='';}
-function overlayFilterSearch(q){q=q.toLowerCase().trim();const res=document.getElementById('search-ov-results');if(!q){res.innerHTML='';return;}const matches=allMatches.filter(m=>m.title.toLowerCase().includes(q)).slice(0,10);if(!matches.length){res.innerHTML='<div style="padding:0.75rem;color:var(--muted);font-size:0.82rem;">No matches found</div>';return;}res.innerHTML='';matches.forEach(match=>{const el=document.createElement('div');el.className='search-ov-item';const t=new Date(match.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});el.innerHTML=`<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.6rem;color:var(--accent2)">PPV.to</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||(match._iframe?1:0))} streams</div></div>`;el.addEventListener('click',()=>{document.getElementById('search-overlay').classList.remove('open');openMatch(match);});res.appendChild(el);});}
+function overlayFilterSearch(q){q=q.toLowerCase().trim();const res=document.getElementById('search-ov-results');if(!q){res.innerHTML='';return;}const matches=allMatches.filter(m=>m.title.toLowerCase().includes(q)).slice(0,10);if(!matches.length){res.innerHTML='<div style="padding:0.75rem;color:var(--muted);font-size:0.82rem;">No matches found</div>';return;}res.innerHTML='';matches.forEach(match=>{const el=document.createElement('div');el.className='search-ov-item';const t=new Date(match.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});el.innerHTML=`<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.6rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.6rem;color:var(--accent2)">WatchFooty</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;el.addEventListener('click',()=>{document.getElementById('search-overlay').classList.remove('open');openMatch(match);});res.appendChild(el);});}
 
 // ── URL / DEEPLINK ──
 async function checkUrlMatch(){const params=new URLSearchParams(location.search);const partyParam=params.get('party'),matchId=params.get('match');if(partyParam){if(!partyUserName){pendingPartyJoin=partyParam;openNameModal();}else{joinPartyFlow(partyParam);}return;}if(matchId){try{const ms=await fetch(W+'/api/matches/all').then(r=>r.json());const m=ms.find(x=>x.id===matchId);if(m)openMatch(m);}catch(e){}}}
