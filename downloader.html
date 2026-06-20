@@ -42,8 +42,6 @@
             background-image: radial-gradient(ellipse at 10% 20%, rgba(0, 230, 118, 0.04) 0%, transparent 60%),
                 radial-gradient(ellipse at 90% 80%, rgba(0, 176, 255, 0.04) 0%, transparent 60%);
         }
-
-        /* ── Scrollbar ── */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -55,8 +53,6 @@
             background: var(--border);
             border-radius: 10px;
         }
-
-        /* ── Container ── */
         .container {
             width: 100%;
             max-width: 640px;
@@ -79,8 +75,6 @@
                 transform: translateY(0) scale(1);
             }
         }
-
-        /* ── Header ── */
         .logo {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 2rem;
@@ -104,6 +98,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .sub .badge {
             font-size: 0.55rem;
@@ -116,8 +111,6 @@
             border-radius: 20px;
             border: 1px solid rgba(0, 230, 118, 0.15);
         }
-
-        /* ── Input ── */
         .input-wrap {
             display: flex;
             gap: 8px;
@@ -173,8 +166,6 @@
             transform: none;
             box-shadow: none;
         }
-
-        /* ── Supported platforms hint ── */
         .platform-hint {
             display: flex;
             gap: 12px;
@@ -200,8 +191,6 @@
             height: 14px;
             fill: currentColor;
         }
-
-        /* ── Status / Loading ── */
         #status {
             margin-top: 1.2rem;
             font-size: 0.85rem;
@@ -234,8 +223,6 @@
                 transform: rotate(360deg);
             }
         }
-
-        /* ── Result Card ── */
         #result {
             display: none;
             margin-top: 1.5rem;
@@ -295,7 +282,7 @@
             align-items: center;
             gap: 4px;
         }
-        .result-info .platform-tag {
+        .platform-tag {
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -317,8 +304,6 @@
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-
-        /* ── Download Buttons ── */
         .downloads {
             display: flex;
             flex-wrap: wrap;
@@ -376,8 +361,6 @@
             cursor: not-allowed;
             transform: none !important;
         }
-
-        /* ── Footer ── */
         .footer {
             margin-top: 1.8rem;
             font-size: 0.6rem;
@@ -395,8 +378,6 @@
             color: var(--text);
             opacity: 1;
         }
-
-        /* ── Responsive ── */
         @media (max-width: 550px) {
             .container {
                 padding: 1.5rem 1rem;
@@ -451,47 +432,29 @@
     </style>
 </head>
 <body>
-
     <div class="container">
-
-        <!-- Logo -->
         <a class="logo" href="/">Kick<span>Stream</span></a>
         <div class="sub">
             <span>⬇️ Video &amp; Audio Downloader</span>
             <span class="badge">YouTube · TikTok</span>
         </div>
 
-        <!-- Input -->
         <div class="input-wrap">
-            <input
-            type="text"
-            id="urlInput"
-            placeholder="Paste YouTube or TikTok URL here…"
-            spellcheck="false"
-            autocomplete="off"
-            />
+            <input type="text" id="urlInput" placeholder="Paste YouTube or TikTok URL here…" spellcheck="false" autocomplete="off" />
             <button id="fetchBtn" onclick="fetchMedia()">Get Media</button>
         </div>
 
         <div class="platform-hint">
-            <span class="pill">
-                <svg viewBox="0 0 24 24"><path d="M10.333 0c-5.522 0-10 4.478-10 10 0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm3.701 14.077c-1.752 1.057-4.098 1.044-5.852-.004-1.754-1.049-1.754-2.744 0-3.793 1.754-1.048 4.1-1.061 5.852-.004 1.753 1.048 1.753 2.744 0 3.793zm-4.084-1.767c-.497.296-1.033.296-1.53 0-.497-.297-.497-.778 0-1.075.497-.296 1.033-.296 1.53 0 .497.297.497.778 0 1.075z"/></svg>
-                YouTube
-            </span>
-            <span class="pill">
-                <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.467c.168 1.302-.219 2.664-.766 3.914-.62 1.414-1.539 2.672-2.614 3.704-1.178 1.131-2.562 2.036-4.131 2.557-1.561.519-3.095.633-4.727.324-1.746-.329-3.311-1.134-4.638-2.299-.93-.817-1.642-1.806-2.157-2.922-.554-1.203-.893-2.455-.965-3.748-.072-1.293.112-2.57.541-3.792.407-1.158 1.014-2.254 1.79-3.198.746-.905 1.654-1.665 2.67-2.252.988-.568 2.11-.969 3.246-1.126 1.139-.157 2.295-.058 3.382.294.995.323 1.956.861 2.777 1.544.812.673 1.5 1.489 2.024 2.415.509.902.833 1.896.976 2.927z"/></svg>
-                TikTok
-            </span>
-            <span style="opacity:0.4;font-size:0.6rem;">— paste any link &amp; we’ll detect it</span>
+            <span class="pill"><svg viewBox="0 0 24 24"><path d="M10.333 0c-5.522 0-10 4.478-10 10 0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm3.701 14.077c-1.752 1.057-4.098 1.044-5.852-.004-1.754-1.049-1.754-2.744 0-3.793 1.754-1.048 4.1-1.061 5.852-.004 1.753 1.048 1.753 2.744 0 3.793zm-4.084-1.767c-.497.296-1.033.296-1.53 0-.497-.297-.497-.778 0-1.075.497-.296 1.033-.296 1.53 0 .497.297.497.778 0 1.075z"/></svg> YouTube</span>
+            <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.467c.168 1.302-.219 2.664-.766 3.914-.62 1.414-1.539 2.672-2.614 3.704-1.178 1.131-2.562 2.036-4.131 2.557-1.561.519-3.095.633-4.727.324-1.746-.329-3.311-1.134-4.638-2.299-.93-.817-1.642-1.806-2.157-2.922-.554-1.203-.893-2.455-.965-3.748-.072-1.293.112-2.57.541-3.792.407-1.158 1.014-2.254 1.79-3.198.746-.905 1.654-1.665 2.67-2.252.988-.568 2.11-.969 3.246-1.126 1.139-.157 2.295-.058 3.382.294.995.323 1.956.861 2.777 1.544.812.673 1.5 1.489 2.024 2.415.509.902.833 1.896.976 2.927z"/></svg> TikTok</span>
+            <span style="opacity:0.4;font-size:0.6rem;">— proxy enabled for CORS bypass</span>
         </div>
 
-        <!-- Status -->
         <div id="status">
             <span class="spinner"></span>
             <span id="statusText">Enter a URL above to start</span>
         </div>
 
-        <!-- Result -->
         <div id="result">
             <div class="result-top">
                 <div class="result-thumb" id="thumbWrap">
@@ -506,9 +469,7 @@
                     <div class="platform-tag youtube" id="platformTag">▶ YouTube</div>
                 </div>
             </div>
-            <div class="downloads" id="downloadsContainer">
-                <!-- buttons injected here -->
-            </div>
+            <div class="downloads" id="downloadsContainer"></div>
         </div>
 
         <div class="footer">
@@ -518,6 +479,35 @@
     </div>
 
     <script>
+        /* ── CORS Proxy ── */
+        const PROXY = 'https://api.allorigins.win/raw?url=';
+
+        async function fetchWithProxy(url, timeout = 20000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeout);
+            try {
+                const res = await fetch(PROXY + encodeURIComponent(url), {
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+                if (!res.ok) throw new Error(`Proxy error (${res.status})`);
+                // Some APIs return HTML errors via proxy, check content-type
+                const contentType = res.headers.get('content-type') || '';
+                if (contentType.includes('text/html')) {
+                    const text = await res.text();
+                    if (text.includes('502') || text.includes('504') || text.includes('error')) {
+                        throw new Error('Proxy returned an error page');
+                    }
+                    // Try to parse as JSON anyway, maybe it's JSON with text/html header
+                    try { return JSON.parse(text); } catch (e) { throw new Error('Invalid response from proxy'); }
+                }
+                return res.json();
+            } catch (err) {
+                clearTimeout(timer);
+                throw err;
+            }
+        }
+
         /* ── Helpers ── */
         const $ = id => document.getElementById(id);
         const status = $('status');
@@ -553,70 +543,66 @@
             return null;
         }
 
-        function extractTikTokID(url) {
-            // TikTok oembed works with the full URL, we just need to validate it's a TikTok link
-            const patterns = [
-                /tiktok\.com\/@[\w.-]+\/video\/(\d+)/,
-                /tiktok\.com\/@[\w.-]+\/v\/(\d+)/,
-                /vt\.tiktok\.com\//
-            ];
-            for (const p of patterns) {
-                if (p.test(url)) return true;
-            }
-            // Also check for tiktok.com in the URL
-            if (url.includes('tiktok.com')) return true;
-            return null;
-        }
-
         function detectPlatform(url) {
             if (extractYouTubeID(url)) return 'youtube';
-            if (extractTikTokID(url)) return 'tiktok';
+            if (url.includes('tiktok.com')) return 'tiktok';
             return null;
         }
 
-        /* ── Fetch from APIs ── */
+        function formatDuration(seconds) {
+            const s = Math.floor(seconds);
+            const m = Math.floor(s / 60);
+            const h = Math.floor(m / 60);
+            const secs = s % 60;
+            if (h > 0) return `${h}:${String(m % 60).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+            return `${m}:${String(secs).padStart(2,'0')}`;
+        }
+
+        function formatNumber(n) {
+            if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+            return String(n);
+        }
+
+        function platformLabel(platform) {
+            return platform === 'youtube' ? 'YouTube' : platform === 'tiktok' ? 'TikTok' : 'Video';
+        }
+
+        function platformIcon(platform) {
+            return platform === 'youtube' ? '▶' : '♪';
+        }
+
+        /* ── Fetch Functions (with Proxy) ── */
         async function fetchYouTube(id) {
-            // Use the vevioz API to get download info
-            // First, get video info via oembed for title/thumbnail
-            const oembedUrl =
-                `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`;
-            const oembedRes = await fetch(oembedUrl);
-            if (!oembedRes.ok) throw new Error('Could not fetch video info');
-            const oembedData = await oembedRes.json();
-
-            // Now get download links from vevioz
-            // We'll try both mp4 and mp3 endpoints
-            const mp4Url = `https://api.vevioz.com/api/button/mp4/${id}`;
-            const mp3Url = `https://api.vevioz.com/api/button/mp3/${id}`;
-
-            let mp4Data = null,
-                mp3Data = null;
+            // Get metadata via oembed (works without proxy)
+            const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`;
+            let oembedData = { title: 'YouTube Video', thumbnail_url: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                author_name: '—', duration: null };
             try {
-                const [mp4Res, mp3Res] = await Promise.all([
-                    fetch(mp4Url, { signal: AbortSignal.timeout(15000) }),
-                    fetch(mp3Url, { signal: AbortSignal.timeout(15000) })
-                ]);
-                if (mp4Res.ok) mp4Data = await mp4Res.json();
-                if (mp3Res.ok) mp3Data = await mp3Res.json();
-            } catch (e) {
-                // some endpoints might fail, that's fine
-            }
+                const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(5000) });
+                if (res.ok) oembedData = await res.json();
+            } catch (_) { /* fallback to defaults */ }
 
-            // Extract download URLs from responses
-            // vevioz returns: { success: true, data: { url: '...' } } or similar
+            // Fetch download links via proxy
             let mp4Link = null,
                 mp3Link = null;
-            if (mp4Data && mp4Data.success && mp4Data.data && mp4Data.data.url) {
-                mp4Link = mp4Data.data.url;
-            }
-            if (mp3Data && mp3Data.success && mp3Data.data && mp3Data.data.url) {
-                mp3Link = mp3Data.data.url;
-            }
+            try {
+                const mp4Data = await fetchWithProxy(`https://api.vevioz.com/api/button/mp4/${id}`);
+                if (mp4Data && mp4Data.success && mp4Data.data && mp4Data.data.url) {
+                    mp4Link = mp4Data.data.url;
+                } else if (mp4Data && mp4Data.link) {
+                    mp4Link = mp4Data.link;
+                }
+            } catch (e) { console.warn('MP4 fetch failed', e); }
 
-            // Fallback: try to construct from the API if the response format is different
-            // Some versions return { link: '...' }
-            if (!mp4Link && mp4Data && mp4Data.link) mp4Link = mp4Data.link;
-            if (!mp3Link && mp3Data && mp3Data.link) mp3Link = mp3Data.link;
+            try {
+                const mp3Data = await fetchWithProxy(`https://api.vevioz.com/api/button/mp3/${id}`);
+                if (mp3Data && mp3Data.success && mp3Data.data && mp3Data.data.url) {
+                    mp3Link = mp3Data.data.url;
+                } else if (mp3Data && mp3Data.link) {
+                    mp3Link = mp3Data.link;
+                }
+            } catch (e) { console.warn('MP3 fetch failed', e); }
 
             return {
                 id,
@@ -633,17 +619,15 @@
         }
 
         async function fetchTikTok(url) {
-            // Use tikmate API
-            const apiUrl = `https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`;
-            const res = await fetch(apiUrl, { signal: AbortSignal.timeout(15000) });
-            if (!res.ok) throw new Error('TikTok API error');
-            const data = await res.json();
+            let data = null;
+            try {
+                data = await fetchWithProxy(`https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`);
+            } catch (e) {
+                throw new Error('TikTok API unreachable via proxy');
+            }
+            if (!data || !data.success) throw new Error(data?.error || 'TikTok fetch failed');
 
-            if (!data.success) throw new Error(data.error || 'Could not fetch TikTok video');
-
-            // tikmate returns: { success: true, id, video_id, title, duration, thumbnail, url: '...', views, ... }
             const downloadUrl = data.url || null;
-            // Sometimes they provide multiple qualities
             const hdUrl = data.hd_url || data.url || null;
 
             return {
@@ -656,41 +640,12 @@
                 platform: 'tiktok',
                 downloads: {
                     mp4: downloadUrl,
-                    hd: hdUrl,
-                    // no mp3 for tiktok usually
+                    hd: hdUrl
                 }
             };
         }
 
-        /* ── Helpers ── */
-        function formatDuration(seconds) {
-            const s = Math.floor(seconds);
-            const m = Math.floor(s / 60);
-            const h = Math.floor(m / 60);
-            const secs = s % 60;
-            if (h > 0) return `${h}:${String(m % 60).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-            return `${m}:${String(secs).padStart(2,'0')}`;
-        }
-
-        function formatNumber(n) {
-            if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-            return String(n);
-        }
-
-        function platformIcon(platform) {
-            if (platform === 'youtube') return '▶';
-            if (platform === 'tiktok') return '♪';
-            return '📹';
-        }
-
-        function platformLabel(platform) {
-            if (platform === 'youtube') return 'YouTube';
-            if (platform === 'tiktok') return 'TikTok';
-            return 'Video';
-        }
-
-        /* ── Main fetch handler ── */
+        /* ── Main Handler ── */
         async function fetchMedia() {
             const url = urlInput.value.trim();
             if (!url) {
@@ -698,16 +653,14 @@
                 return;
             }
 
-            // Detect platform
             const platform = detectPlatform(url);
             if (!platform) {
                 setStatus('Unsupported URL. Please use a YouTube or TikTok link.', 'error');
                 return;
             }
 
-            // Disable button & show loading
             fetchBtn.disabled = true;
-            setStatus(`Fetching ${platformLabel(platform)} video…`, 'loading');
+            setStatus(`Fetching ${platformLabel(platform)} via proxy…`, 'loading');
             showResult(false);
 
             try {
@@ -722,10 +675,18 @@
                     throw new Error('Unsupported platform');
                 }
 
-                // Render result
-                renderResult(data);
-                setStatus('Ready to download ✅', 'success');
-                showResult(true);
+                // Check if we actually got any download links
+                const hasDownloads = data.downloads && (data.downloads.mp4 || data.downloads.hd || data.downloads.mp3);
+                if (!hasDownloads) {
+                    // Still show the info but indicate no links
+                    renderResult(data, true);
+                    setStatus('⚠️ Video info found, but no download links available (try again later)', 'error');
+                    showResult(true);
+                } else {
+                    renderResult(data, false);
+                    setStatus('Ready to download ✅', 'success');
+                    showResult(true);
+                }
 
             } catch (err) {
                 setStatus(`Error: ${err.message || 'Something went wrong'}`, 'error');
@@ -735,104 +696,67 @@
             }
         }
 
-        /* ── Render result ── */
-        function renderResult(data) {
-            // Thumbnail
+        function renderResult(data, noLinks = false) {
             thumbImg.src = data.thumbnail || '';
             thumbImg.alt = data.title || 'Thumbnail';
-            // Title
             mediaTitle.textContent = data.title || 'Untitled';
-            // Meta
             mediaDuration.textContent = data.duration || '—';
             mediaViews.textContent = data.views || data.author || '—';
-            // Platform tag
+
             const tag = platformTag;
             tag.className = `platform-tag ${data.platform}`;
             tag.textContent = `${platformIcon(data.platform)} ${platformLabel(data.platform)}`;
 
-            // Build download buttons
             downloadsContainer.innerHTML = '';
 
-            const downloads = data.downloads || {};
-
-            // MP4 / Video
-            if (downloads.mp4) {
-                downloadsContainer.appendChild(createDownloadBtn(downloads.mp4, '🎬', 'Video (MP4)', 'primary'));
-            }
-            if (downloads.hd && downloads.hd !== downloads.mp4) {
-                downloadsContainer.appendChild(createDownloadBtn(downloads.hd, '🎬', 'HD Video', 'primary'));
-            }
-
-            // MP3 / Audio (YouTube only)
-            if (downloads.mp3) {
-                downloadsContainer.appendChild(createDownloadBtn(downloads.mp3, '🎵', 'Audio (MP3)', 'audio'));
+            if (noLinks || !data.downloads) {
+                const msg = document.createElement('div');
+                msg.style.cssText =
+                    'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
+                msg.textContent = 'No direct download links available. Try again later.';
+                downloadsContainer.appendChild(msg);
+                return;
             }
 
-            // If no downloads available
+            const d = data.downloads;
+            if (d.mp4) downloadsContainer.appendChild(createBtn(d.mp4, '🎬', 'Video (MP4)', 'primary'));
+            if (d.hd && d.hd !== d.mp4) downloadsContainer.appendChild(createBtn(d.hd, '🎬', 'HD Video', 'primary'));
+            if (d.mp3) downloadsContainer.appendChild(createBtn(d.mp3, '🎵', 'Audio (MP3)', 'audio'));
+
             if (downloadsContainer.children.length === 0) {
-                const fallback = document.createElement('div');
-                fallback.style.cssText = 'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
-                fallback.textContent = 'No direct download links available. Try again later.';
-                downloadsContainer.appendChild(fallback);
+                const msg = document.createElement('div');
+                msg.style.cssText =
+                    'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
+                msg.textContent = 'No downloadable formats found for this video.';
+                downloadsContainer.appendChild(msg);
             }
         }
 
-        function createDownloadBtn(url, icon, label, style = '') {
+        function createBtn(url, icon, label, style = '') {
             const a = document.createElement('a');
             a.className = `btn ${style}`;
             a.href = url;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
             a.innerHTML = `<span class="icon">${icon}</span> ${label}`;
-            // If it's a blob or data URL, it will download directly
-            // Otherwise it opens in new tab
-            a.addEventListener('click', (e) => {
-                // For direct download links, we want to open in new tab
-                // Some APIs return direct links, some return pages
-                // Let the browser handle it
-            });
             return a;
         }
 
-        /* ── Enter key support ── */
-        urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') fetchMedia();
-        });
+        /* ── Event Listeners ── */
+        urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchMedia(); });
+        window.addEventListener('load', () => { urlInput.focus();
+            setStatus('Paste a YouTube or TikTok link', ''); });
 
-        /* ── Auto-detect on paste ── */
-        urlInput.addEventListener('paste', () => {
-            // Small delay to let the value update
-            setTimeout(() => {
-                const url = urlInput.value.trim();
-                if (url && detectPlatform(url)) {
-                    // Auto-fetch after a short delay
-                    // But only if the user hasn't started typing more
-                }
-            }, 100);
-        });
-
-        /* ── Focus input on load ── */
-        window.addEventListener('load', () => {
-            urlInput.focus();
-            setStatus('Paste a YouTube or TikTok link', '');
-        });
-
-        /* ── Handle query param ?url=... ── */
         (function checkUrlParam() {
             const params = new URLSearchParams(window.location.search);
             const urlParam = params.get('url');
             if (urlParam) {
                 urlInput.value = urlParam;
-                // Auto-fetch after a short delay
-                setTimeout(fetchMedia, 400);
+                setTimeout(fetchMedia, 500);
             }
         })();
 
-        /* ── Simple analytics / debug ── */
-        console.log('🎥 KickStream Downloader ready');
-        console.log('ℹ️  Supported: YouTube, TikTok');
-        console.log('💡 Tip: add ?url=YOUR_URL to auto-load');
+        console.log('🎥 KickStream Downloader (CORS Proxy enabled)');
     </script>
-
 </body>
 </html>
