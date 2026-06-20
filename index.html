@@ -25,7 +25,6 @@ body.light-mode{
   --text:#1a2533;--muted:#6b7f96;--card-hover:#eaf0f7;--surface:#fff;
   --score-bg:rgba(0,180,90,0.08);--score-border:rgba(0,180,90,0.2);
 }
-/* High contrast mode */
 body.high-contrast{--text:#ffffff;--muted:#b0c4de;--border:#4a6a8a;--surface:#0a0a0a;--surface2:#1a1a2e;}
 body.high-contrast .match-card{border-width:2px;}
 body.high-contrast .sport-link.active{border-left-width:4px;}
@@ -211,6 +210,8 @@ body.sidebar-hidden .main{margin-left:0;}
 .skel::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);animation:shimmer 1.5s infinite;}
 @keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 .empty{text-align:center;padding:3rem;color:var(--muted);font-size:0.85rem;}
+.empty .empty-suggestion{font-size:0.75rem;color:var(--muted);margin-top:8px;}
+.empty .empty-suggestion a{color:var(--accent);cursor:pointer;text-decoration:underline;}
 #multistream-section{display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;}
 #multistream-section.visible{display:block;}
 .multistream-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
@@ -943,7 +944,7 @@ async function loadSports(){try{const sports=await fetch(W+'/api/sports').then(r
 const _cache=new Map();
 async function cachedFetch(url,ttl=60000){const hit=_cache.get(url);if(hit&&Date.now()-hit.ts<ttl)return hit.data;const data=await fetch(url).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();});_cache.set(url,{data,ts:Date.now()});return data;}
 
-// ── loadMatches with new source toggles and ordering ──
+// ── loadMatches with live‑tab fix (include soon‑starting matches) ──
 async function loadMatches(){
   if(channelsView)return;
   document.getElementById('matches-container').innerHTML=`<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
@@ -965,26 +966,27 @@ async function loadMatches(){
     const ppv = Array.isArray(ppvAll)?ppvAll:[];
     const wf = Array.isArray(wfAll)?wfAll:[];
 
-    // Filter by current view
-    const now=Date.now();
-    const todayStart=new Date();todayStart.setHours(0,0,0,0);
-    const todayEnd=new Date();todayEnd.setHours(23,59,59,999);
+    // Filter by current view – include upcoming (within 60min) in 'live'
+    const now = Date.now();
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
     const filterByView = (list) => list.filter(m=>{
-      const start=new Date(m.date).getTime();
-      if(currentFilter==='live')return m.status==='live'||m.alwaysLive;
-      if(currentFilter==='today')return start>=todayStart.getTime()&&start<=todayEnd.getTime();
+      const start = new Date(m.date).getTime();
+      const isLive = m.status === 'live' || m.alwaysLive;
+      const isSoon = (start - now) <= 60 * 60 * 1000 && (start - now) > -10 * 60 * 1000; // within next hour & not more than 10 mins past
+      if(currentFilter === 'live') return isLive || isSoon;
+      if(currentFilter === 'today') return start >= todayStart.getTime() && start <= todayEnd.getTime();
       return true;
     });
+
     const filteredPrimary = filterByView(primary);
     const filteredPPV = filterByView(ppv);
     const filteredWF = filterByView(wf);
 
-    // Merge: start with primary, then merge PPV and WF (deduplicate)
     let merged = [...filteredPrimary];
     merged = mergePPV(merged, filteredPPV);
     merged = mergeWatchFooty(merged, filteredWF);
 
-    // Apply "hide empty" setting
     if(getSetting('hideEmpty', false)){
       merged = merged.filter(m => m.sources && m.sources.length > 0);
     }
@@ -1006,7 +1008,13 @@ function renderMatches(matches){
   let filtered=currentSport==='all'?matches:matches.filter(m=>m.category===currentSport);
   if(currentLeague)filtered=filtered.filter(m=>{const p=m.title.split(/[-–|]/);const l=(p[1]||p[0]).trim();return l===currentLeague;});
   if(getSetting('hideFinished',false)){const now=Date.now();filtered=filtered.filter(m=>!m.date||new Date(m.date).getTime()+3*60*60*1000>now);}
-  if(!filtered.length){document.getElementById('matches-container').innerHTML='<div class="empty">No matches available right now.</div>';return;}
+  if(!filtered.length){
+    const suggestions = (currentFilter === 'live') ?
+      `<div class="empty-suggestion">Try the <a onclick="setFilter('today', document.querySelector('.filter-tab:nth-child(2)'))">Today</a> or <a onclick="setFilter('all', document.querySelector('.filter-tab:nth-child(3)'))">All</a> tabs</div>` :
+      '';
+    document.getElementById('matches-container').innerHTML=`<div class="empty">No matches available right now.${suggestions}</div>`;
+    return;
+  }
   const isLiveFilter=currentFilter==='live';
   filtered.sort((a,b)=>{const aF=favs.some(f=>a.teams?.home?.name===f||a.teams?.away?.name===f)?0:1;const bF=favs.some(f=>b.teams?.home?.name===f||b.teams?.away?.name===f)?0:1;if(aF!==bF)return aF-bF;return new Date(a.date)-new Date(b.date);});
   const groups={};filtered.forEach(m=>{if(!groups[m.category])groups[m.category]=[];groups[m.category].push(m);});
@@ -1051,7 +1059,7 @@ function buildCard(match,isLive){
 
 function showToast(msg){const ex=document.querySelector('.toast');if(ex)ex.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
 
-// ── openMatch with source order and auto-fullscreen ──
+// ── openMatch ──
 async function openMatch(match){
   currentItem=match;
   history.pushState({matchId:match.id},'',(partyId?'?party='+partyId+'&':'?')+'match='+match.id);
@@ -1064,7 +1072,6 @@ async function openMatch(match){
   document.getElementById('stream-list').innerHTML=`<div class="no-streams"><span class="spinner"></span>Fetching...</div>`;
   showLiveScoreBar(match);startScorePolling(match);
 
-  // Fetch primary streams, ppv.to, and watchfooty (respect toggles)
   const enablePrimary = getSetting('enablePrimary', true);
   const enablePPV = getSetting('enablePPV', true);
   const enableWF = getSetting('enableWF', true);
@@ -1084,19 +1091,12 @@ async function openMatch(match){
   ]);
 
   let streams = [];
-
-  // Add primary streams (direct embed)
   streams.push(...primaryStreams);
-
-  // Add ppv.to iframe
   if(enablePPV){
     const ppvIframe=ppvMatchFor(match, ppvAll);
     if(ppvIframe) streams.push({language:'PPV.to',streamNo:1,hd:false,_source:'ppvto',embedUrl:ppvIframe});
   }
-
-  // Add watchfooty
   if(enableWF){
-    // from match.sources
     if(match.sources && match.sources.length){
       match.sources.forEach(s=>{
         if(s.source==='watchfooty' && s.embedUrl){
@@ -1127,7 +1127,6 @@ async function openMatch(match){
     }
   }
 
-  // Apply source order
   const orderMap = {
     'ppv_wf_primary': ['ppvto','watchfooty','primary'],
     'wf_ppv_primary': ['watchfooty','ppvto','primary'],
@@ -1144,7 +1143,6 @@ async function openMatch(match){
     return priority.indexOf(aSrc) - priority.indexOf(bSrc);
   });
 
-  // Prefer HD
   if(getSetting('preferHD', true)) streams.sort((a,b) => (b.hd?1:0)-(a.hd?1:0));
 
   if(!streams.length){
@@ -1168,7 +1166,6 @@ async function openMatch(match){
     const wrap=document.createElement('div');wrap.className='stream-item-btns';wrap.appendChild(item);wrap.appendChild(nt);list.appendChild(wrap);
   });
 
-  // Auto-fullscreen if enabled
   if(getSetting('autoFullscreen', false)){
     setTimeout(()=>{
       const pw=document.getElementById('player-wrap');
@@ -1184,7 +1181,6 @@ function embedStream(embedUrl,itemEl){
   const pw=document.getElementById('player-wrap');
   pw.innerHTML=`<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
   publishSync(embedUrl);
-  // Try to set volume via iframe if possible (not cross-origin)
   function tryNext(attempt){const iframe=document.getElementById('stream-iframe'),blocked=document.getElementById('player-blocked');if(!iframe||!blocked)return;let failed=false;try{const doc=iframe.contentDocument||iframe.contentWindow?.document;if(!doc||doc.URL==='about:blank')failed=true;}catch(e){}if(failed){if(currentStreams.length>1&&currentStreamIndex<currentStreams.length-1){currentStreamIndex++;const ns=currentStreams[currentStreamIndex];const ni=document.querySelector(`.stream-item[data-index="${currentStreamIndex}"]`);showToast(`Trying stream ${currentStreamIndex+1}`);embedStream(ns.embedUrl,ni);}else{iframe.style.display='none';blocked.style.display='flex';}}}
   setTimeout(()=>tryNext(1),3000);setTimeout(()=>{const iframe=document.getElementById('stream-iframe');if(iframe&&iframe.style.display!=='none')tryNext(2);},7000);
 }
@@ -1197,12 +1193,9 @@ function closePlayer(){
   document.getElementById('player-section').classList.remove('visible');document.getElementById('player-wrap').innerHTML=`<div class="player-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Select a stream to watch</span></div>`;document.getElementById('stream-list').innerHTML='<div class="no-streams">No match selected</div>';document.getElementById('teams-row').style.display='none';
 }
 
-// ── CHANNELS (unchanged) ──
+// ── CHANNELS ──
 let hlsInstance=null;
-function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');// apply volume
-  const vol = parseInt(getSetting('volume', 80)) / 100;
-  video.volume = vol;
-  if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
+function playChannel(streamUrl,channelName,cardEl){closePlayer();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));if(cardEl)cardEl.classList.add('active');const existing=document.getElementById('channel-player-section');if(existing)existing.remove();if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const section=document.createElement('div');section.id='channel-player-section';section.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;';section.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;">${channelName}</div><button onclick="closeChannelPlayer()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button></div><div style="position:relative;aspect-ratio:16/9;background:#000;"><video id="channel-video" style="width:100%;height:100%;display:block;" controls autoplay playsinline></video></div>`;const container=document.getElementById('matches-container');container.insertBefore(section,container.firstChild);section.scrollIntoView({behavior:'smooth',block:'start'});const video=document.getElementById('channel-video');const vol = parseInt(getSetting('volume', 80)) / 100; video.volume = vol; if(Hls.isSupported()){hlsInstance=new Hls({maxBufferLength:30,maxMaxBufferLength:60,enableWorker:true,lowLatencyMode:false,fragLoadingMaxRetry:4,manifestLoadingMaxRetry:3,levelLoadingMaxRetry:4});hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hlsInstance.on(Hls.Events.ERROR,(e,data)=>{if(data.fatal){switch(data.type){case Hls.ErrorTypes.NETWORK_ERROR:hlsInstance.startLoad();break;case Hls.ErrorTypes.MEDIA_ERROR:hlsInstance.recoverMediaError();break;default:showToast('Stream unavailable');closeChannelPlayer();break;}}});}else if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=streamUrl;video.play().catch(()=>{});}else{section.querySelector('div:last-child').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">HLS not supported</div>';}}
 function closeChannelPlayer(){if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}const el=document.getElementById('channel-player-section');if(el)el.remove();document.querySelectorAll('.channel-card').forEach(c=>c.classList.remove('active'));}
 function filterChannels(q){q=q.toLowerCase().trim();document.querySelectorAll('.channel-card').forEach(c=>{const n=c.querySelector('.channel-name')?.textContent.toLowerCase()||'';c.style.display=(!q||n.includes(q))?'':'none';});document.querySelectorAll('.channels-section-title').forEach(t=>{const g=t.nextElementSibling;if(!g)return;const v=[...g.querySelectorAll('.channel-card')].some(c=>c.style.display!=='none');t.style.display=v?'':'none';});}
 
@@ -1236,15 +1229,11 @@ async function addToMultistream(match,btn){
   if(multistreams.find(m=>m.match.id===match.id)){showToast('Already in multistream');return;}
   btn.classList.add('added');btn.textContent='⊞ Added';
   let embedUrl=null;
-
-  // Try ppv.to if enabled
   if(getSetting('enablePPV',true)){
     const ppvAll=await fetchPPVTo();
     const ppvIframe=ppvMatchFor(match, ppvAll);
     if(ppvIframe) embedUrl=ppvIframe;
   }
-
-  // Try watchfooty if enabled
   if(!embedUrl && getSetting('enableWF',true)){
     const wfAll=await fetchWatchFooty();
     const wfMatch=wfAll.find(w=>simplify(w.title)===simplify(match.title));
@@ -1253,8 +1242,6 @@ async function addToMultistream(match,btn){
       if(s.embedUrl) embedUrl=s.embedUrl;
     }
   }
-
-  // Fallback to primary
   if(!embedUrl && getSetting('enablePrimary',true) && match.sources && match.sources.length){
     for(const s of match.sources){
       try{
@@ -1268,7 +1255,6 @@ async function addToMultistream(match,btn){
       }catch(e){}
     }
   }
-
   if(!embedUrl){showToast('No stream available');btn.classList.remove('added');btn.textContent='⊞';return;}
   multistreams.push({match,embedUrl});renderMultistream();document.getElementById('multistream-section').classList.add('visible');document.getElementById('multistream-section').scrollIntoView({behavior:'smooth',block:'start'});showToast(`Added to multistream (${multistreams.length}/4)`);
 }
