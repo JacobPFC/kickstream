@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-        /* ── Reset & Root ── */
         * {
             margin: 0;
             padding: 0;
@@ -356,11 +355,6 @@
             font-size: 1rem;
             line-height: 1;
         }
-        .downloads .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none !important;
-        }
         .footer {
             margin-top: 1.8rem;
             font-size: 0.6rem;
@@ -447,7 +441,7 @@
         <div class="platform-hint">
             <span class="pill"><svg viewBox="0 0 24 24"><path d="M10.333 0c-5.522 0-10 4.478-10 10 0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm3.701 14.077c-1.752 1.057-4.098 1.044-5.852-.004-1.754-1.049-1.754-2.744 0-3.793 1.754-1.048 4.1-1.061 5.852-.004 1.753 1.048 1.753 2.744 0 3.793zm-4.084-1.767c-.497.296-1.033.296-1.53 0-.497-.297-.497-.778 0-1.075.497-.296 1.033-.296 1.53 0 .497.297.497.778 0 1.075z"/></svg> YouTube</span>
             <span class="pill"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.467c.168 1.302-.219 2.664-.766 3.914-.62 1.414-1.539 2.672-2.614 3.704-1.178 1.131-2.562 2.036-4.131 2.557-1.561.519-3.095.633-4.727.324-1.746-.329-3.311-1.134-4.638-2.299-.93-.817-1.642-1.806-2.157-2.922-.554-1.203-.893-2.455-.965-3.748-.072-1.293.112-2.57.541-3.792.407-1.158 1.014-2.254 1.79-3.198.746-.905 1.654-1.665 2.67-2.252.988-.568 2.11-.969 3.246-1.126 1.139-.157 2.295-.058 3.382.294.995.323 1.956.861 2.777 1.544.812.673 1.5 1.489 2.024 2.415.509.902.833 1.896.976 2.927z"/></svg> TikTok</span>
-            <span style="opacity:0.4;font-size:0.6rem;">— proxy enabled for CORS bypass</span>
+            <span style="opacity:0.4;font-size:0.6rem;">— using reliable APIs via proxy</span>
         </div>
 
         <div id="status">
@@ -479,34 +473,11 @@
     </div>
 
     <script>
-        /* ── CORS Proxy ── */
-        const PROXY = 'https://api.allorigins.win/raw?url=';
-
-        async function fetchWithProxy(url, timeout = 20000) {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), timeout);
-            try {
-                const res = await fetch(PROXY + encodeURIComponent(url), {
-                    signal: controller.signal
-                });
-                clearTimeout(timer);
-                if (!res.ok) throw new Error(`Proxy error (${res.status})`);
-                // Some APIs return HTML errors via proxy, check content-type
-                const contentType = res.headers.get('content-type') || '';
-                if (contentType.includes('text/html')) {
-                    const text = await res.text();
-                    if (text.includes('502') || text.includes('504') || text.includes('error')) {
-                        throw new Error('Proxy returned an error page');
-                    }
-                    // Try to parse as JSON anyway, maybe it's JSON with text/html header
-                    try { return JSON.parse(text); } catch (e) { throw new Error('Invalid response from proxy'); }
-                }
-                return res.json();
-            } catch (err) {
-                clearTimeout(timer);
-                throw err;
-            }
-        }
+        /* ── Configuration ── */
+        const PROXIES = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url='
+        ];
 
         /* ── Helpers ── */
         const $ = id => document.getElementById(id);
@@ -572,80 +543,108 @@
             return platform === 'youtube' ? '▶' : '♪';
         }
 
-        /* ── Fetch Functions (with Proxy) ── */
+        /* ── Fetch with proxy fallback ── */
+        async function fetchWithProxy(url, timeout = 20000) {
+            let lastError = null;
+            for (const proxy of PROXIES) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), timeout);
+                    const fullUrl = proxy + encodeURIComponent(url);
+                    const res = await fetch(fullUrl, { signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    // Check content-type
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.includes('text/html')) {
+                        // might be an error page; try to parse JSON anyway
+                        const text = await res.text();
+                        try { return JSON.parse(text); } catch (_) { throw new Error('Proxy returned HTML'); }
+                    }
+                    return await res.json();
+                } catch (err) {
+                    lastError = err;
+                    continue; // try next proxy
+                }
+            }
+            throw new Error(`All proxies failed: ${lastError?.message || 'unknown'}`);
+        }
+
+        /* ── YouTube fetch using ytdl.me API ── */
         async function fetchYouTube(id) {
-            // Get metadata via oembed (works without proxy)
-            const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`;
+            // First get metadata via oembed (no proxy needed)
             let oembedData = { title: 'YouTube Video', thumbnail_url: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
                 author_name: '—', duration: null };
             try {
-                const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(5000) });
+                const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`, {
+                    signal: AbortSignal.timeout(5000)
+                });
                 if (res.ok) oembedData = await res.json();
-            } catch (_) { /* fallback to defaults */ }
+            } catch (_) { /* ignore */ }
 
-            // Fetch download links via proxy
-            let mp4Link = null,
-                mp3Link = null;
-            try {
-                const mp4Data = await fetchWithProxy(`https://api.vevioz.com/api/button/mp4/${id}`);
-                if (mp4Data && mp4Data.success && mp4Data.data && mp4Data.data.url) {
-                    mp4Link = mp4Data.data.url;
-                } else if (mp4Data && mp4Data.link) {
-                    mp4Link = mp4Data.link;
-                }
-            } catch (e) { console.warn('MP4 fetch failed', e); }
+            // Fetch download links from ytdl.me (via proxy)
+            const apiUrl = `https://api.ytdl.me/api/v1/download?url=https://www.youtube.com/watch?v=${id}`;
+            const data = await fetchWithProxy(apiUrl);
 
-            try {
-                const mp3Data = await fetchWithProxy(`https://api.vevioz.com/api/button/mp3/${id}`);
-                if (mp3Data && mp3Data.success && mp3Data.data && mp3Data.data.url) {
-                    mp3Link = mp3Data.data.url;
-                } else if (mp3Data && mp3Data.link) {
-                    mp3Link = mp3Data.link;
-                }
-            } catch (e) { console.warn('MP3 fetch failed', e); }
+            // ytdl.me returns: { status: 'success', data: { title, video: { url, quality }, audio: { url, quality } } }
+            if (!data || data.status !== 'success' || !data.data) {
+                throw new Error('YouTube API returned invalid response');
+            }
+            const info = data.data;
+            const video = info.video || {};
+            const audio = info.audio || {};
 
             return {
                 id,
-                title: oembedData.title || 'YouTube Video',
-                thumbnail: oembedData.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-                duration: oembedData.duration ? formatDuration(oembedData.duration) : '—',
-                author: oembedData.author_name || '—',
+                title: info.title || oembedData.title || 'YouTube Video',
+                thumbnail: info.thumbnail || oembedData.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                duration: info.duration ? formatDuration(info.duration) : (oembedData.duration ? formatDuration(oembedData
+                    .duration) : '—'),
+                author: info.author || oembedData.author_name || '—',
+                views: info.views ? formatNumber(info.views) : '—',
                 platform: 'youtube',
                 downloads: {
-                    mp4: mp4Link,
-                    mp3: mp3Link
+                    mp4: video.url || null,
+                    mp3: audio.url || null,
+                    // also provide other qualities if available
+                    hd: video.url && video.quality === 'hd' ? video.url : null
                 }
             };
         }
 
+        /* ── TikTok fetch using tikwm.com API ── */
         async function fetchTikTok(url) {
-            let data = null;
-            try {
-                data = await fetchWithProxy(`https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`);
-            } catch (e) {
-                throw new Error('TikTok API unreachable via proxy');
-            }
-            if (!data || !data.success) throw new Error(data?.error || 'TikTok fetch failed');
+            // Use tikwm.com API via proxy
+            const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
+            const data = await fetchWithProxy(apiUrl);
 
-            const downloadUrl = data.url || null;
-            const hdUrl = data.hd_url || data.url || null;
+            // tikwm returns: { code: 0, msg: 'success', data: { title, video, images, music, ... } }
+            if (!data || data.code !== 0 || !data.data) {
+                throw new Error('TikTok API returned invalid response');
+            }
+            const info = data.data;
+            // Video download URLs: data.data.video (with watermark) and data.data.video_no_watermark
+            const videoWithWatermark = info.video || null;
+            const videoNoWatermark = info.video_no_watermark || null;
+            const audio = info.music || null;
 
             return {
-                id: data.video_id || data.id || 'tiktok',
-                title: data.title || 'TikTok Video',
-                thumbnail: data.thumbnail || data.cover || '',
-                duration: data.duration ? formatDuration(data.duration) : '—',
-                author: data.author || '—',
-                views: data.views ? formatNumber(data.views) : '—',
+                id: info.id || 'tiktok',
+                title: info.title || 'TikTok Video',
+                thumbnail: info.cover || info.origin_cover || '',
+                duration: info.duration ? formatDuration(info.duration) : '—',
+                author: info.author?.unique_id || info.author?.nickname || '—',
+                views: info.play_count ? formatNumber(info.play_count) : '—',
                 platform: 'tiktok',
                 downloads: {
-                    mp4: downloadUrl,
-                    hd: hdUrl
+                    mp4: videoNoWatermark || videoWithWatermark,
+                    hd: videoNoWatermark || null,
+                    audio: audio || null
                 }
             };
         }
 
-        /* ── Main Handler ── */
+        /* ── Main fetch handler ── */
         async function fetchMedia() {
             const url = urlInput.value.trim();
             if (!url) {
@@ -675,18 +674,16 @@
                     throw new Error('Unsupported platform');
                 }
 
-                // Check if we actually got any download links
-                const hasDownloads = data.downloads && (data.downloads.mp4 || data.downloads.hd || data.downloads.mp3);
-                if (!hasDownloads) {
-                    // Still show the info but indicate no links
-                    renderResult(data, true);
-                    setStatus('⚠️ Video info found, but no download links available (try again later)', 'error');
-                    showResult(true);
+                // Check if we have any download links
+                const hasLinks = data.downloads && (data.downloads.mp4 || data.downloads.hd || data.downloads.mp3 || data
+                    .downloads.audio);
+                renderResult(data);
+                if (hasLinks) {
+                    setStatus('✅ Ready to download', 'success');
                 } else {
-                    renderResult(data, false);
-                    setStatus('Ready to download ✅', 'success');
-                    showResult(true);
+                    setStatus('⚠️ Video info found, but no download links available (try again later)', 'error');
                 }
+                showResult(true);
 
             } catch (err) {
                 setStatus(`Error: ${err.message || 'Something went wrong'}`, 'error');
@@ -696,7 +693,7 @@
             }
         }
 
-        function renderResult(data, noLinks = false) {
+        function renderResult(data) {
             thumbImg.src = data.thumbnail || '';
             thumbImg.alt = data.title || 'Thumbnail';
             mediaTitle.textContent = data.title || 'Untitled';
@@ -708,20 +705,14 @@
             tag.textContent = `${platformIcon(data.platform)} ${platformLabel(data.platform)}`;
 
             downloadsContainer.innerHTML = '';
+            const d = data.downloads || {};
 
-            if (noLinks || !data.downloads) {
-                const msg = document.createElement('div');
-                msg.style.cssText =
-                    'width:100%;text-align:center;padding:0.5rem 0;color:var(--text-secondary);font-size:0.78rem;';
-                msg.textContent = 'No direct download links available. Try again later.';
-                downloadsContainer.appendChild(msg);
-                return;
-            }
-
-            const d = data.downloads;
+            // Prefer no-watermark for TikTok
             if (d.mp4) downloadsContainer.appendChild(createBtn(d.mp4, '🎬', 'Video (MP4)', 'primary'));
             if (d.hd && d.hd !== d.mp4) downloadsContainer.appendChild(createBtn(d.hd, '🎬', 'HD Video', 'primary'));
             if (d.mp3) downloadsContainer.appendChild(createBtn(d.mp3, '🎵', 'Audio (MP3)', 'audio'));
+            // for TikTok, audio might be under 'audio'
+            if (d.audio && !d.mp3) downloadsContainer.appendChild(createBtn(d.audio, '🎵', 'Audio', 'audio'));
 
             if (downloadsContainer.children.length === 0) {
                 const msg = document.createElement('div');
@@ -756,7 +747,7 @@
             }
         })();
 
-        console.log('🎥 KickStream Downloader (CORS Proxy enabled)');
+        console.log('🎥 KickStream Downloader (v2 – improved APIs)');
     </script>
 </body>
 </html>
