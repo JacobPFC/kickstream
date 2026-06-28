@@ -779,7 +779,14 @@
             display:flex; flex-direction:column; align-items:center; gap:6px;
         }
         .channel-card:hover { border-color:rgba(0,230,118,0.25); box-shadow:0 4px 12px rgba(0,0,0,0.15); }
-        .channel-logo { width:56px; height:32px; object-fit:contain; }
+        .channel-logo { 
+            width:56px; 
+            height:32px; 
+            object-fit:contain; 
+            background: rgba(0,0,0,0.2);
+            border-radius:4px;
+            padding:2px;
+        }
         .channel-name { font-size:0.72rem; font-weight:600; text-align:center; color:var(--text); line-height:1.2; }
         .channel-live { border-color:rgba(255,23,68,0.3) !important; background:rgba(255,23,68,0.04); }
         .channels-section-title { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:1px; margin:1.2rem 0 0.6rem; color:var(--text-secondary); }
@@ -2112,7 +2119,49 @@
             document.getElementById('search-input').value = '';
             document.getElementById('channel-search-bar').style.display = 'block';
             document.getElementById('channel-search-input').value = '';
-            if (channelsLoaded && document.querySelector('.channels-grid')) return;
+            if (channelsLoaded && document.querySelector('.channels-grid')) {
+                // Refresh channel status in background but don't reload the whole view
+                try {
+                    const evRes = await fetch('https://api.cdnlivetv.tv/api/v1/events/sports/?user=cdnlivetv&plan=free', { signal: AbortSignal.timeout(5000) });
+                    if (evRes.ok) {
+                        const evData = await evRes.json();
+                        const events = Array.isArray(evData) ? evData : (evData.events || []);
+                        const nowShowing = {};
+                        events.forEach(ev => { if (ev.status === 'live' && ev.channels) { ev.channels.forEach(ch => { if (!nowShowing[ch.channel_code]) { nowShowing[ch.channel_code] = { title: ev.homeTeam && ev.awayTeam ? `${ev.homeTeam} vs ${ev.awayTeam}` : (ev.event || ev.tournament || ''), viewers: parseInt(ch.viewers) || 0 }; } }); } });
+                        document.querySelectorAll('.channel-card').forEach(card => {
+                            const code = card.dataset.code;
+                            const live = nowShowing[code];
+                            if (live) {
+                                card.classList.add('channel-live');
+                                const nameEl = card.querySelector('.channel-name');
+                                if (nameEl) nameEl.textContent = card.dataset.channelName || '';
+                                const liveTag = card.querySelector('.channel-live-tag') || document.createElement('div');
+                                liveTag.className = 'channel-live-tag';
+                                liveTag.style.cssText = 'font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;';
+                                liveTag.textContent = 'LIVE';
+                                if (!card.querySelector('.channel-live-tag')) {
+                                    card.insertBefore(liveTag, card.querySelector('.channel-name'));
+                                }
+                                const showingNow = card.querySelector('.channel-showing') || document.createElement('div');
+                                showingNow.className = 'channel-showing';
+                                showingNow.style.cssText = 'font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;';
+                                showingNow.textContent = live.title;
+                                if (!card.querySelector('.channel-showing')) {
+                                    card.appendChild(showingNow);
+                                }
+                                const viewers = card.querySelector('.channel-viewers') || document.createElement('div');
+                                viewers.className = 'channel-viewers';
+                                viewers.style.cssText = 'font-size:0.55rem;color:var(--text-secondary);margin-top:2px;';
+                                viewers.textContent = `👁 ${live.viewers}`;
+                                if (!card.querySelector('.channel-viewers')) {
+                                    card.appendChild(viewers);
+                                }
+                            }
+                        });
+                    }
+                } catch(e) {}
+                return;
+            }
             channelsLoaded = false;
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
@@ -2138,21 +2187,32 @@
                 const liveChannels = channels.filter(ch => ch.live);
                 const container = document.createElement('div');
 
-                function buildChannelCard(ch) { const card = document.createElement('div');
+                function buildChannelCard(ch) { 
+                    const card = document.createElement('div');
                     card.className = 'channel-card' + (ch.live ? ' channel-live' : '');
-                    const logo = ch.image ?
-                        `<img class="channel-logo" src="${ch.image}" alt="" loading="lazy" onerror="this.style.display='none'">` :
-                        `<div style="font-size:1.5rem">📺</div>`;
+                    card.dataset.code = ch.code || '';
+                    card.dataset.channelName = ch.name || 'Channel';
+                    
+                    // Logo handling - use provided image or fallback
+                    let logoHtml = '';
+                    if (ch.image) {
+                        logoHtml = `<img class="channel-logo" src="${ch.image}" alt="${ch.name || 'Channel'}" loading="lazy" onerror="this.style.display='none'">`;
+                    } else {
+                        // Generate a simple logo from channel name
+                        const initial = (ch.name || 'Channel').charAt(0).toUpperCase();
+                        logoHtml = `<div style="width:56px;height:32px;background:var(--surface2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:var(--accent);border:1px solid var(--border);">${initial}</div>`;
+                    }
+                    
                     const liveTag = ch.live ?
-                        `<div style="font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>` :
+                        `<div class="channel-live-tag" style="font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>` :
                         '';
                     const showingNow = ch.live ?
-                        `<div style="font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>` :
+                        `<div class="channel-showing" style="font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>` :
                         '';
                     const viewers = ch.totalViewers > 0 ?
-                        `<div style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px">👁 ${ch.totalViewers}</div>` :
+                        `<div class="channel-viewers" style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px;">👁 ${ch.totalViewers}</div>` :
                         '';
-                    card.innerHTML = `${logo}${liveTag}<div class="channel-name">${ch.name||'Channel'}</div>${showingNow}${viewers}`;
+                    card.innerHTML = `${logoHtml}${liveTag}<div class="channel-name">${ch.name||'Channel'}</div>${showingNow}${viewers}`;
                     card.addEventListener('click', () => window.open(ch.url, '_blank', 'noopener,noreferrer'));
                     return card;
                 }
