@@ -385,7 +385,6 @@
             overflow: hidden;
             padding: 4px;
             transition: background 0.2s, border-color 0.2s;
-            flex-direction: column;
         }
         #ad-banner-container iframe {
             max-width: 100%;
@@ -398,13 +397,6 @@
             font-size: 0.7rem;
             opacity: 0.4;
             padding: 8px;
-        }
-        /* ensure native ad container inside doesn't break layout */
-        #ad-banner-container > div[id^="container-"] {
-            max-width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         /* ── SCORE TICKER ── */
@@ -2359,11 +2351,20 @@
                 <button class="pwa-dismiss" onclick="dismissPWA()" title="Dismiss">✕</button>
             </div>
 
-            <!-- ═══ NEW NATIVE AD BANNER ═══ -->
+            <!-- ═══ AD BANNER ═══ -->
             <div id="ad-banner-container">
-                <script async="async" data-cfasync="false" src="https://pl29072448.effectivecpmnetwork.com/3571a161b12859500250b6695f54b5c2/invoke.js">
+                <div class="ad-placeholder">Loading ad…</div>
+                <script>
+                    atOptions = {
+                        'key': '227d90309c60d025e7698e00ceca60ed',
+                        'format': 'iframe',
+                        'height': 60,
+                        'width': 468,
+                        'params': {}
+                    };
                 </script>
-                <div id="container-3571a161b12859500250b6695f54b5c2"></div>
+                <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js">
+                </script>
             </div>
 
             <!-- FAVOURITES -->
@@ -3801,7 +3802,7 @@
         setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
     </script>
 
-    <!-- ═══ AD BLOCKER (whitelists our ad container) ═══ -->
+    <!-- ═══ AD BLOCKER (modified to allow the banner ad) ═══ -->
     <script>
         (function() {
             document.body.classList.add('no-ads');
@@ -3817,6 +3818,7 @@
                     const u = new URL(url, location.href);
                     if (/highperformanceformat|popads|adnxs|doubleclick|googlesyndication|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra|admaven/i
                         .test(u.hostname)) {
+                        // allow our own ad domain only if inside the whitelisted container
                         const caller = document.currentScript;
                         if (caller && caller.closest && caller.closest('#ad-banner-container')) {
                             // let it through
@@ -3853,7 +3855,7 @@
                 'party-chat',
                 'kb-modal',
                 'pwa-banner',
-                'ad-banner-container'
+                'ad-banner-container' // our ad container is safe
             ]);
 
             function isWhitelisted(el) {
@@ -3898,10 +3900,12 @@
                 ms.forEach(m => {
                     m.addedNodes.forEach(n => {
                         if (n.nodeType !== 1) return;
+                        // Script removal – skip if whitelisted
                         if (n.tagName === 'SCRIPT') {
                             const src = n.src || '';
                             if (/highperformanceformat|popads|adnxs|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra/i
                                 .test(src)) {
+                                // if this script is inside our ad container, keep it
                                 if (isWhitelisted(n)) return;
                                 n.remove();
                                 return;
@@ -3911,6 +3915,20 @@
                     });
                 });
             }).observe(document.documentElement, { childList: true, subtree: true });
+        })();
+    </script>
+
+    <!-- ═══ ensure ad container gets a chance to render ═══ -->
+    <script>
+        (function() {
+            // If the ad container's inner placeholder is still visible after 3s, hide it.
+            setTimeout(function() {
+                const c = document.getElementById('ad-banner-container');
+                if (c) {
+                    const ph = c.querySelector('.ad-placeholder');
+                    if (ph) ph.style.display = 'none';
+                }
+            }, 3000);
         })();
     </script>
 
