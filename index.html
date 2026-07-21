@@ -2503,7 +2503,7 @@
 
     <!-- ═══ JAVASCRIPT ═══ -->
     <script>
-        const W = 'https://cold-term-f5a2.sebythewilly.workers.dev';
+        const W = 'https://cold-term-f5a2.sebythewilly.workers.dev'; // fallback if needed
         const STREAMFREE_API = 'https://streamfree.top/api';
         const ABLY_KEY = 'uhrUrw.0fhsnA:Ao7bwXB6clXBCqWcRc_r__G7WF5GbxybcjltqUZagEw';
         const SPORT_ICONS = { football: '⚽', basketball: '🏀', tennis: '🎾', hockey: '🏒', baseball: '⚾', mma: '🥊', boxing: '🥊',
@@ -2558,14 +2558,44 @@
             return { home: { name: m[1].trim() }, away: { name: m[2].trim() } };
         }
 
+        // Improved fetch with multiple response structure fallbacks
         async function fetchStreamFree() {
             if (_streamFreeCache && Date.now() - _streamFreeCacheTs < STREAMFREE_TTL) return _streamFreeCache;
             try {
                 const r = await fetch(STREAMFREE_API, { signal: AbortSignal.timeout(6000) });
                 if (!r.ok) throw new Error(r.status);
                 const data = await r.json();
-                let events = Array.isArray(data) ? data : (data.events || data.matches || data.streams || []);
-                if (!events.length) throw new Error('no events');
+                console.log('[StreamFree] Response:', data); // debug
+
+                // Try to extract an array of events from various possible structures
+                let events = null;
+                if (Array.isArray(data)) {
+                    events = data;
+                } else if (data.data && Array.isArray(data.data)) {
+                    events = data.data;
+                } else if (data.events && Array.isArray(data.events)) {
+                    events = data.events;
+                } else if (data.matches && Array.isArray(data.matches)) {
+                    events = data.matches;
+                } else if (data.streams && Array.isArray(data.streams)) {
+                    events = data.streams;
+                } else {
+                    // Try to find the first array property
+                    for (const key of Object.keys(data)) {
+                        if (Array.isArray(data[key]) && data[key].length > 0) {
+                            events = data[key];
+                            break;
+                        }
+                    }
+                }
+
+                if (!events || !events.length) {
+                    console.warn('[StreamFree] No events found in response');
+                    // Fallback to primary source
+                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
+                    return fallback.map(m => ({ ...m, _streamfree: false }));
+                }
+
                 const flat = [];
                 events.forEach(ev => {
                     const title = ev.title || ev.name || 'StreamFree Event';
@@ -2609,13 +2639,34 @@
                         score: ev.score || ev.result || null
                     });
                 });
+
+                // If we got no events from StreamFree, fallback to primary source
+                if (flat.length === 0) {
+                    console.warn('[StreamFree] No valid events after parsing, falling back to primary');
+                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
+                    return fallback.map(m => ({ ...m, _streamfree: false }));
+                }
+
                 _streamFreeCache = flat;
                 _streamFreeCacheTs = Date.now();
                 return flat;
             } catch (e) {
-                console.warn('[streamfree]', e.message);
-                return _streamFreeCache || [];
+                console.warn('[StreamFree]', e.message);
+                // Fallback to primary source on error
+                try {
+                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
+                    return fallback.map(m => ({ ...m, _streamfree: false }));
+                } catch (e2) {
+                    return _streamFreeCache || [];
+                }
             }
+        }
+
+        // Helper to get endpoint path from current filter
+        function getEndpoint() {
+            if (currentFilter === 'live') return '/api/matches/live';
+            if (currentFilter === 'today') return '/api/matches/all-today';
+            return '/api/matches/all';
         }
 
         // ── PWA ──
@@ -3456,7 +3507,6 @@
             btn.classList.add('added');
             btn.textContent = '⊞ Added';
             let embedUrl = null;
-            // Try to get a stream from the match's sources
             if (match.sources && match.sources.length) {
                 embedUrl = match.sources[0].embedUrl;
             }
@@ -3600,10 +3650,8 @@
         (function() {
             document.body.classList.add('no-ads');
 
-            // ── whitelist our ad container ──
             const AD_WHITELIST = new Set(['ad-banner-container']);
 
-            // ── override open to block popunders ──
             const _open = window.open.bind(window);
             window.open = function(url, target, features) {
                 if (!target || target === '_self' || target === '_top' || target === '_parent') return null;
