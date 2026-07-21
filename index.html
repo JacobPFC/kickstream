@@ -1030,6 +1030,12 @@
         .match-card.fav-card:hover {
             border-color: rgba(255, 214, 0, 0.4);
         }
+        .match-card.ppvto-card {
+            border-color: rgba(0, 176, 255, 0.2);
+        }
+        .match-card.ppvto-card:hover {
+            border-color: rgba(0, 176, 255, 0.35);
+        }
 
         .card-poster {
             aspect-ratio: 16/9;
@@ -2503,8 +2509,9 @@
 
     <!-- ═══ JAVASCRIPT ═══ -->
     <script>
-        const W = 'https://cold-term-f5a2.sebythewilly.workers.dev'; // fallback if needed
-        const STREAMFREE_API = 'https://streamfree.top/api';
+        const W = 'https://cold-term-f5a2.sebythewilly.workers.dev';
+        const PPVTO_API = 'https://ppv.to/api/streams';
+        const WATCHFOOTY_API = 'https://watchfooty.st/api/matches';
         const ABLY_KEY = 'uhrUrw.0fhsnA:Ao7bwXB6clXBCqWcRc_r__G7WF5GbxybcjltqUZagEw';
         const SPORT_ICONS = { football: '⚽', basketball: '🏀', tennis: '🎾', hockey: '🏒', baseball: '⚾', mma: '🥊', boxing: '🥊',
             rugby: '🏉', volleyball: '🏐', cricket: '🏏', golf: '⛳', motorsport: '🏎️', cycling: '🚴', darts: '🎯',
@@ -2530,12 +2537,12 @@
         let liveScores = {};
         let scoreUpdateTimer = null;
 
-        // ── STREAMFREE cache ──
-        let _streamFreeCache = null,
-            _streamFreeCacheTs = 0;
-        const STREAMFREE_TTL = 60000;
+        // ── PPV.TO cache ──
+        let _ppvCache = null,
+            _ppvCacheTs = 0;
+        const PPV_TTL = 60000;
 
-        function streamFreeNormCat(cat = '') {
+        function ppvNormCat(cat = '') {
             const c = cat.toLowerCase();
             if (c.includes('basketball')) return 'basketball';
             if (c.includes('soccer') || c.includes('football')) return 'football';
@@ -2552,121 +2559,185 @@
             return 'other';
         }
 
-        function streamFreeExtractTeams(title = '') {
-            const m = title.match(/^(.+?)\s+(?:vs\.?|at|@|v\.?)\s+(.+)$/i);
+        function ppvExtractTeams(name = '') {
+            const m = name.match(/^(.+?)\s+(?:vs\.?|at|@|v\.?)\s+(.+)$/i);
             if (!m) return null;
             return { home: { name: m[1].trim() }, away: { name: m[2].trim() } };
         }
 
-        // Improved fetch with multiple response structure fallbacks
-        async function fetchStreamFree() {
-            if (_streamFreeCache && Date.now() - _streamFreeCacheTs < STREAMFREE_TTL) return _streamFreeCache;
+        function ppvIsLive(s) {
+            if (s.always_live) return true;
+            const now = Date.now() / 1000;
+            return s.starts_at <= now && (!s.ends_at || s.ends_at >= now);
+        }
+
+        async function fetchPPVTo() {
+            if (_ppvCache && Date.now() - _ppvCacheTs < PPV_TTL) return _ppvCache;
             try {
-                const r = await fetch(STREAMFREE_API, { signal: AbortSignal.timeout(6000) });
+                const r = await fetch(PPVTO_API, { signal: AbortSignal.timeout(6000) });
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                if (!j.success || !Array.isArray(j.streams)) throw new Error('bad');
+                const flat = [];
+                j.streams.forEach(cat => {
+                    const sport = ppvNormCat(cat.category);
+                    (cat.streams || []).forEach(s => {
+                        const ended = s.ends_at && s.ends_at * 1000 < Date.now() && !s.always_live && !s
+                            .allowpaststreams;
+                        if (ended) return;
+                        flat.push({
+                            _ppvto: true,
+                            id: 'ppvto_' + s.id,
+                            title: s.name || 'PPV Stream',
+                            category: sport,
+                            date: s.starts_at ? new Date(s.starts_at * 1000).toISOString() : new Date()
+                            .toISOString(),
+                            ends_at: s.ends_at,
+                            status: ppvIsLive(s) ? 'live' : 'upcoming',
+                            alwaysLive: !!s.always_live,
+                            sources: [],
+                            _iframe: s.iframe || null,
+                            teams: ppvExtractTeams(s.name || ''),
+                        });
+                    });
+                });
+                _ppvCache = flat;
+                _ppvCacheTs = Date.now();
+                return flat;
+            } catch (e) { console.warn('[ppv.to]', e.message); return _ppvCache || []; }
+        }
+
+        function simplify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+        function ppvMatchFor(match, ppvList) {
+            if (match._ppvto && match._iframe) return match._iframe;
+            const mk = simplify(match.title);
+            const found = ppvList.find(p => {
+                if (!p._iframe) return false;
+                const pk = simplify(p.title);
+                const sh = mk.length < pk.length ? mk : pk,
+                    lo = mk.length < pk.length ? pk : mk;
+                return lo.includes(sh) && sh.length > 5;
+            });
+            return found ? found._iframe : null;
+        }
+
+        function mergePPV(primary, ppv) {
+            const keys = new Set(primary.map(m => simplify(m.title)));
+            const unique = ppv.filter(p => {
+                const pk = simplify(p.title);
+                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
+                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
+                return true;
+            });
+            return [...primary, ...unique];
+        }
+
+        // ── WatchFooty API ──
+        let _watchFootyCache = null,
+            _watchFootyCacheTs = 0;
+        const WATCHFOOTY_TTL = 60000;
+
+        async function fetchWatchFooty() {
+            if (_watchFootyCache && Date.now() - _watchFootyCacheTs < WATCHFOOTY_TTL) return _watchFootyCache;
+            try {
+                const r = await fetch(WATCHFOOTY_API, { signal: AbortSignal.timeout(6000) });
                 if (!r.ok) throw new Error(r.status);
                 const data = await r.json();
-                console.log('[StreamFree] Response:', data); // debug
-
-                // Try to extract an array of events from various possible structures
-                let events = null;
-                if (Array.isArray(data)) {
-                    events = data;
-                } else if (data.data && Array.isArray(data.data)) {
-                    events = data.data;
-                } else if (data.events && Array.isArray(data.events)) {
-                    events = data.events;
-                } else if (data.matches && Array.isArray(data.matches)) {
-                    events = data.matches;
-                } else if (data.streams && Array.isArray(data.streams)) {
-                    events = data.streams;
-                } else {
-                    // Try to find the first array property
-                    for (const key of Object.keys(data)) {
-                        if (Array.isArray(data[key]) && data[key].length > 0) {
-                            events = data[key];
-                            break;
-                        }
+                let matches = Array.isArray(data) ? data : (data.matches || data.events || []);
+                if (!matches.length) throw new Error('no matches');
+                const mapped = matches.map(m => {
+                    let homeName = m.home_team || m.homeTeam || m.team1 || '';
+                    let awayName = m.away_team || m.awayTeam || m.team2 || '';
+                    let title = m.title || m.name || `${homeName} vs ${awayName}`;
+                    if (!homeName && !awayName) {
+                        const parts = title.split(/\s+vs\.?\s+|\s+-\s+|\s+@\s+|\s+&amp;\s+/i);
+                        if (parts.length >= 2) { homeName = parts[0].trim();
+                            awayName = parts[1].trim(); }
                     }
-                }
-
-                if (!events || !events.length) {
-                    console.warn('[StreamFree] No events found in response');
-                    // Fallback to primary source
-                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
-                    return fallback.map(m => ({ ...m, _streamfree: false }));
-                }
-
-                const flat = [];
-                events.forEach(ev => {
-                    const title = ev.title || ev.name || 'StreamFree Event';
-                    const category = streamFreeNormCat(ev.sport || ev.category || ev.league || '');
-                    const status = (ev.status && ev.status.toLowerCase() === 'live') ? 'live' : 'upcoming';
-                    const date = ev.date || ev.start_time || ev.datetime || new Date().toISOString();
+                    let cat = m.sport || m.category || m.league || 'football';
+                    cat = cat.toLowerCase();
+                    let category = 'other';
+                    if (cat.includes('soccer') || cat.includes('football')) category = 'football';
+                    else if (cat.includes('basketball')) category = 'basketball';
+                    else if (cat.includes('tennis')) category = 'tennis';
+                    else if (cat.includes('hockey')) category = 'hockey';
+                    else if (cat.includes('baseball')) category = 'baseball';
+                    else if (cat.includes('mma') || cat.includes('ufc')) category = 'mma';
+                    else if (cat.includes('boxing')) category = 'boxing';
+                    else if (cat.includes('rugby')) category = 'rugby';
+                    else if (cat.includes('cricket')) category = 'cricket';
+                    else if (cat.includes('golf')) category = 'golf';
+                    else if (cat.includes('motorsport') || cat.includes('f1')) category = 'motorsport';
+                    let status = 'upcoming';
+                    if (m.status && (m.status.toLowerCase() === 'live' || m.status.toLowerCase() === 'inprogress'))
+                        status = 'live';
+                    else if (m.status && m.status.toLowerCase() === 'finished') status = 'finished';
+                    let dateStr = m.date || m.start_time || m.datetime || new Date().toISOString();
+                    if (dateStr && !isNaN(Date.parse(dateStr))) dateStr = new Date(dateStr).toISOString();
                     let sources = [];
-                    if (ev.streams && Array.isArray(ev.streams)) {
-                        ev.streams.forEach(s => {
-                            const embedUrl = s.embed || s.embedUrl || s.url || s.streamUrl || null;
-                            if (embedUrl) {
+                    if (m.streams && Array.isArray(m.streams)) {
+                        m.streams.forEach(s => {
+                            if (s.url || s.iframe) {
                                 sources.push({
-                                    source: 'streamfree',
-                                    id: s.id || s.stream_id || 'sf_' + Math.random().toString(36).slice(2, 6),
-                                    embedUrl: embedUrl,
-                                    language: s.language || s.lang || 'en',
-                                    hd: s.hd === true || s.quality === 'hd' || s.quality === '1080p'
+                                    source: 'watchfooty',
+                                    id: s.id || s.stream_id || '',
+                                    embedUrl: s.iframe || s.url,
+                                    language: s.language || 'en',
+                                    hd: s.quality === 'hd' || s.quality === '1080p'
                                 });
                             }
                         });
                     }
-                    if (!sources.length && (ev.iframe || ev.embed || ev.embedUrl)) {
+                    if (!sources.length && (m.embed_url || m.iframe)) {
                         sources.push({
-                            source: 'streamfree',
-                            id: 'sf_direct',
-                            embedUrl: ev.iframe || ev.embed || ev.embedUrl,
+                            source: 'watchfooty',
+                            id: 'direct',
+                            embedUrl: m.embed_url || m.iframe,
+                            language: 'en',
+                            hd: true
+                        });
+                    }
+                    if (!sources.length && m.stream_url) {
+                        sources.push({
+                            source: 'watchfooty',
+                            id: 'stream',
+                            embedUrl: m.stream_url,
                             language: 'en',
                             hd: false
                         });
                     }
-                    if (!sources.length) return;
-                    flat.push({
-                        _streamfree: true,
-                        id: 'sf_' + (ev.id || Math.random().toString(36).slice(2, 8)),
+                    return {
+                        id: m.id || 'wf_' + Math.random().toString(36).slice(2, 8),
                         title: title,
                         category: category,
-                        date: new Date(date).toISOString(),
+                        date: dateStr,
                         status: status,
                         sources: sources,
-                        teams: streamFreeExtractTeams(title),
-                        score: ev.score || ev.result || null
-                    });
+                        teams: (homeName || awayName) ? { home: { name: homeName }, away: { name: awayName } } :
+                            null,
+                        score: m.score || m.result || null,
+                        _watchfooty: true
+                    };
                 });
-
-                // If we got no events from StreamFree, fallback to primary source
-                if (flat.length === 0) {
-                    console.warn('[StreamFree] No valid events after parsing, falling back to primary');
-                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
-                    return fallback.map(m => ({ ...m, _streamfree: false }));
-                }
-
-                _streamFreeCache = flat;
-                _streamFreeCacheTs = Date.now();
-                return flat;
+                _watchFootyCache = mapped;
+                _watchFootyCacheTs = Date.now();
+                return mapped;
             } catch (e) {
-                console.warn('[StreamFree]', e.message);
-                // Fallback to primary source on error
-                try {
-                    const fallback = await fetch(W + getEndpoint().split('/api')[1] || '/api/matches/all').then(r => r.json());
-                    return fallback.map(m => ({ ...m, _streamfree: false }));
-                } catch (e2) {
-                    return _streamFreeCache || [];
-                }
+                console.warn('[watchfooty]', e.message);
+                return _watchFootyCache || [];
             }
         }
 
-        // Helper to get endpoint path from current filter
-        function getEndpoint() {
-            if (currentFilter === 'live') return '/api/matches/live';
-            if (currentFilter === 'today') return '/api/matches/all-today';
-            return '/api/matches/all';
+        function mergeWatchFooty(primary, wf) {
+            const keys = new Set(primary.map(m => simplify(m.title)));
+            const unique = wf.filter(m => {
+                const pk = simplify(m.title);
+                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
+                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
+                return true;
+            });
+            return [...primary, ...unique];
         }
 
         // ── PWA ──
@@ -2780,7 +2851,7 @@
             clearInterval(scoreUpdateTimer);
             if (!match) return;
 
-            async function fetchScore() { try { const all = await fetchStreamFree(); const fresh =
+            async function fetchScore() { try { const all = await cachedFetch(W + '/api/matches/live', 20000); const fresh =
                         all.find(m => m.id === match.id); if (fresh) { showLiveScoreBar(fresh);
                         liveScores[match.id] = fresh; } } catch (e) {} }
             fetchScore();
@@ -3009,7 +3080,7 @@
                 confirmName(); });
 
         async function joinPartyFlow(id) { await joinParty(id); const matchId = new URLSearchParams(location.search).get(
-                'match'); if (matchId) { try { const ms = await fetchStreamFree(); const m =
+                'match'); if (matchId) { try { const ms = await fetch(W + '/api/matches/all').then(r => r.json()); const m =
                     ms.find(x => x.id === matchId); if (m) openMatch(m); } catch (e) {} } }
 
         // ── MATCH LOGIC ──
@@ -3037,6 +3108,9 @@
             buildLeagueList(allMatches);
             renderMatches(allMatches); }
 
+        function getEndpoint() { if (currentFilter === 'live') return W + '/api/matches/live'; if (currentFilter ===
+                'today') return W + '/api/matches/all-today'; return W + '/api/matches/all'; }
+
         async function loadSports() { try { const sports = await fetch(W + '/api/sports').then(r => r.json()); const sb =
                 document.getElementById('sidebar'),
                 ls = document.getElementById('league-section');
@@ -3048,27 +3122,54 @@
                     btn.onclick = () => selectSport(sport.id, btn);
                     sb.insertBefore(btn, ls); }); } catch (e) {} }
 
+        const _cache = new Map();
+
+        async function cachedFetch(url, ttl = 60000) { const hit = _cache.get(url); if (hit && Date.now() - hit.ts < ttl)
+                return hit.data; const data = await fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r
+                    .json(); });
+            _cache.set(url, { data, ts: Date.now() });
+            return data; }
+
         async function loadMatches() {
             if (channelsView) return;
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
             try {
-                const sfAll = await fetchStreamFree();
+                const [primaryRes, ppvRes, wfRes] = await Promise.allSettled([
+                    cachedFetch(getEndpoint()),
+                    fetchPPVTo(),
+                    fetchWatchFooty()
+                ]);
+                const primary = primaryRes.status === 'fulfilled' ? primaryRes.value : [];
+                const ppvAll = ppvRes.status === 'fulfilled' ? ppvRes.value : [];
+                const wfAll = wfRes.status === 'fulfilled' ? wfRes.value : [];
+
                 const now = Date.now();
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
                 const todayEnd = new Date();
                 todayEnd.setHours(23, 59, 59, 999);
-                const sf = sfAll.filter(m => {
+                const ppv = ppvAll.filter(m => {
+                    const start = new Date(m.date).getTime();
+                    if (currentFilter === 'live') return m.status === 'live' || m.alwaysLive;
+                    if (currentFilter === 'today') return start >= todayStart.getTime() && start <= todayEnd
+                        .getTime();
+                    return true;
+                });
+                const wf = wfAll.filter(m => {
                     const start = new Date(m.date).getTime();
                     if (currentFilter === 'live') return m.status === 'live';
                     if (currentFilter === 'today') return start >= todayStart.getTime() && start <= todayEnd
                         .getTime();
                     return true;
                 });
-                allMatches = sf;
+
+                let merged = mergePPV(primary, ppv);
+                merged = mergeWatchFooty(merged, wf);
+                allMatches = merged;
+
                 if (currentFilter === 'live') document.getElementById('live-count').textContent = allMatches.filter(m =>
-                    m.status === 'live').length;
+                    m.status === 'live' || m.alwaysLive).length;
                 updateSidebarCounts(allMatches);
                 buildLeagueList(allMatches);
                 renderFavs();
@@ -3076,7 +3177,7 @@
                 buildScoreTicker(allMatches);
             } catch (e) {
                 document.getElementById('matches-container').innerHTML =
-                    `<div class="empty"><p>Could not load matches from StreamFree.</p><p style="margin-top:10px;font-size:0.8rem;color:#4a6280">Make sure the API is reachable.</p></div>`;
+                    `<div class="empty"><p>Could not load matches.</p><p style="margin-top:10px;font-size:0.8rem;color:#4a6280">🇬🇧 UK users may need a VPN — try <a href="https://1.1.1.1" target="_blank" style="color:#00e676">Cloudflare WARP</a></p></div>`;
             }
         }
 
@@ -3126,9 +3227,10 @@
             const hn = match.teams?.home?.name || '',
                 an = match.teams?.away?.name || '';
             const isFavMatch = favs.some(f => hn === f || an === f);
-            const isSF = !!match._streamfree;
-            card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isSF ?
-                ' streamfree-card' : '');
+            const isPPV = !!match._ppvto;
+            const isWF = !!match._watchfooty;
+            card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
+                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
             const use24 = getSetting('clock', '12') === '24';
             const md = new Date(match.date),
                 ts = md.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !use24 });
@@ -3139,8 +3241,9 @@
                 `<div class="card-live-tag"><div class="card-live-dot"></div>LIVE</div>` :
                 `<div class="card-time-tag">${ts}</div>`;
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
-            const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isSF ?
-                '<div class="card-ppvto-badge">StreamFree</div>' : '');
+            const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
+                '<div class="card-ppvto-badge">PPV.to</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
+                    ''));
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
                 '';
@@ -3213,23 +3316,58 @@
             showLiveScoreBar(match);
             startScorePolling(match);
 
-            // Use the sources directly from the match (StreamFree data)
-            let streams = [];
+            const [primaryStreams, ppvAll, wfAll] = await Promise.all([
+                (async () => {
+                    if (!match.sources?.length) return [];
+                    const results = await Promise.all(match.sources.map(s => fetch(`${W}/api/stream/${s.source}/${s.id}`)
+                        .then(r => r.json()).then(data => (Array.isArray(data) ? data : []).map(st => {
+                            let embedUrl = st.embedUrl || st.iframe || st.url || st.streamUrl || null;
+                            if (!embedUrl) return null;
+                            return { ...st, _source: s.source, embedUrl };
+                        }).filter(Boolean)).catch(() => [])));
+                    return results.flat();
+                })(),
+                fetchPPVTo(),
+                fetchWatchFooty()
+            ]);
+
+            let streams = [...primaryStreams];
+            const ppvIframe = ppvMatchFor(match, ppvAll);
+            if (ppvIframe) {
+                streams.push({ language: 'PPV.to', streamNo: 1, hd: false, _source: 'ppvto', embedUrl: ppvIframe });
+            }
             if (match.sources && match.sources.length) {
-                streams = match.sources.map(s => {
-                    return {
-                        language: s.language || 'StreamFree',
-                        streamNo: 1,
-                        hd: s.hd || false,
-                        _source: 'streamfree',
-                        embedUrl: s.embedUrl
-                    };
+                match.sources.forEach(s => {
+                    if (s.source === 'watchfooty' && s.embedUrl) {
+                        streams.push({
+                            language: s.language || 'WatchFooty',
+                            streamNo: 1,
+                            hd: s.hd || false,
+                            _source: 'watchfooty',
+                            embedUrl: s.embedUrl
+                        });
+                    }
                 });
+            } else {
+                const wfMatch = wfAll.find(w => simplify(w.title) === simplify(match.title));
+                if (wfMatch && wfMatch.sources && wfMatch.sources.length) {
+                    wfMatch.sources.forEach(s => {
+                        if (s.embedUrl) {
+                            streams.push({
+                                language: s.language || 'WatchFooty',
+                                streamNo: 1,
+                                hd: s.hd || false,
+                                _source: 'watchfooty',
+                                embedUrl: s.embedUrl
+                            });
+                        }
+                    });
+                }
             }
 
-            if (getSetting('preferHD', true)) {
-                streams.sort((a, b) => (b.hd ? 1 : 0) - (a.hd ? 1 : 0));
-            }
+            if (getSetting('preferHD', true)) streams.sort((a, b) => { if (a._source === 'ppvto') return -1; if (b
+                    ._source === 'ppvto') return 1; if (a._source === 'watchfooty') return -1; if (b._source ===
+                    'watchfooty') return 1; return (b.hd ? 1 : 0) - (a.hd ? 1 : 0); });
 
             if (!streams.length) {
                 document.getElementById('stream-list').innerHTML = '<div class="no-streams">No streams found</div>';
@@ -3243,11 +3381,16 @@
             const list = document.getElementById('stream-list');
             list.innerHTML = '';
             streams.forEach((s, i) => {
+                const isPPV = s._source === 'ppvto';
+                const isWF = s._source === 'watchfooty';
                 const item = document.createElement('div');
                 item.className = 'stream-item';
                 item.dataset.index = i;
+                let srcLabel = s._source || '';
+                if (isPPV) srcLabel = '🔗 ppv.to';
+                else if (isWF) srcLabel = 'WatchFooty';
                 item.innerHTML =
-                    `<div class="stream-lang">${s.language||'StreamFree'} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src">StreamFree</div>`;
+                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(s.language||'Stream'))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3507,8 +3650,22 @@
             btn.classList.add('added');
             btn.textContent = '⊞ Added';
             let embedUrl = null;
-            if (match.sources && match.sources.length) {
-                embedUrl = match.sources[0].embedUrl;
+            const ppvAll = await fetchPPVTo();
+            const ppvIframe = ppvMatchFor(match, ppvAll);
+            if (ppvIframe) embedUrl = ppvIframe;
+            if (!embedUrl) {
+                const wfAll = await fetchWatchFooty();
+                const wfMatch = wfAll.find(w => simplify(w.title) === simplify(match.title));
+                if (wfMatch && wfMatch.sources && wfMatch.sources.length) { const s = wfMatch.sources[0]; if (s
+                        .embedUrl) embedUrl = s.embedUrl; }
+            }
+            if (!embedUrl && match.sources && match.sources.length) {
+                for (const s of match.sources) {
+                    try { const data = await fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r => r.json()); const arr =
+                            Array.isArray(data) ? data : []; const st = arr.find(st => st.embedUrl || st.iframe || st
+                                .url || st.streamUrl); if (st) { embedUrl = st.embedUrl || st.iframe || st.url || st
+                                .streamUrl; break; } } catch (e) {}
+                }
             }
             if (!embedUrl) { showToast('No stream available');
                 btn.classList.remove('added');
@@ -3612,7 +3769,7 @@
                 el.className = 'search-ov-item'; const t = new Date(match.date).toLocaleTimeString([], { hour: '2-digit',
                         minute: '2-digit' });
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
+                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
@@ -3623,8 +3780,8 @@
                 'party'),
                 matchId = params.get('match'); if (partyParam) { if (!partyUserName) { pendingPartyJoin = partyParam;
                     openNameModal(); } else { joinPartyFlow(partyParam); } return; } if (matchId) { try { const ms =
-                        await fetchStreamFree(); const m = ms.find(x => x.id === matchId); if (m) openMatch(m); } catch (
-                    e) {} } }
+                        await fetch(W + '/api/matches/all').then(r => r.json()); const m = ms.find(x => x.id ===
+                        matchId); if (m) openMatch(m); } catch (e) {} } }
 
         // ── BOTTOM BAR SYNC ──
         function syncBottomBar(activeBtn) { const label = activeBtn.textContent.trim();
@@ -3640,8 +3797,8 @@
         loadSports();
         loadMatches();
         checkUrlMatch();
-        setInterval(async () => { try { const all = await fetchStreamFree(); document.getElementById('live-count')
-                    .textContent = all.filter(m => m.status === 'live').length; } catch (e) {} }, 60000);
+        setInterval(async () => { try { document.getElementById('live-count').textContent = (await fetch(W +
+                '/api/matches/live').then(r => r.json())).length; } catch (e) {} }, 60000);
         setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
     </script>
 
@@ -3650,8 +3807,10 @@
         (function() {
             document.body.classList.add('no-ads');
 
+            // ── whitelist our ad container ──
             const AD_WHITELIST = new Set(['ad-banner-container']);
 
+            // ── override open to block popunders ──
             const _open = window.open.bind(window);
             window.open = function(url, target, features) {
                 if (!target || target === '_self' || target === '_top' || target === '_parent') return null;
@@ -3659,6 +3818,7 @@
                     const u = new URL(url, location.href);
                     if (/highperformanceformat|popads|adnxs|doubleclick|googlesyndication|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra|admaven/i
                         .test(u.hostname)) {
+                        // allow our own ad domain only if inside the whitelisted container
                         const caller = document.currentScript;
                         if (caller && caller.closest && caller.closest('#ad-banner-container')) {
                             // let it through
@@ -3670,6 +3830,7 @@
                 return _open(url, '_blank', 'noopener,noreferrer');
             };
 
+            // ── selector for intrusive ads (excluding our whitelisted container) ──
             const AD_SEL = [
                 'iframe[src*="adnxs"]',
                 'iframe[src*="doubleclick"]',
@@ -3694,7 +3855,7 @@
                 'party-chat',
                 'kb-modal',
                 'pwa-banner',
-                'ad-banner-container'
+                'ad-banner-container' // our ad container is safe
             ]);
 
             function isWhitelisted(el) {
@@ -3739,10 +3900,12 @@
                 ms.forEach(m => {
                     m.addedNodes.forEach(n => {
                         if (n.nodeType !== 1) return;
+                        // Script removal – skip if whitelisted
                         if (n.tagName === 'SCRIPT') {
                             const src = n.src || '';
                             if (/highperformanceformat|popads|adnxs|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra/i
                                 .test(src)) {
+                                // if this script is inside our ad container, keep it
                                 if (isWhitelisted(n)) return;
                                 n.remove();
                                 return;
@@ -3758,6 +3921,7 @@
     <!-- ═══ ensure ad container gets a chance to render ═══ -->
     <script>
         (function() {
+            // If the ad container's inner placeholder is still visible after 3s, hide it.
             setTimeout(function() {
                 const c = document.getElementById('ad-banner-container');
                 if (c) {
