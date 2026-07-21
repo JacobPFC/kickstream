@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>KickStream — Live Sports</title>
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="manifest" id="pwa-manifest" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#0a0e13" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" id="pwa-manifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0e13">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.ably.com/lib/ably.min-2.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js">
@@ -19,31 +19,39 @@
         /* ── ROOT ── */
         :root {
             --bg: #080c14;
-            --surface: rgba(18, 26, 38, 0.92);
-            --surface2: rgba(26, 36, 50, 0.8);
+            --surface: rgba(18, 26, 38, 0.85);
+            --surface2: rgba(26, 36, 50, 0.7);
             --border: rgba(56, 80, 110, 0.25);
+            --glow: rgba(0, 230, 118, 0.12);
             --accent: #00e676;
             --accent2: #00b0ff;
             --live: #ff1744;
             --text: #e8edf5;
             --text-secondary: #8a9bb0;
             --muted: #4a6280;
+            --card-hover: rgba(26, 36, 50, 0.9);
             --sidebar-w: 220px;
             --fav: #ffd600;
             --score-bg: rgba(0, 230, 118, 0.07);
             --score-border: rgba(0, 230, 118, 0.18);
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            --radius: 10px;
-            --radius-sm: 6px;
+            --shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         body.light-mode {
             --bg: #eef2f7;
-            --surface: rgba(255, 255, 255, 0.92);
-            --surface2: rgba(235, 240, 247, 0.8);
+            --surface: rgba(255, 255, 255, 0.88);
+            --surface2: rgba(235, 240, 247, 0.7);
             --border: rgba(180, 196, 214, 0.35);
             --text: #14202e;
             --text-secondary: #5a6f88;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --muted: #7a8fa5;
+            --card-hover: rgba(235, 240, 247, 0.9);
+            --score-bg: rgba(0, 180, 90, 0.06);
+            --score-border: rgba(0, 180, 90, 0.15);
+            --shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
+            --glow: rgba(0, 230, 118, 0.06);
         }
 
         /* ── RESET ── */
@@ -69,11 +77,12 @@
             padding-bottom: env(safe-area-inset-bottom);
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
-            transition: background 0.2s, color 0.2s;
-            background: var(--bg);
+            transition: background 0.4s, color 0.4s;
+            background-image: radial-gradient(ellipse at 10% 20%, rgba(0, 230, 118, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 90% 80%, rgba(0, 176, 255, 0.03) 0%, transparent 60%);
         }
         body.light-mode {
-            background: var(--bg);
+            background-image: none;
         }
 
         /* ── SCROLLBAR ── */
@@ -99,14 +108,20 @@
             left: 0;
             right: 0;
             z-index: 200;
-            background: var(--surface);
+            background: rgba(8, 12, 20, 0.92);
+            backdrop-filter: blur(18px) saturate(1.2);
+            -webkit-backdrop-filter: blur(18px) saturate(1.2);
             border-bottom: 1px solid var(--border);
             height: 60px;
             display: flex;
             align-items: center;
             padding: 0 1.5rem;
             gap: 1.2rem;
-            transition: background 0.2s, border-color 0.2s;
+            transition: background 0.4s, border-color 0.4s;
+        }
+        body.light-mode header {
+            background: rgba(238, 242, 247, 0.92);
+            backdrop-filter: blur(18px) saturate(1.2);
         }
         .logo {
             font-family: 'Bebas Neue', sans-serif;
@@ -115,6 +130,11 @@
             color: var(--accent);
             text-decoration: none;
             flex-shrink: 0;
+            text-shadow: 0 0 30px rgba(0, 230, 118, 0.15);
+            transition: text-shadow 0.3s;
+        }
+        .logo:hover {
+            text-shadow: 0 0 50px rgba(0, 230, 118, 0.25);
         }
         .logo span {
             color: var(--text);
@@ -130,17 +150,18 @@
             width: 100%;
             background: var(--surface2);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 10px;
             padding: 8px 16px 8px 38px;
             font-size: 15px;
             color: var(--text);
             font-family: 'DM Sans', sans-serif;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
             -webkit-appearance: none;
         }
         .header-search input:focus {
             border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.1);
         }
         .header-search input::placeholder {
             color: var(--text-secondary);
@@ -160,18 +181,19 @@
             gap: 4px;
             background: var(--surface2);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 10px;
             padding: 4px;
             overflow-x: auto;
             scrollbar-width: none;
             flex-shrink: 0;
+            backdrop-filter: blur(4px);
         }
         .filter-tabs::-webkit-scrollbar {
             display: none;
         }
         .filter-tab {
             padding: 5px 14px;
-            border-radius: 5px;
+            border-radius: 7px;
             font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
@@ -179,13 +201,15 @@
             background: transparent;
             color: var(--text-secondary);
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.25s;
             white-space: nowrap;
             flex-shrink: 0;
+            letter-spacing: 0.3px;
         }
         .filter-tab.active {
             background: var(--accent);
             color: #000;
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.25);
         }
         .filter-tab:hover:not(.active) {
             color: var(--text);
@@ -206,12 +230,12 @@
             border: 1px solid var(--border);
             color: var(--text-secondary);
             padding: 5px 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.72rem;
             font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             white-space: nowrap;
             text-decoration: none;
         }
@@ -241,6 +265,7 @@
             font-size: 0.7rem;
             font-weight: 700;
             color: var(--live);
+            letter-spacing: 0.8px;
             white-space: nowrap;
         }
         .live-dot {
@@ -248,6 +273,18 @@
             height: 7px;
             border-radius: 50%;
             background: var(--live);
+            animation: pulse-dot 1.4s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.3;
+                transform: scale(0.7);
+            }
         }
 
         /* ── LAYOUT ── */
@@ -268,9 +305,11 @@
             overflow-y: auto;
             scrollbar-width: none;
             background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid var(--border);
             padding: 1rem 0 2rem;
-            transition: background 0.2s, border-color 0.2s;
+            transition: background 0.4s, border-color 0.4s;
         }
         .sidebar::-webkit-scrollbar {
             display: none;
@@ -299,8 +338,9 @@
             width: 100%;
             text-align: left;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.2s;
             border-left: 3px solid transparent;
+            position: relative;
         }
         .sport-link:hover {
             color: var(--text);
@@ -326,6 +366,7 @@
             padding: 1px 7px;
             border-radius: 12px;
             color: var(--text-secondary);
+            transition: all 0.2s;
         }
         .sport-link.active .sport-count {
             background: rgba(0, 230, 118, 0.1);
@@ -350,7 +391,7 @@
             width: 100%;
             text-align: left;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.2s;
             border-left: 3px solid transparent;
         }
         .league-btn:hover {
@@ -372,33 +413,6 @@
             max-width: 1400px;
         }
 
-        /* ── AD BANNER ── */
-        #ad-banner-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0.5rem 0 1.25rem;
-            min-height: 70px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            padding: 4px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        #ad-banner-container iframe {
-            max-width: 100%;
-            border: none;
-            display: block;
-            margin: 0 auto;
-        }
-        #ad-banner-container .ad-placeholder {
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-            opacity: 0.4;
-            padding: 8px;
-        }
-
         /* ── SCORE TICKER ── */
         #score-ticker {
             display: none;
@@ -407,11 +421,29 @@
             border-radius: var(--radius-sm);
             padding: 6px 14px;
             margin-bottom: 1.25rem;
-            overflow-x: auto;
-            white-space: nowrap;
+            overflow: hidden;
+            backdrop-filter: blur(4px);
         }
         #score-ticker.visible {
             display: block;
+        }
+        .score-ticker-inner {
+            display: flex;
+            gap: 0;
+            align-items: center;
+            white-space: nowrap;
+            animation: ticker-scroll 30s linear infinite;
+        }
+        .score-ticker-inner:hover {
+            animation-play-state: paused;
+        }
+        @keyframes ticker-scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
         }
         .score-chip {
             display: inline-flex;
@@ -422,6 +454,7 @@
             font-size: 0.74rem;
             font-weight: 500;
             color: var(--text);
+            flex-shrink: 0;
         }
         .score-chip .sc-teams {
             font-weight: 600;
@@ -430,6 +463,7 @@
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1rem;
             color: var(--accent);
+            letter-spacing: 1px;
         }
         .score-chip .sc-live {
             font-size: 0.55rem;
@@ -438,6 +472,10 @@
             background: rgba(255, 23, 68, 0.1);
             padding: 1px 6px;
             border-radius: 3px;
+        }
+        .score-chip .sc-time {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
         }
 
         /* ── LIVE SCORE BAR ── */
@@ -451,6 +489,8 @@
             border-bottom: 1px solid var(--score-border);
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.3rem;
+            letter-spacing: 1px;
+            backdrop-filter: blur(8px);
         }
         #live-score-bar.visible {
             display: flex;
@@ -474,22 +514,35 @@
             padding: 2px 8px;
             border-radius: 4px;
             font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         /* ── PLAYER SECTION ── */
         #player-section {
             display: none;
             background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             margin-bottom: 1.5rem;
             overflow: hidden;
+            animation: fadeIn 0.35s ease;
             box-shadow: var(--shadow);
         }
         #player-section.visible {
             display: block;
         }
-
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-12px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
         .player-inner {
             display: grid;
             grid-template-columns: 1fr 300px;
@@ -525,7 +578,7 @@
             gap: 0.8rem;
             color: var(--text-secondary);
             font-size: 0.9rem;
-            background: var(--surface2);
+            background: radial-gradient(ellipse at center, var(--surface2), var(--bg));
         }
         .player-placeholder svg {
             opacity: 0.15;
@@ -602,7 +655,6 @@
             align-items: center;
             flex: 1;
         }
-
         .streams-header {
             padding: 8px 14px;
             font-size: 0.55rem;
@@ -633,7 +685,7 @@
             cursor: pointer;
             border-bottom: 1px solid rgba(30, 45, 61, 0.3);
             color: var(--text);
-            transition: background 0.15s;
+            transition: background 0.2s, color 0.2s;
             flex: 1;
             font-size: 0.78rem;
         }
@@ -651,6 +703,7 @@
             border-radius: 3px;
             background: rgba(0, 176, 255, 0.12);
             color: var(--accent2);
+            letter-spacing: 0.5px;
         }
         .stream-src {
             font-size: 0.6rem;
@@ -683,7 +736,7 @@
             font-size: 0.72rem;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             width: 100%;
         }
         .close-btn:hover {
@@ -701,6 +754,7 @@
             gap: 1rem;
             padding: 2rem;
             text-align: center;
+            backdrop-filter: blur(8px);
         }
         .player-blocked p {
             color: var(--text-secondary);
@@ -717,7 +771,7 @@
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
             text-decoration: none;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
         }
         .open-tab-btn:hover {
             background: rgba(0, 230, 118, 0.18);
@@ -734,7 +788,7 @@
             color: var(--text-secondary);
             font-size: 0.7rem;
             cursor: pointer;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.2s;
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -772,7 +826,7 @@
             font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -799,7 +853,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             width: 100%;
         }
         .party-btn:hover {
@@ -850,7 +904,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s;
+            transition: all 0.2s;
         }
         .party-copy-btn:hover {
             background: rgba(255, 214, 0, 0.08);
@@ -915,7 +969,7 @@
             color: var(--text);
             font-family: 'DM Sans', sans-serif;
             outline: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s;
         }
         .party-chat-input:focus {
             border-color: var(--fav);
@@ -929,7 +983,7 @@
             font-size: 0.72rem;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s;
+            transition: all 0.2s;
         }
         .party-send-btn:hover {
             background: rgba(255, 214, 0, 0.15);
@@ -943,6 +997,7 @@
             margin-bottom: 1rem;
             align-items: center;
             gap: 10px;
+            backdrop-filter: blur(4px);
         }
         #party-guest-banner.visible {
             display: flex;
@@ -967,7 +1022,7 @@
             font-size: 0.7rem;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, border-color 0.15s;
+            transition: all 0.2s;
         }
         .pgb-leave:hover {
             color: var(--live);
@@ -998,7 +1053,6 @@
             color: var(--text-secondary);
             font-family: 'DM Sans', sans-serif;
         }
-
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1006,23 +1060,28 @@
         }
         .match-card {
             background: var(--surface);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             overflow: hidden;
             cursor: pointer;
-            transition: border-color 0.15s, box-shadow 0.15s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
         .match-card:hover {
             border-color: rgba(0, 230, 118, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
         }
         .match-card.live-card {
             border-color: rgba(255, 23, 68, 0.3);
+            box-shadow: 0 4px 24px rgba(255, 23, 68, 0.06);
         }
         .match-card.live-card:hover {
             border-color: rgba(255, 23, 68, 0.5);
+            box-shadow: 0 12px 40px rgba(255, 23, 68, 0.1);
         }
         .match-card.fav-card {
             border-color: rgba(255, 214, 0, 0.25);
@@ -1053,7 +1112,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(5, 10, 18, 0.6), rgba(5, 10, 18, 0.2));
+            background: linear-gradient(135deg, rgba(5, 10, 18, 0.6) 0%, rgba(5, 10, 18, 0.2) 100%);
             z-index: 0;
         }
         .card-poster-teams {
@@ -1080,6 +1139,8 @@
             color: #fff;
             flex-shrink: 0;
             font-family: 'Bebas Neue', sans-serif;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
         .poster-vs {
@@ -1103,12 +1164,14 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
         }
         .card-live-dot {
             width: 5px;
             height: 5px;
             border-radius: 50%;
             background: #fff;
+            animation: pulse-dot 1.4s ease-in-out infinite;
         }
         .card-time-tag {
             position: absolute;
@@ -1121,6 +1184,7 @@
             background: rgba(0, 0, 0, 0.65);
             padding: 2px 8px;
             border-radius: 4px;
+            backdrop-filter: blur(4px);
         }
         .card-countdown {
             position: absolute;
@@ -1133,6 +1197,7 @@
             background: rgba(0, 0, 0, 0.7);
             padding: 2px 10px;
             border-radius: 4px;
+            backdrop-filter: blur(4px);
             letter-spacing: 0.5px;
         }
         .card-score-badge {
@@ -1148,6 +1213,7 @@
             padding: 1px 10px;
             border-radius: 5px;
             letter-spacing: 1px;
+            backdrop-filter: blur(4px);
         }
         .card-ppvto-badge {
             position: absolute;
@@ -1161,6 +1227,7 @@
             border: 1px solid rgba(0, 176, 255, 0.2);
             padding: 1px 8px;
             border-radius: 4px;
+            letter-spacing: 0.3px;
         }
         .card-fav-btn {
             position: absolute;
@@ -1177,11 +1244,14 @@
             align-items: center;
             justify-content: center;
             font-size: 0.8rem;
-            transition: background 0.15s;
+            transition: all 0.25s;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             color: rgba(255, 255, 255, 0.4);
         }
         .card-fav-btn:hover {
             background: rgba(0, 0, 0, 0.75);
+            transform: scale(1.1);
         }
         .card-fav-btn.active {
             color: var(--fav);
@@ -1226,7 +1296,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
         }
         .card-watch:hover {
             background: rgba(0, 230, 118, 0.12);
@@ -1242,7 +1312,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             flex-shrink: 0;
         }
         .card-share:hover {
@@ -1259,7 +1329,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             flex-shrink: 0;
         }
         .card-multi:hover {
@@ -1277,6 +1347,8 @@
             bottom: 1.5rem;
             right: 1.5rem;
             background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--accent);
             color: var(--text);
             padding: 12px 22px;
@@ -1284,18 +1356,18 @@
             font-size: 0.82rem;
             font-weight: 500;
             z-index: 9999;
-            animation: toastIn 0.2s ease;
+            animation: toastIn 0.35s ease;
             box-shadow: var(--shadow);
             max-width: calc(100vw - 3rem);
         }
         @keyframes toastIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(16px) scale(0.95);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
@@ -1307,6 +1379,8 @@
             inset: 0;
             z-index: 900;
             background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             align-items: center;
             justify-content: center;
         }
@@ -1317,11 +1391,14 @@
         .kb-box,
         .name-modal-box {
             background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 1.5rem 1.8rem;
             width: min(90vw, 420px);
             box-shadow: var(--shadow);
+            animation: fadeIn 0.3s ease;
         }
         .kb-title,
         .name-modal-title {
@@ -1341,7 +1418,7 @@
             font-size: 1.2rem;
             cursor: pointer;
             padding: 4px;
-            transition: color 0.15s;
+            transition: color 0.2s;
         }
         .kb-close:hover {
             color: var(--text);
@@ -1385,7 +1462,7 @@
             outline: none;
             margin-bottom: 0.75rem;
             -webkit-appearance: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s;
         }
         .name-modal-input:focus {
             border-color: var(--fav);
@@ -1401,7 +1478,7 @@
             border-radius: var(--radius-sm);
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s;
+            transition: all 0.25s;
         }
         .name-modal-btn:hover {
             background: rgba(255, 214, 0, 0.15);
@@ -1414,6 +1491,7 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 498;
+            backdrop-filter: blur(6px);
         }
         #settings-overlay.open {
             display: block;
@@ -1425,12 +1503,14 @@
             width: 340px;
             height: 100vh;
             background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-left: 1px solid var(--border);
             z-index: 499;
             padding: 1.5rem 1.5rem 2rem;
-            transition: right 0.3s ease;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
-            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
+            box-shadow: -8px 0 48px rgba(0, 0, 0, 0.4);
         }
         #settings-panel.open {
             right: 0;
@@ -1452,7 +1532,7 @@
             font-size: 1.2rem;
             cursor: pointer;
             padding: 4px;
-            transition: color 0.15s;
+            transition: color 0.2s;
         }
         .sp-close:hover {
             color: var(--text);
@@ -1503,7 +1583,7 @@
             background: var(--border);
             border-radius: 22px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.3s;
         }
         .sp-toggle-slider::before {
             content: '';
@@ -1514,7 +1594,7 @@
             bottom: 3px;
             background: #fff;
             border-radius: 50%;
-            transition: transform 0.2s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sp-toggle input:checked+.sp-toggle-slider {
             background: var(--accent);
@@ -1534,7 +1614,7 @@
             outline: none;
             cursor: pointer;
             -webkit-appearance: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s;
         }
         .sp-select:focus {
             border-color: var(--accent);
@@ -1550,7 +1630,7 @@
             font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, border-color 0.15s;
+            transition: all 0.25s;
             margin-top: 4px;
         }
         .sp-btn:hover {
@@ -1569,6 +1649,8 @@
             inset: 0;
             z-index: 900;
             background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             align-items: flex-start;
             justify-content: center;
             padding-top: 80px;
@@ -1579,10 +1661,13 @@
         .search-overlay-box {
             width: min(92vw, 500px);
             background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 1.2rem 1.5rem;
             box-shadow: var(--shadow);
+            animation: fadeIn 0.3s ease;
         }
         .search-ov-wrap {
             position: relative;
@@ -1608,10 +1693,11 @@
             font-family: 'DM Sans', sans-serif;
             outline: none;
             -webkit-appearance: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         .search-ov-input:focus {
             border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.08);
         }
         .search-ov-results {
             max-height: 50vh;
@@ -1651,7 +1737,7 @@
             font-size: 0.8rem;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, border-color 0.15s;
+            transition: all 0.2s;
         }
         .search-ov-cancel:hover {
             color: var(--text);
@@ -1666,7 +1752,9 @@
             left: 0;
             right: 0;
             z-index: 190;
-            background: var(--surface);
+            background: rgba(8, 12, 20, 0.94);
+            backdrop-filter: blur(18px) saturate(1.2);
+            -webkit-backdrop-filter: blur(18px) saturate(1.2);
             border-top: 1px solid var(--border);
             padding: 6px 0.75rem calc(6px + env(safe-area-inset-bottom));
             gap: 4px;
@@ -1676,7 +1764,7 @@
             text-align: center;
             padding: 8px 4px;
             font-size: 0.7rem;
-            border-radius: 6px;
+            border-radius: 8px;
             min-height: 44px;
             display: flex;
             align-items: center;
@@ -1688,11 +1776,12 @@
             font-family: 'DM Sans', sans-serif;
             font-weight: 600;
             white-space: nowrap;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.2s;
         }
         #mobile-bottom-bar .filter-tab.active {
             background: var(--accent);
             color: #000;
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.2);
         }
 
         /* ── CHANNELS ── */
@@ -1704,28 +1793,29 @@
         }
         .channel-card {
             background: var(--surface);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px 10px;
             cursor: pointer;
-            transition: border-color 0.15s, box-shadow 0.15s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         .channel-card:hover {
             border-color: rgba(0, 230, 118, 0.25);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
         }
         .channel-logo {
             width: 56px;
             height: 32px;
             object-fit: contain;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-            padding: 2px;
         }
         .channel-name {
             font-size: 0.72rem;
@@ -1759,7 +1849,7 @@
             color: var(--text);
             font-family: 'DM Sans', sans-serif;
             outline: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s;
         }
         #channel-search-bar input:focus {
             border-color: var(--accent);
@@ -1781,6 +1871,8 @@
         #multistream-section {
             display: none;
             background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             margin-bottom: 1.5rem;
@@ -1816,7 +1908,7 @@
             font-size: 0.68rem;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s, border-color 0.15s;
+            transition: all 0.25s;
         }
         .multistream-btn:hover {
             color: var(--text);
@@ -1869,6 +1961,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            backdrop-filter: blur(4px);
         }
         .multistream-cell-remove {
             position: absolute;
@@ -1886,7 +1979,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.15s;
+            transition: background 0.2s;
         }
         .multistream-cell-remove:hover {
             background: var(--live);
@@ -1923,7 +2016,7 @@
             border: none;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: color 0.15s;
+            transition: color 0.2s;
         }
         .fav-clear:hover {
             color: var(--live);
@@ -1946,7 +2039,7 @@
             font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s;
+            transition: all 0.2s;
         }
         .fav-chip:hover {
             background: rgba(255, 214, 0, 0.12);
@@ -1971,6 +2064,21 @@
             height: 170px;
             position: relative;
             overflow: hidden;
+        }
+        .skel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            animation: shimmer 1.8s infinite;
+        }
+        @keyframes shimmer {
+            from {
+                transform: translateX(-100%);
+            }
+            to {
+                transform: translateX(100%);
+            }
         }
 
         /* ── EMPTY ── */
@@ -2031,8 +2139,8 @@
             font-weight: 700;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: background 0.15s;
             flex-shrink: 0;
+            transition: all 0.25s;
         }
         .pwa-install-btn:hover {
             background: rgba(0, 230, 118, 0.14);
@@ -2045,7 +2153,7 @@
             cursor: pointer;
             flex-shrink: 0;
             padding: 2px 4px;
-            transition: color 0.15s;
+            transition: color 0.2s;
         }
         .pwa-dismiss:hover {
             color: var(--text);
@@ -2114,7 +2222,7 @@
         }
 
         /* ── RESPONSIVE ── */
-        @media (max-width:1024px) {
+        @media (max-width: 1024px) {
             .player-inner {
                 grid-template-columns: 1fr;
             }
@@ -2123,7 +2231,7 @@
                 border-top: 1px solid var(--border);
             }
         }
-        @media (max-width:768px) {
+        @media (max-width: 768px) {
             .sidebar {
                 display: none;
             }
@@ -2202,7 +2310,7 @@
                 font-size: 1.1rem;
             }
         }
-        @media (max-width:420px) {
+        @media (max-width: 420px) {
             .matches-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
@@ -2238,7 +2346,6 @@
 </head>
 <body class="no-ads">
 
-    <!-- ═══ PWA manifest injection ═══ -->
     <script>
         (function() {
             const manifest = {
@@ -2259,7 +2366,6 @@
         })();
     </script>
 
-    <!-- ═══ MOBILE BOTTOM BAR ═══ -->
     <div id="mobile-bottom-bar">
         <button class="filter-tab active" onclick="setFilter('live',this);syncBottomBar(this)">🔴 Live</button>
         <button class="filter-tab" onclick="setFilter('today',this);syncBottomBar(this)">Today</button>
@@ -2267,7 +2373,6 @@
         <button class="filter-tab" onclick="showChannels(this);syncBottomBar(this)">📺 Ch</button>
     </div>
 
-    <!-- ═══ NAME MODAL ═══ -->
     <div id="name-modal">
         <div class="name-modal-box">
             <div class="name-modal-title">🎉 Join Watch Party</div>
@@ -2277,7 +2382,6 @@
         </div>
     </div>
 
-    <!-- ═══ KEYBOARD SHORTCUTS MODAL ═══ -->
     <div id="kb-modal">
         <div class="kb-box">
             <div class="kb-title">Keyboard Shortcuts <button class="kb-close" onclick="document.getElementById('kb-modal').classList.remove('open')">✕</button></div>
@@ -2291,7 +2395,6 @@
         </div>
     </div>
 
-    <!-- ═══ HEADER ═══ -->
     <header>
         <a class="logo" href="#">Kick<span>Stream</span></a>
         <div class="filter-tabs">
@@ -2317,10 +2420,7 @@
         </div>
     </header>
 
-    <!-- ═══ LAYOUT ═══ -->
     <div class="layout">
-
-        <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-label">Sports</div>
             <button class="sport-link active" data-sport="all" onclick="selectSport('all',this)">
@@ -2333,17 +2433,13 @@
             </div>
         </aside>
 
-        <!-- MAIN -->
         <main class="main">
-
-            <!-- PARTY GUEST BANNER -->
             <div id="party-guest-banner">
                 <div class="pgb-icon">🎉</div>
                 <div class="pgb-text">You're in a <strong>Watch Party</strong> — synced with host</div>
                 <button class="pgb-leave" onclick="leaveParty()">Leave</button>
             </div>
 
-            <!-- PWA BANNER -->
             <div id="pwa-banner">
                 <div class="pwa-icon">📲</div>
                 <div class="pwa-text">Install <strong>KickStream</strong> as an app for faster access</div>
@@ -2351,23 +2447,6 @@
                 <button class="pwa-dismiss" onclick="dismissPWA()" title="Dismiss">✕</button>
             </div>
 
-            <!-- ═══ AD BANNER ═══ -->
-            <div id="ad-banner-container">
-                <div class="ad-placeholder">Loading ad…</div>
-                <script>
-                    atOptions = {
-                        'key': '227d90309c60d025e7698e00ceca60ed',
-                        'format': 'iframe',
-                        'height': 60,
-                        'width': 468,
-                        'params': {}
-                    };
-                </script>
-                <script src="https://www.highperformanceformat.com/227d90309c60d025e7698e00ceca60ed/invoke.js">
-                </script>
-            </div>
-
-            <!-- FAVOURITES -->
             <div id="fav-section">
                 <div class="fav-header">
                     <div class="fav-title">⭐ Favourite Teams</div>
@@ -2376,12 +2455,10 @@
                 <div class="fav-grid" id="fav-grid"></div>
             </div>
 
-            <!-- SCORE TICKER -->
             <div id="score-ticker">
                 <div class="score-ticker-inner" id="score-ticker-inner"></div>
             </div>
 
-            <!-- MULTISTREAM -->
             <div id="multistream-section">
                 <div class="multistream-header">
                     <div class="multistream-title">⚡ Multistream</div>
@@ -2393,7 +2470,6 @@
                 <div class="multistream-grid count-1" id="multistream-grid"></div>
             </div>
 
-            <!-- PLAYER -->
             <div id="player-section">
                 <div id="live-score-bar">
                     <span class="lsb-team" id="lsb-home">—</span>
@@ -2442,7 +2518,6 @@
                 </div>
             </div>
 
-            <!-- CHANNEL SEARCH -->
             <div id="channel-search-bar">
                 <div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
@@ -2450,17 +2525,14 @@
                 </div>
             </div>
 
-            <!-- MATCHES CONTAINER -->
             <div id="matches-container">
                 <div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
             </div>
 
-            <!-- LEGAL NOTICE -->
             <div class="legal-notice">This site does not store any files on our server, we only link to the media which is hosted on 3rd party services.</div>
         </main>
     </div>
 
-    <!-- ═══ SEARCH OVERLAY ═══ -->
     <div id="search-overlay" onclick="closeSearchOverlay(event)">
         <div class="search-overlay-box">
             <div class="search-ov-wrap">
@@ -2472,7 +2544,6 @@
         </div>
     </div>
 
-    <!-- ═══ SETTINGS ═══ -->
     <div id="settings-overlay" onclick="closeSettings()"></div>
     <div id="settings-panel">
         <div class="sp-title">Settings <button class="sp-close" onclick="closeSettings()">✕</button></div>
@@ -2507,12 +2578,10 @@
         <div style="font-size:0.6rem;color:var(--text-secondary);text-align:center;margin-top:1rem;line-height:1.6;opacity:0.6;">KickStream does not host any streams. Content is linked from third-party services.</div>
     </div>
 
-    <!-- ═══ JAVASCRIPT ═══ -->
     <script>
         const W = 'https://cold-term-f5a2.sebythewilly.workers.dev';
         const PPVTO_API = 'https://ppv.to/api/streams';
         const WATCHFOOTY_API = 'https://watchfooty.st/api/matches';
-        const STREAMFREE_API = 'https://streamfree.top/api'; // NEW SOURCE
         const ABLY_KEY = 'uhrUrw.0fhsnA:Ao7bwXB6clXBCqWcRc_r__G7WF5GbxybcjltqUZagEw';
         const SPORT_ICONS = { football: '⚽', basketball: '🏀', tennis: '🎾', hockey: '🏒', baseball: '⚾', mma: '🥊', boxing: '🥊',
             rugby: '🏉', volleyball: '🏐', cricket: '🏏', golf: '⛳', motorsport: '🏎️', cycling: '🚴', darts: '🎯',
@@ -2542,16 +2611,6 @@
         let _ppvCache = null,
             _ppvCacheTs = 0;
         const PPV_TTL = 60000;
-
-        // ── WATCHFOOTY cache ──
-        let _watchFootyCache = null,
-            _watchFootyCacheTs = 0;
-        const WATCHFOOTY_TTL = 60000;
-
-        // ── STREAMFREE cache ──
-        let _streamFreeCache = null,
-            _streamFreeCacheTs = 0;
-        const STREAMFREE_TTL = 60000;
 
         function ppvNormCat(cat = '') {
             const c = cat.toLowerCase();
@@ -2645,6 +2704,10 @@
         }
 
         // ── WatchFooty API ──
+        let _watchFootyCache = null,
+            _watchFootyCacheTs = 0;
+        const WATCHFOOTY_TTL = 60000;
+
         async function fetchWatchFooty() {
             if (_watchFootyCache && Date.now() - _watchFootyCacheTs < WATCHFOOTY_TTL) return _watchFootyCache;
             try {
@@ -2747,104 +2810,6 @@
             return [...primary, ...unique];
         }
 
-        // ── STREAMFREE API ──
-        function streamFreeNormCat(cat = '') {
-            const c = cat.toLowerCase();
-            if (c.includes('basketball')) return 'basketball';
-            if (c.includes('soccer') || c.includes('football')) return 'football';
-            if (c.includes('boxing')) return 'boxing';
-            if (c.includes('mma') || c.includes('ufc')) return 'mma';
-            if (c.includes('hockey')) return 'hockey';
-            if (c.includes('baseball')) return 'baseball';
-            if (c.includes('tennis')) return 'tennis';
-            if (c.includes('rugby')) return 'rugby';
-            if (c.includes('cricket')) return 'cricket';
-            if (c.includes('golf')) return 'golf';
-            if (c.includes('motor') || c.includes('racing') || c.includes('f1')) return 'motorsport';
-            if (c.includes('combat')) return 'mma';
-            return 'other';
-        }
-
-        function streamFreeExtractTeams(title = '') {
-            const m = title.match(/^(.+?)\s+(?:vs\.?|at|@|v\.?)\s+(.+)$/i);
-            if (!m) return null;
-            return { home: { name: m[1].trim() }, away: { name: m[2].trim() } };
-        }
-
-        async function fetchStreamFree() {
-            if (_streamFreeCache && Date.now() - _streamFreeCacheTs < STREAMFREE_TTL) return _streamFreeCache;
-            try {
-                const r = await fetch(STREAMFREE_API, { signal: AbortSignal.timeout(6000) });
-                if (!r.ok) throw new Error(r.status);
-                const data = await r.json();
-                // try to find an array of events/matches
-                let events = Array.isArray(data) ? data : (data.events || data.matches || data.streams || []);
-                if (!events.length) throw new Error('no events');
-                const flat = [];
-                events.forEach(ev => {
-                    // expected structure: { title, sport?, category?, streams: [ { url, embed, language, hd } ] }
-                    const title = ev.title || ev.name || 'StreamFree Event';
-                    const category = streamFreeNormCat(ev.sport || ev.category || ev.league || '');
-                    const status = (ev.status && ev.status.toLowerCase() === 'live') ? 'live' : 'upcoming';
-                    const date = ev.date || ev.start_time || ev.datetime || new Date().toISOString();
-                    let sources = [];
-                    if (ev.streams && Array.isArray(ev.streams)) {
-                        ev.streams.forEach(s => {
-                            const embedUrl = s.embed || s.embedUrl || s.url || s.streamUrl || null;
-                            if (embedUrl) {
-                                sources.push({
-                                    source: 'streamfree',
-                                    id: s.id || s.stream_id || 'sf_' + Math.random().toString(36).slice(2, 6),
-                                    embedUrl: embedUrl,
-                                    language: s.language || s.lang || 'en',
-                                    hd: s.hd === true || s.quality === 'hd' || s.quality === '1080p'
-                                });
-                            }
-                        });
-                    }
-                    // if no explicit streams but an iframe/embed field exists
-                    if (!sources.length && (ev.iframe || ev.embed || ev.embedUrl)) {
-                        sources.push({
-                            source: 'streamfree',
-                            id: 'sf_direct',
-                            embedUrl: ev.iframe || ev.embed || ev.embedUrl,
-                            language: 'en',
-                            hd: false
-                        });
-                    }
-                    if (!sources.length) return;
-                    flat.push({
-                        _streamfree: true,
-                        id: 'sf_' + (ev.id || Math.random().toString(36).slice(2, 8)),
-                        title: title,
-                        category: category,
-                        date: new Date(date).toISOString(),
-                        status: status,
-                        sources: sources,
-                        teams: streamFreeExtractTeams(title),
-                        score: ev.score || ev.result || null
-                    });
-                });
-                _streamFreeCache = flat;
-                _streamFreeCacheTs = Date.now();
-                return flat;
-            } catch (e) {
-                console.warn('[streamfree]', e.message);
-                return _streamFreeCache || [];
-            }
-        }
-
-        function mergeStreamFree(primary, sf) {
-            const keys = new Set(primary.map(m => simplify(m.title)));
-            const unique = sf.filter(m => {
-                const pk = simplify(m.title);
-                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
-                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
-                return true;
-            });
-            return [...primary, ...unique];
-        }
-
         // ── PWA ──
         let deferredInstall = null;
         window.addEventListener('beforeinstallprompt', e => { e.preventDefault();
@@ -2933,7 +2898,8 @@
             ticker.classList.add('visible');
             const chips = live.map(m => `<div class="score-chip"><span class="sc-live">LIVE</span><span class="sc-teams">${m.title}</span>${m.score?`<span class="sc-score">${m.score}</span>`:''}</div>`)
                 .join('');
-            inner.innerHTML = chips;
+            inner.innerHTML = chips + chips;
+            inner.style.animationDuration = Math.max(20, live.length * 8) + 's';
         }
 
         function toggleScoreTicker() { const on = getSetting('scoreTicker', true);
@@ -3240,16 +3206,14 @@
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
             try {
-                const [primaryRes, ppvRes, wfRes, sfRes] = await Promise.allSettled([
+                const [primaryRes, ppvRes, wfRes] = await Promise.allSettled([
                     cachedFetch(getEndpoint()),
                     fetchPPVTo(),
-                    fetchWatchFooty(),
-                    fetchStreamFree()
+                    fetchWatchFooty()
                 ]);
                 const primary = primaryRes.status === 'fulfilled' ? primaryRes.value : [];
                 const ppvAll = ppvRes.status === 'fulfilled' ? ppvRes.value : [];
                 const wfAll = wfRes.status === 'fulfilled' ? wfRes.value : [];
-                const sfAll = sfRes.status === 'fulfilled' ? sfRes.value : [];
 
                 const now = Date.now();
                 const todayStart = new Date();
@@ -3270,17 +3234,9 @@
                         .getTime();
                     return true;
                 });
-                const sf = sfAll.filter(m => {
-                    const start = new Date(m.date).getTime();
-                    if (currentFilter === 'live') return m.status === 'live';
-                    if (currentFilter === 'today') return start >= todayStart.getTime() && start <= todayEnd
-                        .getTime();
-                    return true;
-                });
 
                 let merged = mergePPV(primary, ppv);
                 merged = mergeWatchFooty(merged, wf);
-                merged = mergeStreamFree(merged, sf);
                 allMatches = merged;
 
                 if (currentFilter === 'live') document.getElementById('live-count').textContent = allMatches.filter(m =>
@@ -3344,9 +3300,8 @@
             const isFavMatch = favs.some(f => hn === f || an === f);
             const isPPV = !!match._ppvto;
             const isWF = !!match._watchfooty;
-            const isSF = !!match._streamfree;
             card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
-                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '') + (isSF ? ' streamfree-card' : '');
+                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
             const use24 = getSetting('clock', '12') === '24';
             const md = new Date(match.date),
                 ts = md.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !use24 });
@@ -3359,7 +3314,7 @@
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
             const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
                 '<div class="card-ppvto-badge">PPV.to</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
-                    (isSF ? '<div class="card-ppvto-badge">StreamFree</div>' : '')));
+                    ''));
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
                 '';
@@ -3432,7 +3387,7 @@
             showLiveScoreBar(match);
             startScorePolling(match);
 
-            const [primaryStreams, ppvAll, wfAll, sfAll] = await Promise.all([
+            const [primaryStreams, ppvAll, wfAll] = await Promise.all([
                 (async () => {
                     if (!match.sources?.length) return [];
                     const results = await Promise.all(match.sources.map(s => fetch(`${W}/api/stream/${s.source}/${s.id}`)
@@ -3444,8 +3399,7 @@
                     return results.flat();
                 })(),
                 fetchPPVTo(),
-                fetchWatchFooty(),
-                fetchStreamFree()
+                fetchWatchFooty()
             ]);
 
             let streams = [...primaryStreams];
@@ -3453,7 +3407,6 @@
             if (ppvIframe) {
                 streams.push({ language: 'PPV.to', streamNo: 1, hd: false, _source: 'ppvto', embedUrl: ppvIframe });
             }
-            // WatchFooty streams
             if (match.sources && match.sources.length) {
                 match.sources.forEach(s => {
                     if (s.source === 'watchfooty' && s.embedUrl) {
@@ -3482,45 +3435,10 @@
                     });
                 }
             }
-            // StreamFree streams
-            const sfMatch = sfAll.find(sf => simplify(sf.title) === simplify(match.title));
-            if (sfMatch && sfMatch.sources && sfMatch.sources.length) {
-                sfMatch.sources.forEach(s => {
-                    if (s.embedUrl) {
-                        streams.push({
-                            language: s.language || 'StreamFree',
-                            streamNo: 1,
-                            hd: s.hd || false,
-                            _source: 'streamfree',
-                            embedUrl: s.embedUrl
-                        });
-                    }
-                });
-            }
-            // also if the match itself has _streamfree and sources (already handled but just in case)
-            if (match._streamfree && match.sources && match.sources.length) {
-                match.sources.forEach(s => {
-                    if (s.embedUrl && !streams.some(st => st.embedUrl === s.embedUrl)) {
-                        streams.push({
-                            language: s.language || 'StreamFree',
-                            streamNo: 1,
-                            hd: s.hd || false,
-                            _source: 'streamfree',
-                            embedUrl: s.embedUrl
-                        });
-                    }
-                });
-            }
 
-            if (getSetting('preferHD', true)) streams.sort((a, b) => {
-                if (a._source === 'ppvto') return -1;
-                if (b._source === 'ppvto') return 1;
-                if (a._source === 'watchfooty') return -1;
-                if (b._source === 'watchfooty') return 1;
-                if (a._source === 'streamfree') return -1;
-                if (b._source === 'streamfree') return 1;
-                return (b.hd ? 1 : 0) - (a.hd ? 1 : 0);
-            });
+            if (getSetting('preferHD', true)) streams.sort((a, b) => { if (a._source === 'ppvto') return -1; if (b
+                    ._source === 'ppvto') return 1; if (a._source === 'watchfooty') return -1; if (b._source ===
+                    'watchfooty') return 1; return (b.hd ? 1 : 0) - (a.hd ? 1 : 0); });
 
             if (!streams.length) {
                 document.getElementById('stream-list').innerHTML = '<div class="no-streams">No streams found</div>';
@@ -3536,16 +3454,14 @@
             streams.forEach((s, i) => {
                 const isPPV = s._source === 'ppvto';
                 const isWF = s._source === 'watchfooty';
-                const isSF = s._source === 'streamfree';
                 const item = document.createElement('div');
                 item.className = 'stream-item';
                 item.dataset.index = i;
                 let srcLabel = s._source || '';
                 if (isPPV) srcLabel = '🔗 ppv.to';
                 else if (isWF) srcLabel = 'WatchFooty';
-                else if (isSF) srcLabel = 'StreamFree';
                 item.innerHTML =
-                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(isSF?'StreamFree':(s.language||'Stream')))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
+                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(s.language||'Stream'))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3661,48 +3577,7 @@
             document.getElementById('search-input').value = '';
             document.getElementById('channel-search-bar').style.display = 'block';
             document.getElementById('channel-search-input').value = '';
-            if (channelsLoaded && document.querySelector('.channels-grid')) {
-                try {
-                    const evRes = await fetch('https://api.cdnlivetv.tv/api/v1/events/sports/?user=cdnlivetv&plan=free', { signal: AbortSignal.timeout(5000) });
-                    if (evRes.ok) {
-                        const evData = await evRes.json();
-                        const events = Array.isArray(evData) ? evData : (evData.events || []);
-                        const nowShowing = {};
-                        events.forEach(ev => { if (ev.status === 'live' && ev.channels) { ev.channels.forEach(ch => { if (!nowShowing[ch.channel_code]) { nowShowing[ch.channel_code] = { title: ev.homeTeam && ev.awayTeam ? `${ev.homeTeam} vs ${ev.awayTeam}` : (ev.event || ev.tournament || ''), viewers: parseInt(ch.viewers) || 0 }; } }); } });
-                        document.querySelectorAll('.channel-card').forEach(card => {
-                            const code = card.dataset.code;
-                            const live = nowShowing[code];
-                            if (live) {
-                                card.classList.add('channel-live');
-                                const nameEl = card.querySelector('.channel-name');
-                                if (nameEl) nameEl.textContent = card.dataset.channelName || '';
-                                const liveTag = card.querySelector('.channel-live-tag') || document.createElement('div');
-                                liveTag.className = 'channel-live-tag';
-                                liveTag.style.cssText = 'font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;';
-                                liveTag.textContent = 'LIVE';
-                                if (!card.querySelector('.channel-live-tag')) {
-                                    card.insertBefore(liveTag, card.querySelector('.channel-name'));
-                                }
-                                const showingNow = card.querySelector('.channel-showing') || document.createElement('div');
-                                showingNow.className = 'channel-showing';
-                                showingNow.style.cssText = 'font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;';
-                                showingNow.textContent = live.title;
-                                if (!card.querySelector('.channel-showing')) {
-                                    card.appendChild(showingNow);
-                                }
-                                const viewers = card.querySelector('.channel-viewers') || document.createElement('div');
-                                viewers.className = 'channel-viewers';
-                                viewers.style.cssText = 'font-size:0.55rem;color:var(--text-secondary);margin-top:2px;';
-                                viewers.textContent = `👁 ${live.viewers}`;
-                                if (!card.querySelector('.channel-viewers')) {
-                                    card.appendChild(viewers);
-                                }
-                            }
-                        });
-                    }
-                } catch(e) {}
-                return;
-            }
+            if (channelsLoaded && document.querySelector('.channels-grid')) return;
             channelsLoaded = false;
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
@@ -3728,32 +3603,21 @@
                 const liveChannels = channels.filter(ch => ch.live);
                 const container = document.createElement('div');
 
-                function buildChannelCard(ch) {
-                    const card = document.createElement('div');
+                function buildChannelCard(ch) { const card = document.createElement('div');
                     card.className = 'channel-card' + (ch.live ? ' channel-live' : '');
-                    card.dataset.code = ch.code || '';
-                    card.dataset.channelName = ch.name || 'Channel';
-
-                    let logoHtml = '';
-                    if (ch.image) {
-                        logoHtml = `<img class="channel-logo" src="${ch.image}" alt="${ch.name || 'Channel'}" loading="lazy" onerror="this.style.display='none'">`;
-                    } else {
-                        const initial = (ch.name || 'Channel').charAt(0).toUpperCase();
-                        logoHtml =
-                            `<div style="width:56px;height:32px;background:var(--surface2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:var(--accent);border:1px solid var(--border);">${initial}</div>`;
-                    }
-
+                    const logo = ch.image ?
+                        `<img class="channel-logo" src="${ch.image}" alt="" loading="lazy" onerror="this.style.display='none'">` :
+                        `<div style="font-size:1.5rem">📺</div>`;
                     const liveTag = ch.live ?
-                        `<div class="channel-live-tag" style="font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>` :
+                        `<div style="font-size:0.55rem;font-weight:700;background:var(--live);color:#fff;padding:1px 6px;border-radius:3px;margin-bottom:2px;display:inline-block;">LIVE</div>` :
                         '';
                     const showingNow = ch.live ?
-                        `<div class="channel-showing" style="font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>` :
+                        `<div style="font-size:0.6rem;color:var(--accent);line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${ch.live.title}</div>` :
                         '';
                     const viewers = ch.totalViewers > 0 ?
-                        `<div class="channel-viewers" style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px;">👁 ${ch.totalViewers}</div>` :
+                        `<div style="font-size:0.55rem;color:var(--text-secondary);margin-top:2px">👁 ${ch.totalViewers}</div>` :
                         '';
-                    card.innerHTML =
-                        `${logoHtml}${liveTag}<div class="channel-name">${ch.name||'Channel'}</div>${showingNow}${viewers}`;
+                    card.innerHTML = `${logo}${liveTag}<div class="channel-name">${ch.name||'Channel'}</div>${showingNow}${viewers}`;
                     card.addEventListener('click', () => window.open(ch.url, '_blank', 'noopener,noreferrer'));
                     return card;
                 }
@@ -3812,12 +3676,6 @@
                 const wfAll = await fetchWatchFooty();
                 const wfMatch = wfAll.find(w => simplify(w.title) === simplify(match.title));
                 if (wfMatch && wfMatch.sources && wfMatch.sources.length) { const s = wfMatch.sources[0]; if (s
-                        .embedUrl) embedUrl = s.embedUrl; }
-            }
-            if (!embedUrl) {
-                const sfAll = await fetchStreamFree();
-                const sfMatch = sfAll.find(sf => simplify(sf.title) === simplify(match.title));
-                if (sfMatch && sfMatch.sources && sfMatch.sources.length) { const s = sfMatch.sources[0]; if (s
                         .embedUrl) embedUrl = s.embedUrl; }
             }
             if (!embedUrl && match.sources && match.sources.length) {
@@ -3930,7 +3788,7 @@
                 el.className = 'search-ov-item'; const t = new Date(match.date).toLocaleTimeString([], { hour: '2-digit',
                         minute: '2-digit' });
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
+                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
@@ -3963,135 +3821,41 @@
         setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
     </script>
 
-    <!-- ═══ AD BLOCKER (modified to allow the banner ad) ═══ -->
     <script>
         (function() {
             document.body.classList.add('no-ads');
-
-            // ── whitelist our ad container ──
-            const AD_WHITELIST = new Set(['ad-banner-container']);
-
-            // ── override open to block popunders ──
             const _open = window.open.bind(window);
             window.open = function(url, target, features) {
                 if (!target || target === '_self' || target === '_top' || target === '_parent') return null;
-                try {
-                    const u = new URL(url, location.href);
-                    if (/highperformanceformat|popads|adnxs|doubleclick|googlesyndication|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra|admaven/i
-                        .test(u.hostname)) {
-                        // allow our own ad domain only if inside the whitelisted container
-                        const caller = document.currentScript;
-                        if (caller && caller.closest && caller.closest('#ad-banner-container')) {
-                            // let it through
-                        } else {
-                            return null;
-                        }
-                    }
-                } catch (e) {}
+                try { const u = new URL(url, location.href); if (/highperformanceformat|popads|adnxs|doubleclick|googlesyndication|exoclick|trafficjunky|juicyads|hilltopads|propellerads|popcash|adsterra|admaven/i
+                        .test(u.hostname)) return null; } catch (e) {}
                 return _open(url, '_blank', 'noopener,noreferrer');
             };
-
-            // ── selector for intrusive ads (excluding our whitelisted container) ──
-            const AD_SEL = [
-                'iframe[src*="adnxs"]',
-                'iframe[src*="doubleclick"]',
-                'iframe[src*="exoclick"]',
-                'iframe[src*="trafficjunky"]',
-                'iframe[src*="propellerads"]',
-                'iframe[src*="adsterra"]',
-                '[class*="popunder"]',
-                '[class*="popup-ad"]',
-                '[id*="ad-overlay"]'
+            const AD_SEL = ['iframe[src*="adnxs"]', 'iframe[src*="doubleclick"]', 'iframe[src*="exoclick"]',
+                'iframe[src*="trafficjunky"]', 'iframe[src*="propellerads"]', 'iframe[src*="adsterra"]',
+                '[class*="popunder"]', '[class*="popup-ad"]', '[id*="ad-overlay"]'
             ];
-
-            const SAFE = new Set([
-                'name-modal',
-                'search-overlay',
-                'settings-panel',
-                'settings-overlay',
-                'player-section',
-                'multistream-section',
-                'mobile-bottom-bar',
-                'party-bar',
-                'party-chat',
-                'kb-modal',
-                'pwa-banner',
-                'ad-banner-container' // our ad container is safe
+            const SAFE = new Set(['name-modal', 'search-overlay', 'settings-panel', 'settings-overlay', 'player-section',
+                'multistream-section', 'mobile-bottom-bar', 'party-bar', 'party-chat', 'kb-modal', 'pwa-banner'
             ]);
 
-            function isWhitelisted(el) {
-                if (!el) return false;
-                let cur = el;
-                while (cur) {
-                    if (cur.id && AD_WHITELIST.has(cur.id)) return true;
-                    if (cur.classList && cur.classList.contains('ad-banner-container')) return true;
-                    cur = cur.parentElement;
-                }
-                return false;
-            }
-
-            function nuke(root) {
-                if (!root || typeof root.querySelectorAll !== 'function') root = document;
-                AD_SEL.forEach(sel => {
-                    try {
-                        root.querySelectorAll(sel).forEach(el => {
-                            if (!isWhitelisted(el)) el.remove();
-                        });
-                    } catch (e) {}
-                });
-                try {
-                    document.querySelectorAll(
-                        'body > *:not(header):not(.layout):not(#mobile-bottom-bar):not(#name-modal):not(#search-overlay):not(#settings-overlay):not(#settings-panel):not(.toast):not(#kb-modal):not(#cast-video-proxy):not(#ad-banner-container)'
-                    ).forEach(el => {
-                        if (SAFE.has(el.id)) return;
-                        if (isWhitelisted(el)) return;
-                        const s = window.getComputedStyle(el);
-                        if ((s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 900 &&
+            function nuke(root) { if (!root || typeof root.querySelectorAll !== 'function') root = document;
+                AD_SEL.forEach(sel => { try { root.querySelectorAll(sel).forEach(el => el.remove()); } catch (
+                    e) {} });
+                try { document.querySelectorAll(
+                        'body > *:not(header):not(.layout):not(#mobile-bottom-bar):not(#name-modal):not(#search-overlay):not(#settings-overlay):not(#settings-panel):not(.toast):not(#kb-modal):not(#cast-video-proxy)'
+                        ).forEach(el => { if (SAFE.has(el.id)) return; const s = window.getComputedStyle(el); if ((
+                                s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 900 &&
                             (parseInt(s.width) > window.innerWidth * 0.5 || parseInt(s.height) > window
-                                .innerHeight * 0.5)) {
-                            el.remove();
-                        }
-                    });
-                } catch (e) {}
-            }
-
+                                .innerHeight * 0.5)) el.remove(); }); } catch (e) {} }
             window.addEventListener('load', nuke);
-
-            new MutationObserver(ms => {
-                ms.forEach(m => {
-                    m.addedNodes.forEach(n => {
-                        if (n.nodeType !== 1) return;
-                        // Script removal – skip if whitelisted
-                        if (n.tagName === 'SCRIPT') {
-                            const src = n.src || '';
-                            if (/highperformanceformat|popads|adnxs|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra/i
-                                .test(src)) {
-                                // if this script is inside our ad container, keep it
-                                if (isWhitelisted(n)) return;
-                                n.remove();
-                                return;
-                            }
-                        }
-                        nuke(document);
-                    });
-                });
-            }).observe(document.documentElement, { childList: true, subtree: true });
+            new MutationObserver(ms => { ms.forEach(m => { m.addedNodes.forEach(n => { if (n.nodeType !== 1)
+                            return; if (n.tagName === 'SCRIPT') { const src = n.src || ''; if (/
+                                highperformanceformat|popads|adnxs|exoclick|trafficjunky|juicyads|propellerads|popcash|adsterra
+                                /i.test(src)) { n.remove(); return; } }
+                        nuke(document); }); }); }).observe(document.documentElement, { childList: true,
+                subtree: true });
         })();
     </script>
-
-    <!-- ═══ ensure ad container gets a chance to render ═══ -->
-    <script>
-        (function() {
-            // If the ad container's inner placeholder is still visible after 3s, hide it.
-            setTimeout(function() {
-                const c = document.getElementById('ad-banner-container');
-                if (c) {
-                    const ph = c.querySelector('.ad-placeholder');
-                    if (ph) ph.style.display = 'none';
-                }
-            }, 3000);
-        })();
-    </script>
-
 </body>
 </html>
