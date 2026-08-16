@@ -11,12 +11,9 @@
     <meta name="theme-color" content="#0a0e13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.ably.com/lib/ably.min-2.js">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js">
-    </script>
+    <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
     <style>
-        /* ── ROOT ── */
         :root {
             --bg: #080c14;
             --surface: rgba(18, 26, 38, 0.85);
@@ -53,8 +50,6 @@
             --shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
             --glow: rgba(0, 230, 118, 0.06);
         }
-
-        /* ── RESET ── */
         * {
             margin: 0;
             padding: 0;
@@ -84,8 +79,6 @@
         body.light-mode {
             background-image: none;
         }
-
-        /* ── SCROLLBAR ── */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -100,8 +93,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--muted);
         }
-
-        /* ── HEADER ── */
         header {
             position: fixed;
             top: 0;
@@ -140,7 +131,6 @@
             color: var(--text);
             font-weight: 300;
         }
-
         .header-search {
             flex: 1;
             max-width: 320px;
@@ -175,7 +165,6 @@
             pointer-events: none;
             opacity: 0.6;
         }
-
         .filter-tabs {
             display: flex;
             gap: 4px;
@@ -215,7 +204,6 @@
             color: var(--text);
             background: rgba(255, 255, 255, 0.04);
         }
-
         .header-right {
             margin-left: auto;
             display: flex;
@@ -286,15 +274,11 @@
                 transform: scale(0.7);
             }
         }
-
-        /* ── LAYOUT ── */
         .layout {
             display: flex;
             padding-top: 60px;
             min-height: 100vh;
         }
-
-        /* ── SIDEBAR ── */
         .sidebar {
             width: var(--sidebar-w);
             flex-shrink: 0;
@@ -373,7 +357,6 @@
             border-color: rgba(0, 230, 118, 0.2);
             color: var(--accent);
         }
-
         .league-list {
             padding: 0 0 0.5rem;
         }
@@ -403,8 +386,6 @@
             border-left-color: var(--accent);
             background: rgba(0, 230, 118, 0.03);
         }
-
-        /* ── MAIN ── */
         .main {
             margin-left: var(--sidebar-w);
             flex: 1;
@@ -412,8 +393,6 @@
             min-width: 0;
             max-width: 1400px;
         }
-
-        /* ── SCORE TICKER ── */
         #score-ticker {
             display: none;
             background: var(--score-bg);
@@ -477,8 +456,6 @@
             font-size: 0.62rem;
             color: var(--text-secondary);
         }
-
-        /* ── LIVE SCORE BAR ── */
         #live-score-bar {
             display: none;
             align-items: center;
@@ -516,8 +493,6 @@
             font-weight: 700;
             letter-spacing: 0.5px;
         }
-
-        /* ── PLAYER SECTION ── */
         #player-section {
             display: none;
             background: var(--surface);
@@ -815,7 +790,6 @@
                 transform: rotate(360deg);
             }
         }
-
         .cast-btn {
             background: rgba(0, 176, 255, 0.06);
             border: 1px solid rgba(0, 176, 255, 0.15);
@@ -841,8 +815,6 @@
             background: rgba(0, 176, 255, 0.25);
             border-color: var(--accent2);
         }
-
-        /* ── PARTY ── */
         .party-btn {
             background: rgba(255, 214, 0, 0.06);
             border: 1px solid rgba(255, 214, 0, 0.15);
@@ -1028,8 +1000,6 @@
             color: var(--live);
             border-color: var(--live);
         }
-
-        /* ── MATCH CARDS ── */
         .sport-section {
             margin-bottom: 2rem;
         }
@@ -1095,7 +1065,6 @@
         .match-card.ppvto-card:hover {
             border-color: rgba(0, 176, 255, 0.35);
         }
-
         .card-poster {
             aspect-ratio: 16/9;
             position: relative;
@@ -1340,8 +1309,6 @@
             border-color: var(--accent2);
             color: var(--accent2);
         }
-
-        /* ── TOAST ── */
         .toast {
             position: fixed;
             bottom: 1.5rem;
@@ -1370,8 +1337,6 @@
                 transform: translateY(0) scale(1);
             }
         }
-
-        /* ── MODALS ── */
         #kb-modal,
         #name-modal {
             display: none;
@@ -1444,7 +1409,6 @@
             font-size: 0.75rem;
             color: var(--accent);
         }
-
         .name-modal-sub {
             font-size: 0.78rem;
             color: var(--text-secondary);
@@ -1483,8 +1447,6 @@
         .name-modal-btn:hover {
             background: rgba(255, 214, 0, 0.15);
         }
-
-        /* ── SETTINGS ── */
         #settings-overlay {
             display: none;
             position: fixed;
@@ -1641,8 +1603,6 @@
             color: var(--accent);
             border-color: var(--accent);
         }
-
-        /* ── SEARCH OVERLAY ── */
         #search-overlay {
             display: none;
             position: fixed;
@@ -1743,8 +1703,6 @@
             color: var(--text);
             border-color: var(--text-secondary);
         }
-
-        /* ── MOBILE BOTTOM BAR ── */
         #mobile-bottom-bar {
             display: none;
             position: fixed;
@@ -1783,8 +1741,6 @@
             color: #000;
             box-shadow: 0 4px 16px rgba(0, 230, 118, 0.2);
         }
-
-        /* ── CHANNELS ── */
         .channels-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1866,8 +1822,6 @@
             pointer-events: none;
             opacity: 0.6;
         }
-
-        /* ── MULTISTREAM ── */
         #multistream-section {
             display: none;
             background: var(--surface);
@@ -1984,8 +1938,6 @@
         .multistream-cell-remove:hover {
             background: var(--live);
         }
-
-        /* ── FAV SECTION ── */
         #fav-section {
             display: none;
             background: rgba(255, 214, 0, 0.03);
@@ -2050,8 +2002,6 @@
             line-height: 1;
             margin-left: 2px;
         }
-
-        /* ── SKELETON ── */
         .skel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -2080,8 +2030,6 @@
                 transform: translateX(100%);
             }
         }
-
-        /* ── EMPTY ── */
         .empty {
             text-align: center;
             padding: 3rem 1.5rem;
@@ -2091,8 +2039,6 @@
         .empty p {
             margin-bottom: 0.5rem;
         }
-
-        /* ── LEGAL ── */
         .legal-notice {
             text-align: center;
             padding: 0.75rem 1.5rem 3rem;
@@ -2103,8 +2049,6 @@
             border-top: 1px solid var(--border);
             margin-top: 2rem;
         }
-
-        /* ── PWA BANNER ── */
         #pwa-banner {
             display: none;
             align-items: center;
@@ -2158,8 +2102,6 @@
         .pwa-dismiss:hover {
             color: var(--text);
         }
-
-        /* ── COMPACT VIEW ── */
         body.compact-view .matches-grid {
             grid-template-columns: 1fr;
             gap: 6px;
@@ -2209,20 +2151,14 @@
             margin-top: 0;
             flex-shrink: 0;
         }
-
-        /* ── REDUCE MOTION ── */
         body.reduce-motion * {
             animation-duration: 0.001ms !important;
             transition-duration: 0.001ms !important;
         }
-
-        /* ── NO ADS ── */
         body.no-ads #banner-ad {
             display: none !important;
         }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 1024px) {
+        @media (max-width:1024px) {
             .player-inner {
                 grid-template-columns: 1fr;
             }
@@ -2231,7 +2167,7 @@
                 border-top: 1px solid var(--border);
             }
         }
-        @media (max-width: 768px) {
+        @media (max-width:768px) {
             .sidebar {
                 display: none;
             }
@@ -2310,7 +2246,7 @@
                 font-size: 1.1rem;
             }
         }
-        @media (max-width: 420px) {
+        @media (max-width:420px) {
             .matches-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
@@ -2345,7 +2281,6 @@
     </style>
 </head>
 <body class="no-ads">
-
     <script>
         (function() {
             const manifest = {
@@ -2582,6 +2517,7 @@
         const W = 'https://cold-term-f5a2.sebythewilly.workers.dev';
         const PPVTO_API = 'https://ppv.to/api/streams';
         const WATCHFOOTY_API = 'https://watchfooty.st/api/matches';
+        const STREAMFREE_API = 'https://streamfree.top/api/v1/streams';
         const ABLY_KEY = 'uhrUrw.0fhsnA:Ao7bwXB6clXBCqWcRc_r__G7WF5GbxybcjltqUZagEw';
         const SPORT_ICONS = { football: '⚽', basketball: '🏀', tennis: '🎾', hockey: '🏒', baseball: '⚾', mma: '🥊', boxing: '🥊',
             rugby: '🏉', volleyball: '🏐', cricket: '🏏', golf: '⛳', motorsport: '🏎️', cycling: '🚴', darts: '🎯',
@@ -2607,7 +2543,6 @@
         let liveScores = {};
         let scoreUpdateTimer = null;
 
-        // ── PPV.TO cache ──
         let _ppvCache = null,
             _ppvCacheTs = 0;
         const PPV_TTL = 60000;
@@ -2703,7 +2638,6 @@
             return [...primary, ...unique];
         }
 
-        // ── WatchFooty API ──
         let _watchFootyCache = null,
             _watchFootyCacheTs = 0;
         const WATCHFOOTY_TTL = 60000;
@@ -2802,6 +2736,77 @@
         function mergeWatchFooty(primary, wf) {
             const keys = new Set(primary.map(m => simplify(m.title)));
             const unique = wf.filter(m => {
+                const pk = simplify(m.title);
+                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
+                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
+                return true;
+            });
+            return [...primary, ...unique];
+        }
+
+        // ── StreamFree API ──
+        let _streamFreeCache = null,
+            _streamFreeCacheTs = 0;
+        const STREAMFREE_TTL = 60000;
+
+        function sfMapCategory(cat) {
+            const c = (cat || '').toLowerCase();
+            if (c.includes('soccer')) return 'football';
+            if (c.includes('basketball')) return 'basketball';
+            if (c.includes('hockey')) return 'hockey';
+            if (c.includes('baseball')) return 'baseball';
+            if (c.includes('tennis')) return 'tennis';
+            if (c.includes('cricket')) return 'cricket';
+            if (c.includes('combat')) return 'mma';
+            if (c.includes('boxing')) return 'boxing';
+            if (c.includes('racing')) return 'motorsport';
+            if (c.includes('football')) return 'football';
+            return 'other';
+        }
+
+        async function fetchStreamFree() {
+            if (_streamFreeCache && Date.now() - _streamFreeCacheTs < STREAMFREE_TTL) return _streamFreeCache;
+            try {
+                const r = await fetch(STREAMFREE_API, { signal: AbortSignal.timeout(6000) });
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                if (!j.streams || !Array.isArray(j.streams)) throw new Error('bad');
+                const mapped = j.streams.map(s => {
+                    const title = s.name || s.stream_key || 'StreamFree Event';
+                    const category = sfMapCategory(s.category || '');
+                    const status = s.match_timestamp ? (Date.now() / 1000 >= s.match_timestamp ? 'live' :
+                        'upcoming') : 'upcoming';
+                    return {
+                        _streamfree: true,
+                        id: 'sf_' + (s.stream_key || Math.random().toString(36).slice(2, 8)),
+                        title: title,
+                        category: category,
+                        date: s.match_timestamp ? new Date(s.match_timestamp * 1000).toISOString() : new Date()
+                        .toISOString(),
+                        status: status,
+                        sources: [{
+                            source: 'streamfree',
+                            id: s.stream_key || '',
+                            embedUrl: s.embed_url || `https://streamfree.top/embed/${s.category}/${s.stream_key}`,
+                            language: 'en',
+                            hd: false,
+                            _sf: true
+                        }],
+                        teams: ppvExtractTeams(title),
+                        league: s.league || '',
+                        thumbnail: s.thumbnail_url || '',
+                        _sf_key: s.stream_key
+                    };
+                });
+                _streamFreeCache = mapped;
+                _streamFreeCacheTs = Date.now();
+                return mapped;
+            } catch (e) { console.warn('[streamfree]', e.message); return _streamFreeCache || []; }
+        }
+
+        function mergeStreamFree(primary, sf) {
+            const keys = new Set(primary.map(m => simplify(m.title)));
+            const unique = sf.filter(m => {
                 const pk = simplify(m.title);
                 for (const k of keys) { const sh = pk.length < k.length ? pk : k,
                         lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
@@ -3092,7 +3097,7 @@
                 document.getElementById('now-playing-title').textContent = matchTitle || '';
                 document.getElementById('teams-row').style.display = 'none';
                 document.getElementById('stream-list').innerHTML =
-                '<div class="no-streams">Synced with host</div>';
+                    '<div class="no-streams">Synced with host</div>';
                 embedStreamDirect(embedUrl); });
             partyChannel.subscribe('chat', msg => addChatMsg(msg.data.name, msg.data.text));
             partyChannel.subscribe('system', msg => { const { type, name } = msg.data; if (type === 'join')
@@ -3206,14 +3211,16 @@
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
             try {
-                const [primaryRes, ppvRes, wfRes] = await Promise.allSettled([
+                const [primaryRes, ppvRes, wfRes, sfRes] = await Promise.allSettled([
                     cachedFetch(getEndpoint()),
                     fetchPPVTo(),
-                    fetchWatchFooty()
+                    fetchWatchFooty(),
+                    fetchStreamFree()
                 ]);
                 const primary = primaryRes.status === 'fulfilled' ? primaryRes.value : [];
                 const ppvAll = ppvRes.status === 'fulfilled' ? ppvRes.value : [];
                 const wfAll = wfRes.status === 'fulfilled' ? wfRes.value : [];
+                const sfAll = sfRes.status === 'fulfilled' ? sfRes.value : [];
 
                 const now = Date.now();
                 const todayStart = new Date();
@@ -3234,9 +3241,17 @@
                         .getTime();
                     return true;
                 });
+                const sf = sfAll.filter(m => {
+                    const start = new Date(m.date).getTime();
+                    if (currentFilter === 'live') return m.status === 'live';
+                    if (currentFilter === 'today') return start >= todayStart.getTime() && start <= todayEnd
+                        .getTime();
+                    return true;
+                });
 
                 let merged = mergePPV(primary, ppv);
                 merged = mergeWatchFooty(merged, wf);
+                merged = mergeStreamFree(merged, sf);
                 allMatches = merged;
 
                 if (currentFilter === 'live') document.getElementById('live-count').textContent = allMatches.filter(m =>
@@ -3300,8 +3315,9 @@
             const isFavMatch = favs.some(f => hn === f || an === f);
             const isPPV = !!match._ppvto;
             const isWF = !!match._watchfooty;
+            const isSF = !!match._streamfree;
             card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
-                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
+                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '') + (isSF ? ' streamfree-card' : '');
             const use24 = getSetting('clock', '12') === '24';
             const md = new Date(match.date),
                 ts = md.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !use24 });
@@ -3314,7 +3330,7 @@
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
             const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
                 '<div class="card-ppvto-badge">PPV.to</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
-                    ''));
+                    (isSF ? '<div class="card-ppvto-badge">StreamFree</div>' : '')));
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
                 '';
@@ -3387,7 +3403,7 @@
             showLiveScoreBar(match);
             startScorePolling(match);
 
-            const [primaryStreams, ppvAll, wfAll] = await Promise.all([
+            const [primaryStreams, ppvAll, wfAll, sfAll] = await Promise.all([
                 (async () => {
                     if (!match.sources?.length) return [];
                     const results = await Promise.all(match.sources.map(s => fetch(`${W}/api/stream/${s.source}/${s.id}`)
@@ -3399,7 +3415,8 @@
                     return results.flat();
                 })(),
                 fetchPPVTo(),
-                fetchWatchFooty()
+                fetchWatchFooty(),
+                fetchStreamFree()
             ]);
 
             let streams = [...primaryStreams];
@@ -3418,8 +3435,31 @@
                             embedUrl: s.embedUrl
                         });
                     }
+                    if (s.source === 'streamfree' && s.embedUrl) {
+                        streams.push({
+                            language: 'StreamFree',
+                            streamNo: 1,
+                            hd: false,
+                            _source: 'streamfree',
+                            embedUrl: s.embedUrl
+                        });
+                    }
                 });
             } else {
+                const sfMatch = sfAll.find(w => simplify(w.title) === simplify(match.title));
+                if (sfMatch && sfMatch.sources && sfMatch.sources.length) {
+                    sfMatch.sources.forEach(s => {
+                        if (s.embedUrl) {
+                            streams.push({
+                                language: 'StreamFree',
+                                streamNo: 1,
+                                hd: false,
+                                _source: 'streamfree',
+                                embedUrl: s.embedUrl
+                            });
+                        }
+                    });
+                }
                 const wfMatch = wfAll.find(w => simplify(w.title) === simplify(match.title));
                 if (wfMatch && wfMatch.sources && wfMatch.sources.length) {
                     wfMatch.sources.forEach(s => {
@@ -3438,7 +3478,8 @@
 
             if (getSetting('preferHD', true)) streams.sort((a, b) => { if (a._source === 'ppvto') return -1; if (b
                     ._source === 'ppvto') return 1; if (a._source === 'watchfooty') return -1; if (b._source ===
-                    'watchfooty') return 1; return (b.hd ? 1 : 0) - (a.hd ? 1 : 0); });
+                    'watchfooty') return 1; if (a._source === 'streamfree') return -1; if (b._source ===
+                'streamfree') return 1; return (b.hd ? 1 : 0) - (a.hd ? 1 : 0); });
 
             if (!streams.length) {
                 document.getElementById('stream-list').innerHTML = '<div class="no-streams">No streams found</div>';
@@ -3454,14 +3495,16 @@
             streams.forEach((s, i) => {
                 const isPPV = s._source === 'ppvto';
                 const isWF = s._source === 'watchfooty';
+                const isSF = s._source === 'streamfree';
                 const item = document.createElement('div');
                 item.className = 'stream-item';
                 item.dataset.index = i;
                 let srcLabel = s._source || '';
                 if (isPPV) srcLabel = '🔗 ppv.to';
                 else if (isWF) srcLabel = 'WatchFooty';
+                else if (isSF) srcLabel = 'StreamFree';
                 item.innerHTML =
-                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(s.language||'Stream'))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
+                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(isSF?'StreamFree':(s.language||'Stream')))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3678,6 +3721,12 @@
                 if (wfMatch && wfMatch.sources && wfMatch.sources.length) { const s = wfMatch.sources[0]; if (s
                         .embedUrl) embedUrl = s.embedUrl; }
             }
+            if (!embedUrl) {
+                const sfAll = await fetchStreamFree();
+                const sfMatch = sfAll.find(w => simplify(w.title) === simplify(match.title));
+                if (sfMatch && sfMatch.sources && sfMatch.sources.length) { const s = sfMatch.sources[0]; if (s
+                        .embedUrl) embedUrl = s.embedUrl; }
+            }
             if (!embedUrl && match.sources && match.sources.length) {
                 for (const s of match.sources) {
                     try { const data = await fetch(`${W}/api/stream/${s.source}/${s.id}`).then(r => r.json()); const arr =
@@ -3788,7 +3837,7 @@
                 el.className = 'search-ov-item'; const t = new Date(match.date).toLocaleTimeString([], { hour: '2-digit',
                         minute: '2-digit' });
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
+                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
