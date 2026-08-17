@@ -458,9 +458,6 @@
         .match-card.ppvto-card:hover {
             border-color: rgba(0, 176, 255, 0.35);
         }
-        .match-card.hidden-no-streams {
-            display: none !important;
-        }
         .card-poster {
             aspect-ratio: 16/9;
             position: relative;
@@ -1780,33 +1777,6 @@
                 transform: rotate(360deg);
             }
         }
-        .no-streams-badge {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .no-streams-badge .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #ff6b6b;
-            display: inline-block;
-        }
     </style>
 </head>
 <body class="no-ads">
@@ -2445,8 +2415,8 @@
 
         // ── MATCH LOGIC ──
         function filterSearch(q) { q = q.toLowerCase().trim();
-            document.querySelectorAll('.match-card:not(.hidden-no-streams)').forEach(c => { const t = c.querySelector(
-                    '.card-title')?.textContent.toLowerCase() || '';
+            document.querySelectorAll('.match-card').forEach(c => { const t = c.querySelector('.card-title')
+                    ?.textContent.toLowerCase() || '';
                 c.style.display = (!q || t.includes(q)) ? '' : 'none'; }); }
 
         function setFilter(filter, btn) { channelsView = false;
@@ -2489,19 +2459,6 @@
                     .json(); });
             _cache.set(url, { data, ts: Date.now() });
             return data; }
-
-        // ── Stream detection and filtering ──
-        function matchHasStreams(match) {
-            // Check if the match has any sources that could provide a stream
-            if (match.sources && match.sources.length > 0) return true;
-            // Check if it's a PPV match with an iframe
-            if (match._ppvto && match._iframe) return true;
-            // Check if it's a WatchFooty match with sources
-            if (match._watchfooty && match.sources && match.sources.length > 0) return true;
-            // Check if it's a StreamFree match with sources
-            if (match._streamfree && match.sources && match.sources.length > 0) return true;
-            return false;
-        }
 
         async function loadMatches() {
             if (channelsView) return;
@@ -2549,10 +2506,6 @@
                 let merged = mergePPV(primary, ppv);
                 merged = mergeWatchFooty(merged, wf);
                 merged = mergeStreamFree(merged, sf);
-
-                // Filter out matches with no streams
-                merged = merged.filter(m => matchHasStreams(m));
-
                 allMatches = merged;
 
                 if (currentFilter === 'live') document.getElementById('live-count').textContent = allMatches.filter(m =>
@@ -2615,17 +2568,8 @@
             const isFavMatch = favs.some(f => hn === f || an === f);
             const isPPV = !!match._ppvto;
             const isWF = !!match._watchfooty;
-            const isSF = !!match._streamfree;
-            const hasStreams = matchHasStreams(match);
-
-            // If no streams, hide the card
-            if (!hasStreams) {
-                card.className = 'match-card hidden-no-streams';
-                return card;
-            }
-
             card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
-                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '') + (isSF ? ' streamfree-card' : '');
+                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
             const use24 = getSetting('clock', '12') === '24';
             const md = new Date(match.date),
                 ts = md.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !use24 });
@@ -2638,7 +2582,7 @@
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
             const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
                 '<div class="card-ppvto-badge">PPV.to</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
-                    (isSF ? '<div class="card-ppvto-badge">StreamFree</div>' : '')));
+                    ''));
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
                 '';
