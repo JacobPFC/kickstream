@@ -1964,7 +1964,8 @@
 
     <script>
         const W = 'https://cold-term-f5a2.sebythewilly.workers.dev';
-        const PPVTO_API = 'https://ppv.to/api/streams';
+        // REPLACED: ppv.to API with api.ppv.st/api/streams
+        const PPVTO_API = 'https://api.ppv.st/api/streams';
         const WATCHFOOTY_API = 'https://watchfooty.st/api/matches';
         const STREAMFREE_API = 'https://streamfree.top/api/v1/streams';
         const SPORT_ICONS = { football: '⚽', basketball: '🏀', tennis: '🎾', hockey: '🏒', baseball: '⚾', mma: '🥊', boxing: '🥊',
@@ -2127,7 +2128,7 @@
                 _ppvCache = flat;
                 _ppvCacheTs = Date.now();
                 return flat;
-            } catch (e) { console.warn('[ppv.to]', e.message); return _ppvCache || []; }
+            } catch (e) { console.warn('[ppv.st]', e.message); return _ppvCache || []; }
         }
 
         async function fetchWatchFooty() {
@@ -2618,7 +2619,7 @@
                 `<div class="card-time-tag">${ts}</div>`;
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
             const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
-                '<div class="card-ppvto-badge">PPV.to</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
+                '<div class="card-ppvto-badge">PPV.st</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
                     ''));
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
@@ -2702,7 +2703,7 @@
             let streams = [...primaryStreams];
             const ppvIframe = ppvMatchFor(match, ppvAll);
             if (ppvIframe) {
-                streams.push({ language: 'PPV.to', streamNo: 1, hd: false, _source: 'ppvto', embedUrl: ppvIframe });
+                streams.push({ language: 'PPV.st', streamNo: 1, hd: false, _source: 'ppvto', embedUrl: ppvIframe });
             }
             if (match.sources && match.sources.length) {
                 match.sources.forEach(s => {
@@ -2780,11 +2781,11 @@
                 item.className = 'stream-item';
                 item.dataset.index = i;
                 let srcLabel = s._source || '';
-                if (isPPV) srcLabel = '🔗 ppv.to';
+                if (isPPV) srcLabel = '🔗 ppv.st';
                 else if (isWF) srcLabel = 'WatchFooty';
                 else if (isSF) srcLabel = 'StreamFree';
                 item.innerHTML =
-                    `<div class="stream-lang">${isPPV?'PPV.to':(isWF?'WatchFooty':(isSF?'StreamFree':(s.language||'Stream')))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
+                    `<div class="stream-lang">${isPPV?'PPV.st':(isWF?'WatchFooty':(isSF?'StreamFree':(s.language||'Stream')))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3040,7 +3041,7 @@
                 el.className = 'search-ov-item'; const t = new Date(match.date).toLocaleTimeString([], { hour: '2-digit',
                         minute: '2-digit' });
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.to</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
+                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.st</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
@@ -3069,11 +3070,5 @@
                 '/api/matches/live').then(r => r.json())).length; } catch (e) {} }, 60000);
         setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
     </script>
-
-    <script>
-        (function() {
-            document.body.classList.add('no-ads');
-            const _open = window.open.bind(window);
-            window.open = function(url, target, features) {
-                if (!target || target === '_self' || target === '_top' || target === '_parent') return null;
-                try { const u = new URL(url, location.href); if (/highperformanceformat|popads|adnxs|doubleclick|googles
+</body>
+</html>
