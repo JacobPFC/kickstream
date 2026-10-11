@@ -11,7 +11,6 @@
     <meta name="theme-color" content="#0a0e13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
     <style>
         :root {
@@ -452,12 +451,6 @@
         .match-card.fav-card:hover {
             border-color: rgba(255, 214, 0, 0.4);
         }
-        .match-card.ppvto-card {
-            border-color: rgba(0, 176, 255, 0.2);
-        }
-        .match-card.ppvto-card:hover {
-            border-color: rgba(0, 176, 255, 0.35);
-        }
         .card-poster {
             aspect-ratio: 16/9;
             position: relative;
@@ -576,20 +569,6 @@
             border-radius: 5px;
             letter-spacing: 1px;
             backdrop-filter: blur(4px);
-        }
-        .card-ppvto-badge {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            z-index: 2;
-            font-size: 0.52rem;
-            font-weight: 700;
-            color: var(--accent2);
-            background: rgba(0, 176, 255, 0.12);
-            border: 1px solid rgba(0, 176, 255, 0.2);
-            padding: 1px 8px;
-            border-radius: 4px;
-            letter-spacing: 0.3px;
         }
         .card-fav-btn {
             position: absolute;
@@ -1369,9 +1348,6 @@
             animation-duration: 0.001ms !important;
             transition-duration: 0.001ms !important;
         }
-        body.no-ads #banner-ad {
-            display: none !important;
-        }
         @media (max-width:1024px) {
             .player-inner {
                 grid-template-columns: 1fr;
@@ -1670,9 +1646,6 @@
         .stream-src {
             font-size: 0.6rem;
             color: var(--text-secondary);
-        }
-        .stream-src.ppvto-src {
-            color: var(--accent2);
         }
         .no-streams {
             padding: 1.5rem;
@@ -2563,11 +2536,8 @@
             const hn = match.teams?.home?.name || '',
                 an = match.teams?.away?.name || '';
             const isFavMatch = favs.some(f => hn === f || an === f);
-            const isPPV = !!match._ppvto;
-            const isWF = !!match._watchfooty;
 
-            card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
-                ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
+            card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '');
             const use24 = getSetting('clock', '12') === '24';
             const md = new Date(match.date),
                 ts = md.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: !use24 });
@@ -2578,9 +2548,7 @@
                 `<div class="card-live-tag"><div class="card-live-dot"></div>LIVE</div>` :
                 `<div class="card-time-tag">${ts}</div>`;
             const cdEl = isUpcoming ? `<div class="card-countdown" data-countdown="${mt}">…</div>` : '';
-            const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : (isPPV ?
-                '<div class="card-ppvto-badge">PPV.st</div>' : (isWF ? '<div class="card-ppvto-badge">WatchFooty</div>' :
-                    ''));
+            const scoreEl = match.score ? `<div class="card-score-badge">${match.score}</div>` : '';
             const favBtnHtml = (hn || an) ?
                 `<button class="card-fav-btn${isFavMatch?' active':''}" title="${isFavMatch?'Remove':'Add'} favourite">${isFavMatch?'⭐':'☆'}</button>` :
                 '';
@@ -2590,7 +2558,8 @@
                 `<div class="card-poster-teams"><div class="poster-badge">${hn?hn[0].toUpperCase():'?'}</div><div class="poster-vs">VS</div><div class="poster-badge">${an?an[0].toUpperCase():'?'}</div></div>${tag}${cdEl}${scoreEl}${favBtnHtml}`;
             const body = document.createElement('div');
             body.className = 'card-body';
-            const streamCount = match.sources?.length || 0;
+            // Count streams accurately: sources + PPV iframe if present
+            const streamCount = (match.sources?.length || 0) + (match._ppvto && match._iframe ? 1 : 0);
             body.innerHTML =
                 `<div class="card-title">${match.title}</div><div class="card-meta"><span>${streamCount} stream${streamCount!==1?'s':''}</span><span>${ts}</span></div>`;
             const bw = document.createElement('div');
@@ -2734,18 +2703,13 @@
             const list = document.getElementById('stream-list');
             list.innerHTML = '';
             streams.forEach((s, i) => {
-                const isPPV = s._source === 'ppvto';
-                const isWF = s._source === 'watchfooty';
-                const isSF = s._source === 'streamfree';
+                const srcMap = { ppvto: 'PPV.st', watchfooty: 'WatchFooty', streamfree: 'StreamFree' };
+                const srcName = srcMap[s._source] || (s.language || 'Stream');
                 const item = document.createElement('div');
                 item.className = 'stream-item';
                 item.dataset.index = i;
-                let srcLabel = s._source || '';
-                if (isPPV) srcLabel = '🔗 ppv.st';
-                else if (isWF) srcLabel = 'WatchFooty';
-                else if (isSF) srcLabel = 'StreamFree';
                 item.innerHTML =
-                    `<div class="stream-lang">${isPPV?'PPV.st':(isWF?'WatchFooty':(isSF?'StreamFree':(s.language||'Stream')))} #${s.streamNo||i+1}</div>${s.hd?'<div class="stream-hd">HD</div>':''}<div class="stream-src${isPPV?' ppvto-src':''}">${srcLabel}</div>`;
+                    `<div class="stream-lang">Stream ${i + 1}</div>${s.hd ? '<div class="stream-hd">HD</div>' : ''}<div class="stream-src">${srcName}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3000,8 +2964,9 @@
             matches.forEach(match => { const el = document.createElement('div');
                 el.className = 'search-ov-item'; const t = new Date(match.date).toLocaleTimeString([], { hour: '2-digit',
                         minute: '2-digit' });
+                const sc = (match.sources?.length || 0) + (match._ppvto && match._iframe ? 1 : 0);
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}${match._ppvto?' <span style="font-size:0.55rem;color:var(--accent2)">PPV.st</span>':''}${match._watchfooty?' <span style="font-size:0.55rem;color:var(--accent2)">WatchFooty</span>':''}${match._streamfree?' <span style="font-size:0.55rem;color:var(--accent2)">StreamFree</span>':''}</div><div class="search-ov-meta">${t} · ${(match.sources?.length||0)} streams</div></div>`;
+                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${sc} stream${sc!==1?'s':''}</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
