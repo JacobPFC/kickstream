@@ -2056,6 +2056,9 @@
 </head>
 <body class="no-ads minimal fast-render">
     <script>
+        const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // Embed hosts whose players usually need Media Source Extensions, which iPhone Safari often lacks
+        const isIosWeakHost = u => { try { return /embed/i.test(new URL(u).hostname); } catch (e) { return false; } };
         if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
             AbortSignal.timeout = function (ms) { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
         }
@@ -3068,6 +3071,10 @@
                 return;
             }
 
+            if (IS_IOS) {
+                streams.forEach(st => { st._iosWeak = isIosWeakHost(st.embedUrl); });
+                streams = [...streams.filter(st => !st._iosWeak), ...streams.filter(st => st._iosWeak)];
+            }
             currentStreams = streams;
             currentStreamIndex = 0;
             const list = document.getElementById('stream-list');
@@ -3079,7 +3086,7 @@
                 item.className = 'stream-item';
                 item.dataset.index = i;
                 item.innerHTML =
-                    `<div class="stream-lang">Stream ${i + 1}</div>${s.hd ? '<div class="stream-hd">HD</div>' : ''}<div class="stream-src">${srcName}</div>`;
+                    `<div class="stream-lang">Stream ${i + 1}</div>${s.hd ? '<div class="stream-hd">HD</div>' : ''}<div class="stream-src">${srcName}${s._iosWeak ? ' · may not play here, tap ↗' : ''}</div>`;
                 item.addEventListener('click', () => { currentStreamIndex = i;
                     embedStream(s.embedUrl, item); });
                 const nt = document.createElement('a');
@@ -3104,6 +3111,7 @@
             pw.innerHTML =
                 `<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" referrerpolicy="origin"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
 
+            if (IS_IOS && isIosWeakHost(embedUrl)) showToast('This player often won\'t play inside iPhone Safari. Use ↗ Open stream in new tab');
             const _ifr = document.getElementById('stream-iframe');
             if (_ifr) _ifr.addEventListener('load', () => { _ifr.dataset.loaded = '1'; });
             const _ol = document.getElementById('open-stream-link');
