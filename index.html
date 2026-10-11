@@ -1754,6 +1754,14 @@
             display: none !important;
         }
 
+        /* Auto poster thumbnails */
+        .card-poster-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+        .card-poster.has-poster .card-poster-teams { display: none; }
+        .card-poster.has-poster::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 35%, rgba(0,0,0,0.45) 100%); pointer-events: none; }
+        .card-poster.has-poster .card-live-tag, .card-poster.has-poster .card-time-tag,
+        .card-poster.has-poster .card-countdown, .card-poster.has-poster .card-score-badge,
+        .card-poster.has-poster .card-fav-btn { z-index: 3; }
+
         /* ═══ PROFESSIONAL REFINEMENT LAYER ═══ */
         :root {
             --bg: #0b0f17;
@@ -2659,6 +2667,20 @@
             startCountdownTimers();
         }
 
+        const IMG_BASE = 'https://streamed.pk';
+
+        function getPosterUrl(match) {
+            if (match.thumbnail) return match.thumbnail;                       // StreamFree-style direct URL
+            if (match.poster) {                                                // event poster (proxied path)
+                if (/^https?:\/\//i.test(match.poster)) return match.poster;
+                const p = match.poster.startsWith('/') ? match.poster : '/' + match.poster;
+                return IMG_BASE + (p.endsWith('.webp') ? p : p + '.webp');
+            }
+            const hb = match.teams?.home?.badge, ab = match.teams?.away?.badge;
+            if (hb && ab) return `${IMG_BASE}/api/images/poster/${encodeURIComponent(hb)}/${encodeURIComponent(ab)}.webp`;
+            return null;
+        }
+
         function buildCard(match, isLive, favs) {
             const card = document.createElement('div');
             const hn = match.teams?.home?.name || '',
@@ -2684,6 +2706,23 @@
             top.className = 'card-poster';
             top.innerHTML =
                 `<div class="card-poster-teams"><div class="poster-badge">${hn?hn[0].toUpperCase():'?'}</div><div class="poster-vs">VS</div><div class="poster-badge">${an?an[0].toUpperCase():'?'}</div></div>${tag}${cdEl}${scoreEl}${favBtnHtml}`;
+            // Auto thumbnail: real poster if available, letter badges stay as fallback
+            const posterSrc = getPosterUrl(match);
+            if (posterSrc) {
+                const img = document.createElement('img');
+                img.className = 'card-poster-img';
+                img.loading = 'lazy';
+                img.alt = '';
+                img.referrerPolicy = 'no-referrer';
+                img.onload = () => {
+                    // Skip generic placeholder-sized/failed loads
+                    if (!img.naturalWidth) { img.remove(); return; }
+                    top.classList.add('has-poster');
+                };
+                img.onerror = () => img.remove();
+                img.src = posterSrc;
+                top.insertBefore(img, top.firstChild);
+            }
             const body = document.createElement('div');
             body.className = 'card-body';
             // Count streams accurately: sources + PPV iframe if present
