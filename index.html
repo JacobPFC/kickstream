@@ -8,12 +8,15 @@
     <link rel="manifest" id="pwa-manifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0a0e13">
+    <meta name="theme-color" content="#0e0e0e">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-title" content="KickStream">
+    <link rel="apple-touch-icon" href="favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://streamed.pk" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
     <style>
         :root {
             --bg: #080c14;
@@ -1988,6 +1991,45 @@
         /* No motion */
         .match-card, .channel-card, .card-watch, .sport-link, .filter-tab, .hdr-btn { transition: border-color .15s ease, background-color .15s ease, opacity .15s ease, color .15s ease; }
         .card-poster-img { transition: opacity .25s ease; }
+
+        /* ═══ iOS / TOUCH OPTIMISATION ═══ */
+        html { -webkit-text-size-adjust: 100%; }
+        a, button, .match-card, .channel-card, .sport-link, .filter-tab, .stream-item { -webkit-tap-highlight-color: transparent; }
+        button, .filter-tab, .sport-link, .card-watch { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        @supports (height: 100dvh) {
+            body { min-height: 100dvh; }
+            .layout { min-height: 100dvh; }
+            #settings-panel { height: 100dvh; }
+        }
+        #settings-panel, .search-ov-results, .sidebar, .streams-list { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        @media (hover: none) {
+            .match-card:hover, .channel-card:hover { transform: none !important; }
+            .card-poster-img { transition: none; }
+        }
+        @media (max-width: 768px) {
+            input, select, textarea { font-size: 16px !important; }
+            .match-card, .channel-card { contain: layout paint style; }
+            .card-watch, .card-share, .filter-tab, .hdr-btn { min-height: 40px; }
+        }
+        @supports (-webkit-touch-callout: none) {
+            /* Safari is slow with blur on scrolling layers: use solid surfaces instead */
+            header, .sidebar, #mobile-bottom-bar, #settings-panel, .search-overlay-box, .kb-box, .toast, .match-card, .channel-card, #player-section {
+                -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+            }
+            header { background: var(--bg); }
+            #mobile-bottom-bar { background: var(--bg); }
+            #settings-panel, .search-overlay-box { background: var(--surface); }
+            .card-poster-img, .card-poster { transform: translateZ(0); }
+        }
+        /* Installed web app on iPhone: respect the notch / status bar */
+        @media (display-mode: standalone) {
+            @supports (-webkit-touch-callout: none) {
+                header { height: calc(60px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+                .layout { padding-top: calc(60px + env(safe-area-inset-top)); }
+                .sidebar { top: calc(60px + env(safe-area-inset-top)); }
+                #settings-panel { padding-top: env(safe-area-inset-top); }
+            }
+        }
     </style>
 </head>
 <body class="no-ads minimal fast-render">
@@ -3072,7 +3114,7 @@
             container.insertBefore(section, container.firstChild);
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             const video = document.getElementById('channel-video');
-            if (Hls.isSupported()) { hlsInstance = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60,
+            if (!video.canPlayType('application/vnd.apple.mpegurl') && typeof Hls !== 'undefined' && Hls.isSupported()) { hlsInstance = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60,
                     enableWorker: true, lowLatencyMode: false, fragLoadingMaxRetry: 4, manifestLoadingMaxRetry: 3,
                     levelLoadingMaxRetry: 4 });
                 hlsInstance.loadSource(streamUrl);
