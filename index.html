@@ -1892,63 +1892,94 @@
             .card-title { font-size: 0.8rem; }
         }
 
-        /* ═══ MINIMAL LAYER: flat, monochrome, no decoration ═══ */
-        :root {
+        /* ═══ MINIMAL LAYER (toggle: body.minimal) ═══ */
+        body.minimal {
             --bg: #0e0e0e; --surface: #151515; --surface2: #1c1c1c; --border: #262626;
             --accent: #f2f2f2; --accent2: #f2f2f2; --live: #ff4d4d;
             --text: #ededed; --text-secondary: #8a8a8a; --muted: #5a5a5a; --fav: #ededed;
             --radius: 4px; --radius-sm: 3px; --shadow: none;
         }
-        body.light-mode {
+        body.minimal.light-mode {
             --bg: #fafafa; --surface: #ffffff; --surface2: #f2f2f2; --border: #e4e4e4;
             --accent: #111111; --accent2: #111111; --text: #111111; --text-secondary: #6b6b6b; --muted: #9a9a9a; --fav: #111111;
         }
-        *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
-        .logo { font-family: 'DM Sans', sans-serif !important; font-size: 1.1rem; font-weight: 700; letter-spacing: 0; }
-        .logo span { color: var(--text-secondary) !important; }
-        .discord-btn, .hdr-btn[title*="Install"], #pwa-banner, .legal-notice { display: none !important; }
-
-        /* Header & nav */
+        body.minimal *,
+        body.minimal *::before,
+        body.minimal *::after { box-shadow: none !important; text-shadow: none !important; }
+        body.minimal .logo { font-family: 'DM Sans', sans-serif !important; font-size: 1.1rem; font-weight: 700; letter-spacing: 0; }
+        body.minimal .logo span { color: var(--text-secondary) !important; }
+        body.minimal .discord-btn,
+        body.minimal .hdr-btn[title*="Install"],
+        body.minimal #pwa-banner,
+        body.minimal .legal-notice { display: none !important; }
+        body.minimal /* Header & nav */
         header { border-bottom: 1px solid var(--border); }
-        .filter-tab.active { background: transparent; box-shadow: none; color: var(--text); border-bottom: 1px solid var(--text); border-radius: 0; }
-        .filter-tab:hover:not(.active), .hdr-btn:hover, .sport-link:hover, .league-btn:hover { background: transparent; color: var(--text); }
-        .live-pill { border: none; padding: 0; }
-
-        /* Sidebar: plain text list */
+        body.minimal .filter-tab.active { background: transparent; box-shadow: none; color: var(--text); border-bottom: 1px solid var(--text); border-radius: 0; }
+        body.minimal .filter-tab:hover:not(.active),
+        body.minimal .hdr-btn:hover,
+        body.minimal .sport-link:hover,
+        body.minimal .league-btn:hover { background: transparent; color: var(--text); }
+        body.minimal .live-pill { border: none; padding: 0; }
+        body.minimal /* Sidebar: plain text list */
         .sidebar { border-right: 1px solid var(--border); }
-        .sidebar-label { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-        .sport-link { border-left: none; border-radius: 0; background: transparent; color: var(--text-secondary); }
-        .sport-link.active, .league-btn.active { background: transparent; color: var(--text); font-weight: 600; }
-        .sport-count, .sport-link.active .sport-count { background: transparent; border: none; color: var(--muted); padding: 0; }
-
-        /* Headings */
+        body.minimal .sidebar-label { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+        body.minimal .sport-link { border-left: none; border-radius: 0; background: transparent; color: var(--text-secondary); }
+        body.minimal .sport-link.active,
+        body.minimal .league-btn.active { background: transparent; color: var(--text); font-weight: 600; }
+        body.minimal .sport-count,
+        body.minimal .sport-link.active .sport-count { background: transparent; border: none; color: var(--muted); padding: 0; }
+        body.minimal /* Headings */
         .sport-section-title { border-bottom: none; padding-bottom: 0; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
-        .sport-section-count { color: var(--muted); }
-
-        /* Cards: flat tiles */
-        .match-card, .match-card:hover, .match-card.live-card, .match-card.live-card:hover, .match-card.fav-card, .channel-card, .channel-card:hover {
+        body.minimal .sport-section-count { color: var(--muted); }
+        body.minimal /* Cards: flat tiles */
+        .match-card,
+        body.minimal .match-card:hover,
+        body.minimal .match-card.live-card,
+        body.minimal .match-card.live-card:hover,
+        body.minimal .match-card.fav-card,
+        body.minimal .channel-card,
+        body.minimal .channel-card:hover {
             background: var(--surface); border: 1px solid var(--border); transform: none; border-radius: var(--radius);
         }
-        .match-card:hover, .channel-card:hover { border-color: var(--muted); }
-        .match-card.live-card .card-title::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-right: 6px; vertical-align: middle; }
-        .card-poster, body.light-mode .card-poster { background: var(--surface2); background-image: none; }
-        .poster-badge, body.light-mode .poster-badge { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .card-poster.has-poster::after { display: none; }
-        .card-live-tag { background: var(--live); border-radius: 2px; }
-        .card-time-tag, .card-countdown, .card-score-badge { background: rgba(0, 0, 0, 0.75); color: #fff; border-radius: 2px; }
-        .card-watch, .open-tab-btn, .pwa-install-btn { background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); font-weight: 600; }
-        .card-watch:hover, .open-tab-btn:hover { background: var(--text); opacity: 0.85; }
-        .card-share { border: 1px solid var(--border); background: transparent; }
-        .card-fav-btn { background: rgba(0, 0, 0, 0.5); }
-
-        /* Panels */
-        #player-section, #settings-panel, .search-overlay-box, .kb-box, #fav-section, .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-        .toast { border-left: 1px solid var(--border); }
-        .stream-item:hover { background: var(--surface2); }
+        body.minimal .match-card:hover,
+        body.minimal .channel-card:hover { border-color: var(--muted); }
+        body.minimal .match-card.live-card .card-title::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-right: 6px; vertical-align: middle; }
+        body.minimal .card-poster,
+        body.minimal.light-mode .card-poster { background: var(--surface2); background-image: none; }
+        body.minimal .poster-badge,
+        body.minimal.light-mode .poster-badge { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        body.minimal .card-poster.has-poster::after { display: none; }
+        body.minimal .card-live-tag { background: var(--live); border-radius: 2px; }
+        body.minimal .card-time-tag,
+        body.minimal .card-countdown,
+        body.minimal .card-score-badge { background: rgba(0, 0, 0, 0.75); color: #fff; border-radius: 2px; }
+        body.minimal .card-watch,
+        body.minimal .open-tab-btn,
+        body.minimal .pwa-install-btn { background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); font-weight: 600; }
+        body.minimal .card-watch:hover,
+        body.minimal .open-tab-btn:hover { background: var(--text); opacity: 0.85; }
+        body.minimal .card-share { border: 1px solid var(--border); background: transparent; }
+        body.minimal .card-fav-btn { background: rgba(0, 0, 0, 0.5); }
+        body.minimal /* Panels */
+        #player-section,
+        body.minimal #settings-panel,
+        body.minimal .search-overlay-box,
+        body.minimal .kb-box,
+        body.minimal #fav-section,
+        body.minimal .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+        body.minimal .toast { border-left: 1px solid var(--border); }
+        body.minimal .stream-item:hover { background: var(--surface2); }
 
         /* Performance */
-        .match-card, .channel-card { content-visibility: auto; contain-intrinsic-size: 220px 260px; }
+        body.fast-render .match-card, body.fast-render .channel-card { content-visibility: auto; contain-intrinsic-size: 220px 260px; }
         .card-poster-img { will-change: auto; }
+
+        /* Toggles */
+        .sport-emoji { display: none; }
+        body.show-sport-icons .sport-emoji { display: inline; margin-right: 4px; }
+        body.no-posters .card-poster-img { display: none; }
+        body.no-posters .card-poster.has-poster .card-poster-teams { display: flex; }
+        body.hide-ad .ad-slot { display: none; }
 
         /* Ad slot */
         .ad-slot { width: 160px; min-height: 300px; margin: 1.5rem auto 1rem; overflow: hidden; }
@@ -1959,7 +1990,7 @@
         .card-poster-img { transition: opacity .25s ease; }
     </style>
 </head>
-<body class="no-ads">
+<body class="no-ads minimal fast-render">
     <script>
         (function() {
             const manifest = {
@@ -2029,7 +2060,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-label">Sports</div>
             <button class="sport-link active" data-sport="all" onclick="selectSport('all',this)">
-                All Sports
+                <span class="sport-emoji">🌐</span>All Sports
                 <span class="sport-count" id="count-all">—</span>
             </button>
             <div id="league-section" style="display:none">
@@ -2124,6 +2155,14 @@
             <div class="sp-row"><span>Compact card view</span><label class="sp-toggle"><input type="checkbox" id="sp-compact" onchange="toggleCompact(this.checked)"><span class="sp-toggle-slider"></span></label></div>
             <div class="sp-row"><span>Clock format</span><select class="sp-select" id="sp-clock" onchange="saveSetting('clock',this.value)"><option value="12">12-hour</option><option value="24">24-hour</option></select></div>
             <div class="sp-row"><span>Reduce motion</span><label class="sp-toggle"><input type="checkbox" id="sp-reduce-motion" onchange="toggleReduceMotion(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+        </div>
+        <div class="sp-section">
+            <span class="sp-label">Site Style</span>
+            <div class="sp-row"><span>Minimal design</span><label class="sp-toggle"><input type="checkbox" id="sp-minimal" onchange="toggleMinimal(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+            <div class="sp-row"><span>Sport icons (emoji)</span><label class="sp-toggle"><input type="checkbox" id="sp-sporticons" onchange="toggleSportIcons(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+            <div class="sp-row"><span>Match poster thumbnails</span><label class="sp-toggle"><input type="checkbox" id="sp-posters" onchange="togglePosters(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+            <div class="sp-row"><span>Faster rendering</span><label class="sp-toggle"><input type="checkbox" id="sp-fastrender" onchange="toggleFastRender(this.checked)"><span class="sp-toggle-slider"></span></label></div>
+            <div class="sp-row"><span>Show sidebar ad</span><label class="sp-toggle"><input type="checkbox" id="sp-showad" onchange="toggleAd(this.checked)"><span class="sp-toggle-slider"></span></label></div>
         </div>
         <div class="sp-section">
             <span class="sp-label">Notifications</span>
@@ -2622,7 +2661,7 @@
                     btn.className = 'sport-link';
                     btn.dataset.sport = sport.id;
                     btn.innerHTML =
-                        `${sport.name} <span class="sport-count" id="count-${sport.id}">—</span>`;
+                        `<span class="sport-emoji">${SPORT_ICONS[sport.id]||'🎯'}</span>${sport.name} <span class="sport-count" id="count-${sport.id}">—</span>`;
                     btn.onclick = () => selectSport(sport.id, btn);
                     sb.insertBefore(btn, ls); }); } catch (e) {} }
 
@@ -2733,7 +2772,7 @@
                 const section = document.createElement('div');
                 section.className = 'sport-section';
                 section.innerHTML =
-                    `<div class="sport-section-title">${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
+                    `<div class="sport-section-title"><span class="sport-emoji">${SPORT_ICONS[sport]||'🎯'}</span>${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
                 const grid = document.createElement('div');
                 grid.className = 'matches-grid';
                 sportMatches.forEach(match => grid.appendChild(buildCard(match, isLiveFilter, favs)));
@@ -2753,6 +2792,7 @@
         const IMG_BASE = 'https://streamed.pk';
 
         function getPosterUrl(match) {
+            if (getSetting('posters', true) === false) return null;
             if (match.thumbnail) return match.thumbnail;                       // StreamFree-style direct URL
             if (match.poster) {                                                // event poster (proxied path)
                 if (/^https?:\/\//i.test(match.poster)) return match.poster;
@@ -3170,6 +3210,17 @@
         function toggleReduceMotion(on) { saveSetting('reduceMotion', on);
             document.body.classList.toggle('reduce-motion', on); }
 
+        function toggleMinimal(on) { saveSetting('minimal', on); document.body.classList.toggle('minimal', on); }
+
+        function toggleSportIcons(on) { saveSetting('sportIcons', on); document.body.classList.toggle('show-sport-icons', on); }
+
+        function togglePosters(on) { saveSetting('posters', on); document.body.classList.toggle('no-posters', !on);
+            if (on && typeof allMatches !== 'undefined' && allMatches.length && typeof loadMatches === 'function') loadMatches(); }
+
+        function toggleFastRender(on) { saveSetting('fastRender', on); document.body.classList.toggle('fast-render', on); }
+
+        function toggleAd(on) { saveSetting('showAd', on); document.body.classList.toggle('hide-ad', !on); if (on) loadAd(); }
+
         async function toggleNotifications(on) { if (on) { const p = await Notification.requestPermission(); if (p !==
                     'granted') { showToast('Notifications blocked');
                     document.getElementById('sp-notifs').checked = false; return; }
@@ -3177,7 +3228,7 @@
             saveSetting('notifs', on); }
 
         function resetSettings() { ['defaultFilter', 'defaultSport', 'autoplay', 'preferHD', 'hideFinished', 'compact',
-                'clock', 'reduceMotion', 'notifs', 'lightMode', 'pwaDismissed'
+                'clock', 'reduceMotion', 'notifs', 'lightMode', 'pwaDismissed', 'minimal', 'sportIcons', 'posters', 'fastRender', 'showAd'
             ].forEach(k => localStorage.removeItem('ks_s_' + k));
             location.reload(); }
 
@@ -3193,6 +3244,18 @@
             document.getElementById('sp-clock').value = getSetting('clock', '12');
             document.getElementById('sp-light').checked = getSetting('lightMode', false);
             document.body.classList.add('no-ads');
+            const mini = getSetting('minimal', true), icons = getSetting('sportIcons', false), posters = getSetting('posters', true),
+                  fast = getSetting('fastRender', true), ad = getSetting('showAd', true);
+            document.getElementById('sp-minimal').checked = mini;
+            document.getElementById('sp-sporticons').checked = icons;
+            document.getElementById('sp-posters').checked = posters;
+            document.getElementById('sp-fastrender').checked = fast;
+            document.getElementById('sp-showad').checked = ad;
+            document.body.classList.toggle('minimal', mini);
+            document.body.classList.toggle('show-sport-icons', icons);
+            document.body.classList.toggle('no-posters', !posters);
+            document.body.classList.toggle('fast-render', fast);
+            document.body.classList.toggle('hide-ad', !ad);
             if (getSetting('lightMode', false)) document.body.classList.add('light-mode');
             if (getSetting('compact', false)) document.body.classList.add('compact-view');
             if (getSetting('reduceMotion', false)) document.body.classList.add('reduce-motion');
@@ -3218,7 +3281,7 @@
                         minute: '2-digit' });
                 const sc = (match.sources?.length || 0) + (match._ppvto && match._iframe ? 1 : 0);
                 el.innerHTML =
-                    `<div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${sc} stream${sc!==1?'s':''}</div></div>`;
+                    `<span class="sport-emoji" style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${sc} stream${sc!==1?'s':''}</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
@@ -3240,9 +3303,9 @@
 
         // ── INIT ──
         // Ad loads in its own iframe after the page is ready, so it never blocks rendering
-        (function loadAd() {
+        function loadAd() {
             const slot = document.getElementById('ad-sidebar');
-            if (!slot) return;
+            if (!slot || slot.firstChild || getSetting('showAd', true) === false) return;
             const go = () => {
                 const f = document.createElement('iframe');
                 f.width = 160; f.height = 300; f.scrolling = 'no'; f.title = 'Advertisement';
@@ -3254,8 +3317,9 @@
             };
             const kick = () => ('requestIdleCallback' in window) ? requestIdleCallback(go, { timeout: 3000 }) : setTimeout(go, 1500);
             if (document.readyState === 'complete') kick(); else window.addEventListener('load', kick, { once: true });
-        })();
+        }
         applySettings();
+        loadAd();
         loadSports();
         loadMatches();
         checkUrlMatch();
