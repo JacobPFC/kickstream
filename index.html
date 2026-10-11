@@ -458,9 +458,6 @@
         .match-card.ppvto-card:hover {
             border-color: rgba(0, 176, 255, 0.35);
         }
-        .match-card.hidden-no-streams {
-            display: none !important;
-        }
         .card-poster {
             aspect-ratio: 16/9;
             position: relative;
@@ -2046,23 +2043,16 @@
             return found ? found._iframe : null;
         }
 
-        function mergePPV(primary, ppv) {
+        // Unified merge: appends items from `incoming` that don't title-match anything in `primary`
+        function mergeSource(primary, incoming) {
             const keys = new Set(primary.map(m => simplify(m.title)));
-            const unique = ppv.filter(p => {
-                const pk = simplify(p.title);
-                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
-                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
-                return true;
-            });
-            return [...primary, ...unique];
-        }
-
-        function mergeWatchFooty(primary, wf) {
-            const keys = new Set(primary.map(m => simplify(m.title)));
-            const unique = wf.filter(m => {
+            const unique = incoming.filter(m => {
                 const pk = simplify(m.title);
-                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
-                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
+                for (const k of keys) {
+                    const sh = pk.length < k.length ? pk : k,
+                          lo = pk.length < k.length ? k : pk;
+                    if (lo.includes(sh) && sh.length > 5) return false;
+                }
                 return true;
             });
             return [...primary, ...unique];
@@ -2083,16 +2073,6 @@
             return 'other';
         }
 
-        function mergeStreamFree(primary, sf) {
-            const keys = new Set(primary.map(m => simplify(m.title)));
-            const unique = sf.filter(m => {
-                const pk = simplify(m.title);
-                for (const k of keys) { const sh = pk.length < k.length ? pk : k,
-                        lo = pk.length < k.length ? k : pk; if (lo.includes(sh) && sh.length > 5) return false; }
-                return true;
-            });
-            return [...primary, ...unique];
-        }
 
         // ── API fetchers ──
         async function fetchPPVTo() {
@@ -2469,14 +2449,8 @@
 
         // ── STRICT STREAM DETECTION ──
         function matchHasStreams(match) {
-            // Check primary sources
             if (match.sources && match.sources.length > 0) return true;
-            // Check PPV iframe
             if (match._ppvto && match._iframe) return true;
-            // Check WatchFooty sources
-            if (match._watchfooty && match.sources && match.sources.length > 0) return true;
-            // Check StreamFree sources
-            if (match._streamfree && match.sources && match.sources.length > 0) return true;
             return false;
         }
 
@@ -2523,9 +2497,9 @@
                     return true;
                 });
 
-                let merged = mergePPV(primary, ppv);
-                merged = mergeWatchFooty(merged, wf);
-                merged = mergeStreamFree(merged, sf);
+                let merged = mergeSource(primary, ppv);
+                merged = mergeSource(merged, wf);
+                merged = mergeSource(merged, sf);
 
                 // ── STRICT FILTER: Hide matches with no streams ──
                 merged = merged.filter(m => matchHasStreams(m));
@@ -2575,13 +2549,7 @@
                     `<div class="sport-section-title"><span>${SPORT_ICONS[sport]||'🎯'}</span> ${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
                 const grid = document.createElement('div');
                 grid.className = 'matches-grid';
-                sportMatches.forEach(match => {
-                    const card = buildCard(match, isLiveFilter);
-                    // Double-check: if card has hidden class, skip appending
-                    if (!card.classList.contains('hidden-no-streams')) {
-                        grid.appendChild(card);
-                    }
-                });
+                sportMatches.forEach(match => grid.appendChild(buildCard(match, isLiveFilter, favs)));
                 section.appendChild(grid);
                 container.appendChild(section);
             });
@@ -2590,21 +2558,13 @@
             startCountdownTimers();
         }
 
-        function buildCard(match, isLive) {
-            const favs = getFavs(),
-                card = document.createElement('div');
+        function buildCard(match, isLive, favs) {
+            const card = document.createElement('div');
             const hn = match.teams?.home?.name || '',
                 an = match.teams?.away?.name || '';
             const isFavMatch = favs.some(f => hn === f || an === f);
             const isPPV = !!match._ppvto;
             const isWF = !!match._watchfooty;
-            const hasStreams = matchHasStreams(match);
-
-            // ── STRICT: If no streams, hide immediately ──
-            if (!hasStreams) {
-                card.className = 'match-card hidden-no-streams';
-                return card;
-            }
 
             card.className = 'match-card' + (isLive ? ' live-card' : '') + (isFavMatch ? ' fav-card' : '') + (isPPV ?
                 ' ppvto-card' : '') + (isWF ? ' watchfooty-card' : '');
@@ -3066,8 +3026,11 @@
         loadSports();
         loadMatches();
         checkUrlMatch();
-        setInterval(async () => { try { document.getElementById('live-count').textContent = (await fetch(W +
-                '/api/matches/live').then(r => r.json())).length; } catch (e) {} }, 60000);
+        setInterval(() => {
+            if (currentFilter === 'live' && allMatches.length) {
+                document.getElementById('live-count').textContent = allMatches.filter(m => m.status === 'live' || m.alwaysLive).length;
+            }
+        }, 60000);
         setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
     </script>
 </body>
