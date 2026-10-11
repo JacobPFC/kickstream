@@ -1507,7 +1507,8 @@
             display: block;
         }
         .player-iframe-wrap {
-            position: relative;
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
         }
@@ -2029,6 +2030,27 @@
                 .sidebar { top: calc(60px + env(safe-area-inset-top)); }
                 #settings-panel { padding-top: env(safe-area-inset-top); }
             }
+        }
+
+        /* ═══ PLAYER FIXES (phones) ═══ */
+        .player-wrap.pseudo-fs { position: fixed !important; inset: 0; z-index: 9999; width: 100vw !important; height: 100vh !important; height: 100dvh !important; aspect-ratio: auto !important; max-height: none !important; background: #000; }
+        #player-section { scroll-margin-top: 72px; }
+        .player-wrap { width: 100%; min-height: 0; -webkit-transform: translateZ(0); transform: translateZ(0); }
+        .player-wrap iframe, .player-iframe-wrap iframe { width: 100% !important; height: 100% !important; border: 0; display: block; }
+        @media (max-width: 1024px) {
+            #player-section .player-inner { display: block; grid-template-columns: 1fr; }
+            #player-section .player-wrap { width: 100%; aspect-ratio: 16 / 9; height: auto; }
+            #player-section .player-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+        }
+        @media (max-width: 768px) {
+            /* full-width video on phones */
+            #player-section { margin-left: -0.75rem; margin-right: -0.75rem; border-radius: 0; border-left: none; border-right: none; }
+            body.minimal #player-section { border-radius: 0; border-left: none; border-right: none; }
+            #player-section .stream-list { max-height: 40vh; -webkit-overflow-scrolling: touch; }
+        }
+        @media (max-width: 768px) and (orientation: landscape) {
+            /* landscape: video fills the screen height, panel below */
+            #player-section .player-wrap { max-height: calc(100dvh - 70px); }
         }
     </style>
 </head>
@@ -2569,8 +2591,17 @@
             `.stream-item[data-index="${currentStreamIndex}"]`));
             showToast(`Stream ${currentStreamIndex+1}/${currentStreams.length}`); }
 
-        function togglePlayerFullscreen() { const pw = document.getElementById('player-wrap'); if (!document
-                .fullscreenElement) pw.requestFullscreen?.().catch(() => {}); else document.exitFullscreen?.(); }
+        function togglePlayerFullscreen() {
+            const pw = document.getElementById('player-wrap');
+            if (!pw) return;
+            const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+            if (pw.classList.contains('pseudo-fs')) { pw.classList.remove('pseudo-fs'); document.body.style.overflow = ''; return; }
+            if (fsEl) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+            const req = pw.requestFullscreen || pw.webkitRequestFullscreen;
+            if (req) { try { const p = req.call(pw); if (p && p.catch) p.catch(() => { pw.classList.add('pseudo-fs'); }); return; } catch (e) {} }
+            // iPhone Safari cannot fullscreen a div: fill the screen with CSS instead
+            pw.classList.add('pseudo-fs'); document.body.style.overflow = 'hidden';
+        }
 
         function getFavs() { try { return JSON.parse(localStorage.getItem('ks_favs') || '[]'); } catch (e) { return []; } }
 
