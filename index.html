@@ -10,7 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0e13">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://streamed.pk" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
     <style>
         :root {
@@ -114,7 +116,7 @@
             backdrop-filter: blur(18px) saturate(1.2);
         }
         .logo {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.7rem;
             letter-spacing: 2.5px;
             color: var(--accent);
@@ -396,7 +398,7 @@
             margin-bottom: 2rem;
         }
         .sport-section-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.3rem;
             letter-spacing: 1px;
             margin-bottom: 0.8rem;
@@ -493,13 +495,13 @@
             font-weight: 700;
             color: #fff;
             flex-shrink: 0;
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
         .poster-vs {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
             letter-spacing: 2px;
@@ -560,7 +562,7 @@
             bottom: 8px;
             right: 8px;
             z-index: 2;
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.1rem;
             color: #fff;
             background: rgba(0, 0, 0, 0.7);
@@ -714,7 +716,7 @@
             animation: fadeIn 0.3s ease;
         }
         .kb-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.3rem;
             letter-spacing: 2px;
             margin-bottom: 0.8rem;
@@ -787,7 +789,7 @@
             right: 0;
         }
         .sp-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.4rem;
             letter-spacing: 2px;
             margin-bottom: 1.5rem;
@@ -1094,7 +1096,7 @@
             background: rgba(255, 23, 68, 0.04);
         }
         .channels-section-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.1rem;
             letter-spacing: 1px;
             margin: 1.2rem 0 0.6rem;
@@ -1149,7 +1151,7 @@
             margin-bottom: 6px;
         }
         .fav-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.95rem;
             letter-spacing: 1px;
             color: var(--fav);
@@ -1543,7 +1545,7 @@
             opacity: 0.8;
         }
         .now-playing-title {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
             font-size: 1.2rem;
             line-height: 1.2;
             color: var(--text);
@@ -1571,7 +1573,7 @@
             font-weight: 700;
             color: var(--accent);
             flex-shrink: 0;
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: 'DM Sans', sans-serif;
         }
         .vs-sm {
             font-size: 0.6rem;
@@ -1944,6 +1946,10 @@
         .toast { border-left: 1px solid var(--border); }
         .stream-item:hover { background: var(--surface2); }
 
+        /* Performance */
+        .match-card, .channel-card { content-visibility: auto; contain-intrinsic-size: 220px 260px; }
+        .card-poster-img { will-change: auto; }
+
         /* Ad slot */
         .ad-slot { width: 160px; min-height: 300px; margin: 1.5rem auto 1rem; overflow: hidden; }
         @media (max-width:768px) { .ad-slot { display: none; } }
@@ -2005,7 +2011,7 @@
         </div>
         <div class="header-search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-            <input type="text" placeholder="Search matches..." id="search-input" oninput="filterSearch(this.value)" inputmode="search" autocomplete="off" spellcheck="false">
+            <input type="text" placeholder="Search matches..." id="search-input" oninput="debouncedFilterSearch(this.value)" inputmode="search" autocomplete="off" spellcheck="false">
         </div>
         <div class="header-right">
             <button class="hdr-btn" onclick="openSearchOverlay()" style="display:none" id="mobile-search-btn">🔍</button>
@@ -2087,7 +2093,7 @@
             <div id="channel-search-bar">
                 <div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-                    <input type="text" placeholder="Search channels..." id="channel-search-input" oninput="filterChannels(this.value)">
+                    <input type="text" placeholder="Search channels..." id="channel-search-input" oninput="debouncedFilterChannels(this.value)">
                 </div>
             </div>
 
@@ -2103,7 +2109,7 @@
         <div class="search-overlay-box">
             <div class="search-ov-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19l-4.35-4.35A7.5 7.5 0 1 0 15 16.65L19.35 21 21 19zm-9-3a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-                <input class="search-ov-input" id="search-ov-input" type="text" placeholder="Search matches..." oninput="overlayFilterSearch(this.value)" autocomplete="off">
+                <input class="search-ov-input" id="search-ov-input" type="text" placeholder="Search matches..." oninput="debouncedOverlaySearch(this.value)" autocomplete="off">
             </div>
             <div class="search-ov-results" id="search-ov-results"></div>
             <button class="search-ov-cancel" onclick="closeSearchOverlay()">Cancel</button>
@@ -2540,14 +2546,23 @@
                 m = Math.floor((ms % 3600000) / 60000),
                 s = Math.floor((ms % 60000) / 1000); if (h > 0) return `${h}h ${m}m`; if (m > 0) return `${m}m ${s}s`; return `${s}s`; }
 
-        function startCountdownTimers() { countdownTimers.forEach(clearInterval);
+        function startCountdownTimers() {
+            countdownTimers.forEach(clearInterval);
             countdownTimers = [];
-            document.querySelectorAll('[data-countdown]').forEach(el => { const target = parseInt(el.dataset
-                    .countdown); const t = setInterval(() => { const d = target - Date.now(); if (d <= 0) { el
-                            .textContent = 'Starting soon';
-                            clearInterval(t); } else el.textContent = formatCountdown(d); }, 1000);
-                countdownTimers.push(t);
-                el.textContent = formatCountdown(target - Date.now()); }); }
+            const els = [...document.querySelectorAll('[data-countdown]')].map(el => ({ el, target: parseInt(el.dataset.countdown) }));
+            const tick = () => {
+                if (document.hidden) return;
+                const now = Date.now();
+                for (const it of els) {
+                    if (it.done) continue;
+                    const d = it.target - now;
+                    if (d <= 0) { it.el.textContent = 'Starting soon'; it.done = true; }
+                    else it.el.textContent = formatCountdown(d);
+                }
+            };
+            tick();
+            if (els.length) countdownTimers.push(setInterval(tick, 1000));
+        }
 
         function buildLeagueList(matches) {
             const section = document.getElementById('league-section'),
@@ -2638,7 +2653,7 @@
             return false;
         }
 
-        async function loadMatches() {
+        async function loadMatches() { window.__lastLoad = Date.now();
             if (channelsView) return;
             document.getElementById('matches-container').innerHTML =
                 `<div class="skel-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`;
@@ -2742,6 +2757,11 @@
             startCountdownTimers();
         }
 
+        function debounce(fn, ms) { let t; return v => { clearTimeout(t); t = setTimeout(() => fn(v), ms); }; }
+        const debouncedFilterSearch = debounce(v => filterSearch(v), 120);
+        const debouncedFilterChannels = debounce(v => filterChannels(v), 120);
+        const debouncedOverlaySearch = debounce(v => overlayFilterSearch(v), 120);
+
         const IMG_BASE = 'https://streamed.pk';
 
         function getPosterUrl(match) {
@@ -2787,6 +2807,7 @@
                 const img = document.createElement('img');
                 img.className = 'card-poster-img';
                 img.loading = 'lazy';
+                img.decoding = 'async';
                 img.alt = '';
                 img.referrerPolicy = 'no-referrer';
                 img.onload = () => {
@@ -3238,7 +3259,10 @@
                 document.getElementById('live-count').textContent = allMatches.filter(m => m.status === 'live' || m.alwaysLive).length;
             }
         }, 60000);
-        setInterval(() => { if (!channelsView) loadMatches(); }, 180000);
+        setInterval(() => { if (!channelsView && !document.hidden) loadMatches(); }, 180000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !channelsView && Date.now() - (window.__lastLoad || 0) > 180000) loadMatches();
+        });
     </script>
 </body>
 </html>
