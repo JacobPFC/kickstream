@@ -1889,6 +1889,65 @@
             .matches-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .card-title { font-size: 0.8rem; }
         }
+
+        /* ═══ MINIMAL LAYER: flat, monochrome, no decoration ═══ */
+        :root {
+            --bg: #0e0e0e; --surface: #151515; --surface2: #1c1c1c; --border: #262626;
+            --accent: #f2f2f2; --accent2: #f2f2f2; --live: #ff4d4d;
+            --text: #ededed; --text-secondary: #8a8a8a; --muted: #5a5a5a; --fav: #ededed;
+            --radius: 4px; --radius-sm: 3px; --shadow: none;
+        }
+        body.light-mode {
+            --bg: #fafafa; --surface: #ffffff; --surface2: #f2f2f2; --border: #e4e4e4;
+            --accent: #111111; --accent2: #111111; --text: #111111; --text-secondary: #6b6b6b; --muted: #9a9a9a; --fav: #111111;
+        }
+        *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+        .logo { font-family: 'DM Sans', sans-serif !important; font-size: 1.1rem; font-weight: 700; letter-spacing: 0; }
+        .logo span { color: var(--text-secondary) !important; }
+        .discord-btn, .hdr-btn[title*="Install"], #pwa-banner, .legal-notice { display: none !important; }
+
+        /* Header & nav */
+        header { border-bottom: 1px solid var(--border); }
+        .filter-tab.active { background: transparent; box-shadow: none; color: var(--text); border-bottom: 1px solid var(--text); border-radius: 0; }
+        .filter-tab:hover:not(.active), .hdr-btn:hover, .sport-link:hover, .league-btn:hover { background: transparent; color: var(--text); }
+        .live-pill { border: none; padding: 0; }
+
+        /* Sidebar: plain text list */
+        .sidebar { border-right: 1px solid var(--border); }
+        .sidebar-label { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+        .sport-link { border-left: none; border-radius: 0; background: transparent; color: var(--text-secondary); }
+        .sport-link.active, .league-btn.active { background: transparent; color: var(--text); font-weight: 600; }
+        .sport-count, .sport-link.active .sport-count { background: transparent; border: none; color: var(--muted); padding: 0; }
+
+        /* Headings */
+        .sport-section-title { border-bottom: none; padding-bottom: 0; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+        .sport-section-count { color: var(--muted); }
+
+        /* Cards: flat tiles */
+        .match-card, .match-card:hover, .match-card.live-card, .match-card.live-card:hover, .match-card.fav-card, .channel-card, .channel-card:hover {
+            background: var(--surface); border: 1px solid var(--border); transform: none; border-radius: var(--radius);
+        }
+        .match-card:hover, .channel-card:hover { border-color: var(--muted); }
+        .match-card.live-card .card-title::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-right: 6px; vertical-align: middle; }
+        .card-poster, body.light-mode .card-poster { background: var(--surface2); background-image: none; }
+        .poster-badge, body.light-mode .poster-badge { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .card-poster.has-poster::after { display: none; }
+        .card-live-tag { background: var(--live); border-radius: 2px; }
+        .card-time-tag, .card-countdown, .card-score-badge { background: rgba(0, 0, 0, 0.75); color: #fff; border-radius: 2px; }
+        .card-watch, .open-tab-btn, .pwa-install-btn { background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); font-weight: 600; }
+        .card-watch:hover, .open-tab-btn:hover { background: var(--text); opacity: 0.85; }
+        .card-share { border: 1px solid var(--border); background: transparent; }
+        .card-fav-btn { background: rgba(0, 0, 0, 0.5); }
+
+        /* Panels */
+        #player-section, #settings-panel, .search-overlay-box, .kb-box, #fav-section, .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+        .toast { border-left: 1px solid var(--border); }
+        .stream-item:hover { background: var(--surface2); }
+
+        /* No motion */
+        *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+        .live-dot { animation: none !important; }
+        .skel::after { display: none; }
     </style>
 </head>
 <body class="no-ads">
@@ -1961,7 +2020,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-label">Sports</div>
             <button class="sport-link active" data-sport="all" onclick="selectSport('all',this)">
-                <span class="sport-icon">🌐</span> All Sports
+                All Sports
                 <span class="sport-count" id="count-all">—</span>
             </button>
             <div id="league-section" style="display:none">
@@ -2544,7 +2603,7 @@
                     btn.className = 'sport-link';
                     btn.dataset.sport = sport.id;
                     btn.innerHTML =
-                        `<span class="sport-icon">${SPORT_ICONS[sport.id]||'🎯'}</span> ${sport.name} <span class="sport-count" id="count-${sport.id}">—</span>`;
+                        `${sport.name} <span class="sport-count" id="count-${sport.id}">—</span>`;
                     btn.onclick = () => selectSport(sport.id, btn);
                     sb.insertBefore(btn, ls); }); } catch (e) {} }
 
@@ -2655,7 +2714,7 @@
                 const section = document.createElement('div');
                 section.className = 'sport-section';
                 section.innerHTML =
-                    `<div class="sport-section-title"><span>${SPORT_ICONS[sport]||'🎯'}</span> ${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
+                    `<div class="sport-section-title">${SPORT_NAMES[sport]||sport} <span class="sport-section-count">${sportMatches.length}</span></div>`;
                 const grid = document.createElement('div');
                 grid.className = 'matches-grid';
                 sportMatches.forEach(match => grid.appendChild(buildCard(match, isLiveFilter, favs)));
@@ -3133,7 +3192,7 @@
                         minute: '2-digit' });
                 const sc = (match.sources?.length || 0) + (match._ppvto && match._iframe ? 1 : 0);
                 el.innerHTML =
-                    `<span style="font-size:1.2rem">${SPORT_ICONS[match.category]||'🎯'}</span><div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${sc} stream${sc!==1?'s':''}</div></div>`;
+                    `<div><div class="search-ov-title">${match.title}</div><div class="search-ov-meta">${t} · ${sc} stream${sc!==1?'s':''}</div></div>`;
                 el.addEventListener('click', () => { document.getElementById('search-overlay').classList.remove(
                         'open');
                     openMatch(match); });
