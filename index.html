@@ -2035,7 +2035,7 @@
         /* ═══ PLAYER FIXES (phones) ═══ */
         .player-wrap.pseudo-fs { position: fixed !important; inset: 0; z-index: 9999; width: 100vw !important; height: 100vh !important; height: 100dvh !important; aspect-ratio: auto !important; max-height: none !important; background: #000; }
         #player-section { scroll-margin-top: 72px; }
-        .player-wrap { width: 100%; min-height: 0; -webkit-transform: translateZ(0); transform: translateZ(0); }
+        .player-wrap { width: 100%; min-height: 0; }
         .player-wrap iframe, .player-iframe-wrap iframe { width: 100% !important; height: 100% !important; border: 0; display: block; }
         @media (max-width: 1024px) {
             #player-section .player-inner { display: block; grid-template-columns: 1fr; }
@@ -2056,6 +2056,9 @@
 </head>
 <body class="no-ads minimal fast-render">
     <script>
+        if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
+            AbortSignal.timeout = function (ms) { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
+        }
         (function() {
             const manifest = {
                 name: 'KickStream',
@@ -2167,6 +2170,8 @@
                         <div class="streams-header">Streams</div>
                         <div class="stream-list" id="stream-list"><div class="no-streams">No match selected</div></div>
                         <div class="player-footer">
+                            <a id="open-stream-link" class="close-btn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;text-align:center;text-decoration:none;margin-bottom:6px;">↗ Open stream in new tab</a>
+                            <button class="close-btn" onclick="if(window.__currentEmbed)embedStream(window.__currentEmbed.embedUrl,window.__currentEmbed.itemEl)" style="margin-bottom:6px;">↻ Reload stream</button>
                             <button class="close-btn" onclick="closePlayer()">✕ Close Player</button>
                         </div>
                     </div>
@@ -3097,12 +3102,16 @@
             if (itemEl) itemEl.style.background = 'rgba(0,230,118,0.08)';
             const pw = document.getElementById('player-wrap');
             pw.innerHTML =
-                `<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
+                `<div class="player-iframe-wrap"><iframe id="stream-iframe" src="${embedUrl}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" referrerpolicy="origin"></iframe><div id="player-blocked" style="display:none" class="player-blocked"><p>Stream can't be embedded.</p><a class="open-tab-btn" href="${embedUrl}" target="_blank" rel="noopener noreferrer">↗ Open in New Tab</a></div></div>`;
 
+            const _ifr = document.getElementById('stream-iframe');
+            if (_ifr) _ifr.addEventListener('load', () => { _ifr.dataset.loaded = '1'; });
+            const _ol = document.getElementById('open-stream-link');
+            if (_ol) { _ol.href = embedUrl; _ol.style.display = ''; }
+            window.__currentEmbed = { embedUrl, itemEl };
             function tryNext(attempt) { const iframe = document.getElementById('stream-iframe'),
                     blocked = document.getElementById('player-blocked'); if (!iframe || !blocked) return; let failed =
-                    false; try { const doc = iframe.contentDocument || iframe.contentWindow?.document; if (!doc || doc
-                        .URL === 'about:blank') failed = true; } catch (e) {} if (failed) { if (currentStreams
+                    false; /* only fail if the page never loaded (cross-origin frames can't be inspected, esp. on Safari) */ if (attempt === 2 && !iframe.dataset.loaded) failed = true; if (failed) { if (currentStreams
                         .length > 1 && currentStreamIndex < currentStreams.length - 1) { currentStreamIndex++; const ns =
                             currentStreams[currentStreamIndex]; const ni = document.querySelector(
                             `.stream-item[data-index="${currentStreamIndex}"]`);
