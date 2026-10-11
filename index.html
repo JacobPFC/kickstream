@@ -1944,6 +1944,10 @@
         .toast { border-left: 1px solid var(--border); }
         .stream-item:hover { background: var(--surface2); }
 
+        /* Ad slot */
+        .ad-slot { width: 160px; min-height: 300px; margin: 1.5rem auto 1rem; overflow: hidden; }
+        @media (max-width:768px) { .ad-slot { display: none; } }
+
         /* No motion */
         *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
         .live-dot { animation: none !important; }
@@ -2026,6 +2030,18 @@
             <div id="league-section" style="display:none">
                 <div class="sidebar-label" style="margin-top:0.75rem;">League</div>
                 <div class="league-list" id="league-list"></div>
+            </div>
+            <div class="ad-slot" id="ad-sidebar">
+                <script>
+                  atOptions = {
+                    'key' : 'c5424e86bb6b187007fa7c3c4008e521',
+                    'format' : 'iframe',
+                    'height' : 300,
+                    'width' : 160,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://www.highrevenueformat.com/c5424e86bb6b187007fa7c3c4008e521/invoke.js"></script>
             </div>
         </aside>
 
