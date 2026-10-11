@@ -2016,19 +2016,46 @@
             return found ? found._iframe : null;
         }
 
-        // Unified merge: appends items from `incoming` that don't title-match anything in `primary`
+        // Returns true if two simplified title strings are close enough to be the same match
+        function titlesMatch(a, b) {
+            if (a === b) return true;
+            const sh = a.length < b.length ? a : b,
+                  lo = a.length < b.length ? b : a;
+            return sh.length > 5 && lo.includes(sh);
+        }
+
+        // Deduplicate a single list by title (Worker can return duplicates itself)
+        function dedupList(list) {
+            const out = [];
+            for (const m of list) {
+                const mk = simplify(m.title);
+                if (!out.some(x => titlesMatch(simplify(x.title), mk))) out.push(m);
+            }
+            return out;
+        }
+
+        // Merge `incoming` into `primary`:
+        // - If a title match exists in primary, inject its streams into that card instead of adding a duplicate
+        // - If no match, add as a new card (it's a genuinely different event)
         function mergeSource(primary, incoming) {
-            const keys = new Set(primary.map(m => simplify(m.title)));
-            const unique = incoming.filter(m => {
-                const pk = simplify(m.title);
-                for (const k of keys) {
-                    const sh = pk.length < k.length ? pk : k,
-                          lo = pk.length < k.length ? k : pk;
-                    if (lo.includes(sh) && sh.length > 5) return false;
+            for (const m of incoming) {
+                const mk = simplify(m.title);
+                const existing = primary.find(x => titlesMatch(simplify(x.title), mk));
+                if (existing) {
+                    // Inject streams from this source into the existing card
+                    const newSources = (m.sources || []).filter(s => s.embedUrl);
+                    if (newSources.length) {
+                        existing.sources = [...(existing.sources || []), ...newSources];
+                    }
+                    // Inject PPV iframe if primary has none
+                    if (m._iframe && !existing._iframe) existing._iframe = m._iframe;
+                    // Carry over score if primary has none
+                    if (m.score && !existing.score) existing.score = m.score;
+                } else {
+                    primary.push(m);
                 }
-                return true;
-            });
-            return [...primary, ...unique];
+            }
+            return primary;
         }
 
         function sfMapCategory(cat) {
@@ -2470,7 +2497,7 @@
                     return true;
                 });
 
-                let merged = mergeSource(primary, ppv);
+                let merged = mergeSource(dedupList(primary), ppv);
                 merged = mergeSource(merged, wf);
                 merged = mergeSource(merged, sf);
 
